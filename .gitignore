@@ -1,0 +1,5 @@
+.idea/
+venv/
+__pycache__
+local_settings.py
+note.txt
