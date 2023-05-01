@@ -1,0 +1,4 @@
+matplotlib
+PySide2
+openpyxl
+qdarkstyle
