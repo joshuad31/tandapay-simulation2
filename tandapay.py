@@ -4,106 +4,78 @@ import shutil
 import time
 from datetime import datetime
 import random
-from openpyxl import load_workbook
-from settings import RESULT_DIR, DB_DIR, FILE_SYSTEM, FILE_USER
+from settings import RESULT_DIR
 from utils.logger import logger
 
 
 class TandaPaySimulatorV2(object):
 
-    def __init__(self, ev=None, pv=None, matrix=False):
-        if len(ev) != 10:
-            ev.append(ev[1] * 0.025 * ev[0])
-        self.ev = copy.deepcopy(ev)
-        self.pv = pv
-        self.wb = {
-            'user': load_workbook(os.path.join(DB_DIR, FILE_USER)),
-            'system': load_workbook(os.path.join(DB_DIR, FILE_SYSTEM)),
-        }
-        self.sh_user = self.wb['user'].active
-        self.sh_system = self.wb['system'].active
-
-        self.excel_files = {}
-        self.counter = 0
+    def __init__(self, ev=None, pv=None, count=10, bundling=0, matrix=False):
+        self.ev = ev or {}
+        self.cov_req = ev['total_member_cnt'] * 0.025 * ev['monthly_premium']
+        self._total = ev['total_member_cnt']
+        self.pv = pv or {}
+        self.period = 0
         self.matrix = matrix
+        self.bundling = bundling
+        self.count = count
+        self._u_d = [
+            {
+                'orig_sbg_num': 0,
+                'remaining_orig_sbg': 0,
+                'cur_sbg_num': 0,
+                'members_cur_sbg': 0,
+                'sbg_status': 'valid',
+                'sbg_reorg_cnt': 0,
+                'pri_role': '',
+                'sec_role': '',
+                'cur_status': 'paid',
+                'reorged_cnt': 0,
+                'payable': 'yes',
+                'defector_cnt': 0,
+                'cur_month_balance': 0,
+                'cur_month_premium': 0,
+                'cur_month_1st_calc': 0,
+                'cur_month_sec_cals': [0, ] * count,
+                'total_value_refunds': [0, ] * count,
+                'wallet_balance': 0,
+                'wallet_claim_award': 0,
+                'wallet_no_claim_refund': 0,
+                'wallet_reorg_refund': 0,
+                'credit_to_savings_account': 0,
+                'prior_premiums': [0] * self.bundling,
+                'debit_to_savings_account': [0, ] * count,
+            } for _ in range(ev['total_member_cnt'])]
 
-        self.sy_rec_p = [self.sh_system.cell(2, i + 2) for i in range(22)]
-        self.sy_rec_f = [self.sh_system.cell(3, i + 2) for i in range(22)]
-        self.sy_rec_r = [self.sh_system.cell(4, i + 2) for i in range(22)]
+        self._s_d = [
+            {
+                'valid_remaining': ev['total_member_cnt'],
+                'defected_cnt': 0,
+                'skipped_cnt': 0,
+                'invalid_cnt': 0,
+                'quit_cnt': 0,
+                'reorged_cnt': 0,
+                'defection_shortfall': 0,
+                'skip_shortfall': 0,
+                'invalid_shortfall': 0,
+                'cur_month_1st_calc': 0,
+                'total_shortfall_period_one_claim': 0,
+                'cur_month_total_shortfall': 0,
+                'individual_shortfall_period_one_claim': 0,
+                'cur_month_individual_shortfall': 0,
+            } for _ in range(count)
+        ]
 
-    def _init_system_sheet(self, target_dir):
-        for i in range(2):
-            self.sh_system.cell(i + 2, 3).value = self.ev[0]
-            self.sh_system.cell(i + 2, 4).value = self.ev[9] / self.ev[0]
-            for k in range(5, 23):
-                self.sh_system.cell(i + 2, k).value = 0 if k != 18 else 'no'
-            self.sh_system.cell(i + 2, 21).value = self.ev[9] / self.ev[0]
-        for i in range(3, 30):
-            for k in range(3, 23):
-                self.sh_system.cell(i + 2, k).value = 0
-        self.excel_files['system'] = os.path.join(target_dir, FILE_SYSTEM)
-        self.save_to_excel('system')
-
-    def _init_user_sheet(self, target_dir):
-        for i in range(self.ev[0]):
-            self.sh_user.cell(i + 2, 1).value = f'user{i + 1}'
-            self.set_reorg_time(i, 0)
-            self.set_invalid_refund_available(i, 0)
-            self.set_total_payment_specific_user(i, self.ev[0])
-            self.set_payable(i, 'yes')
-            self.set_defect_count(i, 0)
-        self.excel_files['user'] = os.path.join(target_dir, FILE_USER)
-        self.save_to_excel('user')
-
-    def _checksum(self, syfunc: int):
-        checked_vals = []
-        for i in range(self.ev[0]):
-            cur_subgroup = self.get_cur_subgroup(i)
-            if cur_subgroup == 0 or self.get_cur_status(i) == 'defected':
-                continue
-            cur_remaining = self.get_remaining_num_cur_subgroup(i)
-            if cur_subgroup not in checked_vals:
-                remainings = [self.get_remaining_num_cur_subgroup(j) for j in range(self.ev[0])
-                              if self.get_cur_subgroup(j) == cur_subgroup and self.get_cur_status(j) != 'defected']
-                if len(set(remainings)) > 1:
-                    msg = f'______________ Period {self.counter} :: SyFunc {syfunc} _checksum failed(i={i}): ' \
-                          f'Remaining numbers in a same subgroup({cur_subgroup}) must be identical, but - {remainings}'
-                    logger.error(msg)
-                if len(remainings) != cur_remaining:
-                    msg = f'______________ Period {self.counter} :: SyFunc {syfunc} _checksum failed(i={i}): ' \
-                          f'UsRec4 value({cur_remaining}) doesn\'t match with {len(remainings)}'
-                    logger.error(msg)
-                checked_vals.append(cur_subgroup)
-
-    def _checksum_sr1(self, _sy_rec1_val: int, syfunc: int):
-        counter = len([i for i in range(self.ev[0]) if self.get_cur_subgroup(i) == 0])
-        if self.ev[0] - _sy_rec1_val != counter:
-            msg = f'______________ Period {self.counter} SyFunc {syfunc} _checksum_sr1 failed: counter = {counter} - ' \
-                  f'supposed to be {self.ev[0] - _sy_rec1_val}'
-            logger.error(msg)
-
-    def assign_variables(self):
-        for i in range(1, 21):
-            self.sy_rec_p[i] = self.sh_system.cell(self.counter * 3 - 1, i + 2)
-            self.sy_rec_f[i] = self.sh_system.cell(self.counter * 3, i + 2)
-            self.sy_rec_r[i] = self.sh_system.cell(self.counter * 3 + 1, i + 2)
-
-    def save_to_excel(self, db_type):
-        if not self.matrix:
-            self.wb[db_type].save(self.excel_files[db_type])
-
-    def start_simulation(self, target_dir=RESULT_DIR, count=10):
+    def start_simulation(self, target_dir=RESULT_DIR):
         s_time = time.time()
         target_dir = os.path.join(target_dir, datetime.now().strftime('%m_%d_%Y__%H_%M_%S'))
         os.makedirs(target_dir, exist_ok=True)
-        self._init_user_sheet(target_dir)
-        self._init_system_sheet(target_dir)
 
-        logger.debug(f'EV1(Total members in the group): {self.ev[0]}')
+        logger.debug(f"Total members in the group: {self._total}")
 
-        # Subgroup  # FUNCTION FOR SUBGROUP EXECUTION
-        step1_ev1 = self.ev[0]
-        step2 = self.ev[0] / 5
+        # ============================== Subgroup Setup ========================================
+        step1_ev1 = self._total
+        step2 = self._total / 5
         step3 = round(step2 / 2.3333)
         step4 = step3 * 5
         step5 = step1_ev1 - step4
@@ -133,10 +105,10 @@ class TandaPaySimulatorV2(object):
         temp_val_four = step14 * 4
         offset = 0
         for i in range(temp_val_four):
-            self.set_orig_subgroup(i + offset, group_num)
-            self.set_remaining_num_orig_subgroup(i + offset, 4)
-            self.set_cur_subgroup(i + offset, group_num)
-            self.set_remaining_num_cur_subgroup(i + offset, 4)
+            self._u_d[i + offset]['orig_sbg_num'] = group_num
+            self._u_d[i + offset]['remaining_orig_sbg'] = 4
+            self._u_d[i + offset]['cur_sbg_num'] = group_num
+            self._u_d[i + offset]['members_cur_sbg'] = 4
             group_mem_count += 1
             if group_mem_count == 4:
                 group_num += 1
@@ -146,10 +118,10 @@ class TandaPaySimulatorV2(object):
         # condition checking for group == 5
         temp_val_five = step3 * 5
         for i in range(temp_val_five):
-            self.set_orig_subgroup(i + offset, group_num)
-            self.set_remaining_num_orig_subgroup(i + offset, 5)
-            self.set_cur_subgroup(i + offset, group_num)
-            self.set_remaining_num_cur_subgroup(i + offset, 5)
+            self._u_d[i + offset]['orig_sbg_num'] = group_num
+            self._u_d[i + offset]['remaining_orig_sbg'] = 5
+            self._u_d[i + offset]['cur_sbg_num'] = group_num
+            self._u_d[i + offset]['members_cur_sbg'] = 5
             group_mem_count += 1
             if group_mem_count == 5:
                 group_num += 1
@@ -159,10 +131,10 @@ class TandaPaySimulatorV2(object):
         # condition checking for group == 6
         temp_val_six = step7 * 6
         for i in range(temp_val_six):
-            self.set_orig_subgroup(i + offset, group_num)
-            self.set_remaining_num_orig_subgroup(i + offset, 6)
-            self.set_cur_subgroup(i + offset, group_num)
-            self.set_remaining_num_cur_subgroup(i + offset, 6)
+            self._u_d[i + offset]['orig_sbg_num'] = group_num
+            self._u_d[i + offset]['remaining_orig_sbg'] = 6
+            self._u_d[i + offset]['cur_sbg_num'] = group_num
+            self._u_d[i + offset]['members_cur_sbg'] = 6
             group_mem_count += 1
             if group_mem_count == 6:
                 group_num += 1
@@ -172,83 +144,120 @@ class TandaPaySimulatorV2(object):
         # condition checking for group == 7
         temp_val_seven = step11 * 7
         for i in range(temp_val_seven):
-            self.set_orig_subgroup(i + offset, group_num)
-            self.set_remaining_num_orig_subgroup(i + offset, 7)
-            self.set_cur_subgroup(i + offset, group_num)
-            self.set_remaining_num_cur_subgroup(i + offset, 7)
+            self._u_d[i + offset]['orig_sbg_num'] = group_num
+            self._u_d[i + offset]['remaining_orig_sbg'] = 7
+            self._u_d[i + offset]['cur_sbg_num'] = group_num
+            self._u_d[i + offset]['members_cur_sbg'] = 7
             group_mem_count += 1
             if group_mem_count == 7:
                 group_num += 1
                 group_mem_count = 0
 
         checksum = offset + temp_val_seven
-        if checksum != self.ev[0]:
-            raise ValueError(f"Initial group checksum failed: checksum:{checksum} != EV1:{self.ev[0]}")
+        if checksum != self._total:
+            raise ValueError(f"Initial group checksum failed: checksum:{checksum} != EV1:{self._total}")
         logger.debug({"D": temp_val_four, "A": temp_val_five, "B": temp_val_six, "C": temp_val_seven})
 
-        # setting valid to UsRec5
-        for i in range(self.ev[0]):
-            self.set_subgroup_status(i, 'valid')
         logger.debug(
             f'Group4 members: {step14}, Group5 members: {step3}, Group6 members: {step7}, '
             f'Group7 members: {step11}, Total group: {step14 * 4 + step3 * 5 + step7 * 6 + step11 * 7}')
 
+        # ========================================= Role Assignment =========================================
         # ROLE 1
-        role_ev4 = int(self.ev[0] * self.ev[3])     # EV 4 = Percentage of honest defectors
-        defectors = random.sample(range(self.ev[0]), role_ev4)
-        non_defectors = [i for i in range(self.ev[0]) if i not in defectors]
-        # EV 5 = Percentage of low-morale members
-        role_ev5 = int(self.ev[0] * self.ev[4])
-        low_morale_list = random.sample(non_defectors, role_ev5)
-        for i in range(self.ev[0]):
-            self.set_primary_role(
-                i, 'defector' if i in defectors else 'low-morale' if i in low_morale_list else 'unity-role')
+        role_honest_defectors = int(self._total * self.ev['perc_honest_defectors'])
+        defectors = random.sample(range(self._total), role_honest_defectors)
+        non_defectors = [i for i in range(self._total) if i not in defectors]
+        role_low_morale = int(self._total * self.ev['perc_low_morale'])
+        low_morales = random.sample(non_defectors, role_low_morale)
+        for i in range(self._total):
+            self._u_d[i]['pri_role'] = \
+                'defector' if i in defectors else 'low-morale' if i in low_morales else 'unity-role'
 
         # ROLE 2
         # temp_val_four users and pick remaining users randomly to be equal with EV6
         # (percentage of members who are unwilling to act alone)
-        remaining_pct = int(self.ev[5] * self.ev[0]) - temp_val_four
-        if remaining_pct > 0:
-            rand_dep_user = random.sample(range(temp_val_four, self.ev[0]), remaining_pct)
-        else:
-            rand_dep_user = []
-        for i in range(self.ev[0]):
-            self.set_secondary_role(
-                i, 'dependent' if (i < temp_val_four or i in rand_dep_user) else 'independent')
+        remaining = int(self.ev['perc_independent'] * self._total) - temp_val_four
+        rand_dep_user = random.sample(range(temp_val_four, self._total), remaining) if remaining > 0 else []
+        for i in range(self._total):
+            self._u_d[i]['sec_role'] = 'dependent' if (i < temp_val_four or i in rand_dep_user) else 'independent'
 
-        for self.counter in range(1, count + 1):
-            # logger.info(f'Current period is: {self.counter}')
-            self.assign_variables()
-            if self.counter == 1:
+        # ========================================= Period =========================================
+        for self.period in range(self.count):
+            if self.period > 0:
+                self._s_d[self.period] = copy.deepcopy(self._s_d[self.period - 1])
+            # RsA
+            cur_month_1st_calc = self.cov_req / self._s_d[self.period]['valid_remaining']
+            self._s_d[self.period]['cur_month_1st_calc'] = cur_month_1st_calc
+            for i in range(self._total):
+                # Current Months First Premium Calculation
+                self._u_d[i]['cur_month_1st_calc'] = cur_month_1st_calc
+                self._u_d[i]['credit_to_savings_account'] = self.cov_req / self._total
+                if self.period == 0:
+                    self._u_d[i]['cur_month_sec_cals'][0] = cur_month_1st_calc
+                else:
+                    wallet_balance = \
+                        cur_month_1st_calc + int(self._u_d[i]['debit_to_savings_account'][self.period - 1]) - \
+                        self._u_d[i]['wallet_no_claim_refund'] - self._u_d[i]['wallet_reorg_refund'] - \
+                        self._u_d[i]['wallet_claim_award']
+                    self._u_d[i]['wallet_balance'] = wallet_balance
+                    self._u_d[i]['cur_month_sec_cals'][self.period] = wallet_balance
+
+                self._u_d[i]['total_value_refunds'][self.period] = \
+                    self._u_d[i]['wallet_no_claim_refund'] + self._u_d[i]['wallet_reorg_refund'] + \
+                    self._u_d[i]['wallet_claim_award']
+
+            if self.period == 0:       # Period 1
                 self.user_func_1()
             else:
                 self.user_func_2()
 
-            self.sys_func_3()
+            # RsB
+            for i in range(self.count):
+                self._u_d[i]['cur_month_balance'] += self._u_d[i]['cur_month_1st_calc']
+                if self.period > 0:
+                    self._u_d[i]['debit_to_savings_account'][self.period] = 0
 
             self.sys_func_4()
 
-            # ___SyFunc5___
-            if self.counter == 1:
-                self.sy_rec_f[9].value = self.sy_rec_f[3].value * self.sy_rec_f[19].value
-                self.sh_system.cell(4, 11).value = self.sy_rec_f[9].value
+            self.user_func_6()
 
-            self.sys_func_6()
+            # RsC
+            sd = self._s_d[self.period]
+            self._s_d[self.period]['total_shortfall_period_one_claim'] = \
+                sum([sd[k] for k in {'defection_shortfall', 'skip_shortfall', 'invalid_shortfall'}])
+            self._s_d[self.period]['individual_shortfall_period_one_claim'] = \
+                self._s_d[self.period]['total_shortfall_period_one_claim'] / sd['valid_remaining']
+            self._s_d[self.period]['cur_month_total_shortfall'] = \
+                sd['skip_shortfall'] + sd['invalid_shortfall'] / sd['valid_remaining']
+            self._s_d[self.period]['cur_month_individual_shortfall'] = \
+                self._s_d[self.period]['cur_month_total_shortfall'] / sd['valid_remaining']
 
-            self.sys_func_7()
-            self._checksum(syfunc=7)       # SysFunc7 doesn't perform checksum inside it.
+            for i in range(self.count):
+                self._u_d[i]['debit_to_savings_account'][self.period] += \
+                    self._s_d[self.period]['individual_shortfall_period_one_claim']
+                if self._u_d[i]['debit_to_savings_account'][self.period] > self._u_d[i]['credit_to_savings_account']:
+                    msg = f"Period: {self.period}, User{i}: Debit(" \
+                          f"{self._u_d[i]['debit_to_savings_account'][self.period]}) > Credit(" \
+                          f"{self._u_d[i]['credit_to_savings_account']})"
+                    raise ValueError(msg)
+
+                self._u_d[i]['cur_month_balance'] += self._s_d[self.period]['cur_month_individual_shortfall']
+
+            cmb = sum([u['cur_month_balance'] for u in self._u_d])
+            if cmb != self.cov_req:
+                raise ValueError(f"Invalid month balance - {cmb}, CV: {self.cov_req}")
 
             self.sys_func_8()
 
-            self.sys_func_9()
+            self.sys_func_7()
 
             # ___SyFunc11___  (Reorg Stage 7)
             total = self.sy_rec_r[3].value + self.sy_rec_r[5].value + self.sy_rec_r[7].value
-            if self.counter != count and total > 0:
+            if self.period != self.count - 1 and total > 0:
                 # copy values of previous to current
                 sy_rec_new_p = [self.sh_system.cell(2, k + 1) for k in range(23)]
                 for k in range(1, 21):
-                    sy_rec_new_p[k] = self.sh_system.cell(self.counter * 3 + 2, k + 2)
+                    sy_rec_new_p[k] = self.sh_system.cell(self.period * 3 + 2, k + 2)
                     sy_rec_new_p[k].value = self.sy_rec_r[k].value
 
                 # Overwriting values in new row
@@ -261,14 +270,14 @@ class TandaPaySimulatorV2(object):
             else:
                 self.save_to_excel('user')
                 self.save_to_excel('system')
-                logger.info(f'Complete at period {self.counter}, elapsed: {time.time() - s_time}')
-                percent = round(self.sh_system.cell(3, 5).value / self.ev[0] * 100, 2)
+                logger.info(f'Complete at period {self.period}, elapsed: {time.time() - s_time}')
+                percent = round(self.sh_system.cell(3, 5).value / self._total * 100, 2)
                 inc_premium = round((self.sy_rec_f[19].value / self.sh_system.cell(2, 21).value) * 100, 2)
                 result_file = os.path.join(target_dir, "result.txt")
                 results = [
-                    self.ev[0],
+                    self._total,
                     self.sy_rec_r[1].value,
-                    round(((self.ev[0] - self.sy_rec_r[1].value) / self.ev[0]) * 100, 2),
+                    round(((self._total - self.sy_rec_r[1].value) / self._total) * 100, 2),
                     round(self.sh_system.cell(2, 21).value),
                     int(self.sy_rec_f[19].value),
                     inc_premium,
@@ -304,135 +313,115 @@ class TandaPaySimulatorV2(object):
         """
         User defection function
         """
-        # Path 1
-        for i in range(self.ev[0]):
-            if self.get_primary_role(i) == 'defector' and self.get_secondary_role(i) == 'dependent':
-                # Increase the defect counter of all subgroup members where the current user is involved.
-                cur_subgroup = self.get_cur_subgroup(i)
-                for j in range(self.ev[0]):
-                    if self.get_primary_role(j) == 'defector' and self.get_secondary_role(j) == 'dependent' \
-                            and self.get_cur_subgroup(j) == cur_subgroup:
-                        # Increase the defect count
-                        self.set_defect_count(j, self.get_defect_count(j) + 1)
-
-        for i in range(self.ev[0]):
-            if self.get_primary_role(i) == 'defector':
-                if self.get_defect_count(i) >= self.ev[6] or self.get_secondary_role(i) == 'independent':  # Path 2
-                    self.sy_rec_p[1].value -= 1  # Decrease valid members remaining
-                    self.sy_rec_p[3].value += 1  # Increase members defected
-                    self.sy_rec_p[5].value += 1  # Increase members skipped
+        for i in range(self._total):
+            if self._u_d[i]['pri_role'] == 'defector':
+                defector_cnt = len([
+                    u for u in self._u_d
+                    if u['pri_role'] == 'defector' and u['cur_sbg_num'] == self._u_d[i]['cur_sbg_num']])
+                self._u_d[i]['defector_cnt'] = defector_cnt
+                if self._u_d[i]['sec_role'] == 'independent' or defector_cnt >= self.ev['dependent_thres']:
+                    self._s_d[self.period]['valid_remaining'] -= 1
+                    self._s_d[self.period]['defected_cnt'] += 1
+                    self._s_d[self.period]['skipped_cnt'] += 1
                     self._poison_a_user(i)
-                if self.get_defect_count(i) < self.ev[6] and self.get_secondary_role(i) == 'dependent':  # Path 3
-                    self.set_primary_role(i, 'low-morale')
-        self._checksum(syfunc=1)
+                else:
+                    self._u_d[i]['pri_role'] = 'low-morale'
+        s_d = self._s_d[self.period]
+        self._s_d[self.period]['defection_shortfall'] = s_d['defected_cnt'] * s_d['cur_month_1st_calc']
+        self._s_d[self.period]['skip_shortfall'] = s_d['skipped_cnt'] * s_d['cur_month_1st_calc']
 
     def user_func_2(self):
         """"
-        Pay Stage 2,  User skip function
+        Pay Stage 2,  Pricing function
         """
-        slope = (self.pv[3] - self.pv[1]) / (self.pv[2] - self.pv[0])
-        cur_total_payment = float(self.sy_rec_p[19].value)
-        prev_total_payment = float(self.sh_system.cell(self.counter * 3 - 1 - 3, 21).value)
-        if prev_total_payment > 0:
-            inc_premium = max((cur_total_payment / prev_total_payment) - 1, 0)
-        else:
-            inc_premium = 0
+        slope = (self.pv['ph_leave_ceiling'] - self.pv['ph_leave_floor']) / \
+                (self.pv['prem_inc_ceiling'] - self.pv['prem_inc_floor'])
 
-        valid_users = [i for i in range(self.ev[0]) if self.get_subgroup_status(i) == 'valid']
-        skip_count = 0
-        if inc_premium >= self.pv[0]:  # PATH1
-            skip_percent = slope * (inc_premium - self.pv[0]) + self.pv[1]
-            skip_count = round(self.sy_rec_p[1].value * skip_percent)
-        else:
-            if cur_total_payment / (self.ev[9] / self.ev[0]) - 1 >= self.pv[4]:  # PATH2
-                skip_count = round(self.sy_rec_p[1].value * self.pv[5])
-            else:  # PATH3
-                if self.ev[7] != 0:
-                    self.ev[7] -= 1
-                    skip_count = 1
-        if valid_users and skip_count > 0:
-            skip_users = random.sample(valid_users, min(skip_count, len(valid_users)))
-            for i in skip_users:
-                self.set_payable(i, 'no')
+        for i in range(self._total):
+            if self._u_d[i]['total_value_refunds'][self.period] == 0:
+                matches = [p for p in range(self.period - 1, -1, -1) if self._u_d[i]['total_value_refunds'][p] == 0]
+            else:
+                matches = [p for p in range(self.period - 1, -1, -1) if self._u_d[i]['total_value_refunds'][p] != 0]
+            mp = matches[-1] if matches else 0
+            one_month_increase_perc = \
+                int(self._u_d[i]['cur_month_sec_cals'][self.period]) / int(self._u_d[i]['cur_month_sec_cals'][mp]) - 1
+            if one_month_increase_perc >= self.pv['prem_inc_floor']:
+                ph_skip_perc = slope * (one_month_increase_perc - self.pv['prem_inc_floor']) + \
+                               self.pv['ph_leave_floor']
+                if random.uniform(0, 1) < ph_skip_perc:
+                    self._poison_a_user(i)
+                    break
+            cum_inc_perc = \
+                int(self._u_d[i]['cur_month_sec_cals'][self.period]) / self.cov_req * self.ev['total_member_cnt'] - 1
+            if cum_inc_perc > self.pv['prem_inc_cum']:
+                if random.uniform(0, 1) < self.pv['ph_leave_cum']:
+                    self._poison_a_user(i)
 
     def _poison_a_user(self, index):
-        cur_subgroup = self.get_cur_subgroup(index)
-        orig_subgroup = self.get_orig_subgroup(index)
-        for j in range(self.ev[0]):
-            if self.get_cur_subgroup(j) == cur_subgroup:
-                # Decrease the number count of the current subgroup
-                self.set_remaining_num_cur_subgroup(j, self.get_remaining_num_cur_subgroup(j) - 1)
-                if self.get_orig_subgroup(j) == orig_subgroup:
-                    # Decrease the number count of original subgroup
-                    self.set_remaining_num_orig_subgroup(j, self.get_remaining_num_orig_subgroup(j) - 1)
-        self.set_cur_subgroup(index, 0)
-        self.set_remaining_num_cur_subgroup(index, 0)
-        self.set_subgroup_status(index, 'NR')
-        self.set_cur_status(index, 'NR')
-        self.set_payable(index, 'NR')
-
-    def sys_func_3(self):
-        """"
-        Pay Stage 3, Validate premium function
-        """
-        valid_users = [i for i in range(self.ev[0]) if self.get_subgroup_status(i) == 'valid']
-
-        for i in valid_users:
-            if self.get_payable(i) == 'no':
-                self.set_cur_status(i, 'skipped')
-                self.sy_rec_p[1].value -= 1  # Decrease valid members remaining
-                self.sy_rec_p[5].value += 1  # Increase members skipped
-                self._poison_a_user(i)
-            elif self.get_payable(i) == 'yes':
-                self.set_cur_status(i, 'paid')
-
-        self._checksum(3)
-        self._checksum_sr1(self.sy_rec_p[1].value, 3)
+        for j in range(self._total):
+            if self._u_d[j]['cur_sbg_num'] == self._u_d[index]['cur_sbg_num']:
+                self._u_d[j]['members_cur_sbg'] -= 1
+            if self._u_d[j]['orig_sbg_num'] == self._u_d[index]['orig_sbg_num']:
+                self._u_d[j]['remaining_orig_sbg'] -= 1
+        self._u_d[index]['cur_sbg_num'] = 0
+        self._u_d[index]['members_cur_sbg'] = 0
+        self._u_d[index]['sbg_status'] = 'NR'
+        self._u_d[index]['cur_status'] = 'NR'
+        self._u_d[index]['payable'] = 'NR'
 
     def sys_func_4(self):
         """"
-        Pay Stage 4, Invalidate subgroup function
+        Invalidate subgroup function
         """
-        for i in range(self.ev[0]):
-            if self.get_remaining_num_cur_subgroup(i) in {1, 2, 3} and self.get_cur_status(i) == 'paid':
-                self.set_cur_status(i, 'paid-invalid')
-                self.set_subgroup_status(i, 'invalid')
-                self.set_invalid_refund_available(i, self.get_total_payment_specific_user(i))  # UsRec 10 = UsRec 11
-                self.sy_rec_p[6].value += 1  # Increase invalid members count
-        # PATH 1
-        for k in range(1, 21):
-            self.sy_rec_f[k].value = self.sy_rec_p[k].value
-            self.sy_rec_r[k].value = self.sy_rec_p[k].value
+        for i in range(self._total):
+            if self._u_d[i]['members_cur_sbg'] in {1, 2, 3} and self._u_d[i]['cur_status'] == 'paid':
+                self._u_d[i]['sbg_status'] = 'invalid'
+                self._u_d[i]['cur_status'] = 'paid-invalid'
+                self._s_d[self.period]['invalid_cnt'] += 1
+                self._s_d[self.period]['valid_remaining'] -= 1
+                self._u_d[i]['wallet_reorg_refund'] = self._u_d[i]['cur_month_1st_calc']
+                self._u_d[i]['cur_month_1st_calc'] = 0
+        sd = self._s_d[self.period]
+        self._s_d[self.period]['invalid_shortfall'] = sd['invalid_cnt'] * sd['cur_month_1st_calc']
 
-    def sys_func_6(self):
-        """"
-        Reorg Stage 1
+    def user_func_6(self):
         """
-        invalid_users = [i for i in range(self.ev[0]) if self.get_cur_status(i) == 'paid-invalid']
-        for i in invalid_users:
-            if (self.get_primary_role(i) == 'low-morale' and random.uniform(0, 1) < self.ev[8]) or \
-                    (self.get_secondary_role(i) == 'dependent' and self.get_remaining_num_orig_subgroup(i) < 2):
-                self.set_cur_status(i, 'quit')
-                self.sy_rec_r[1].value -= 1
-                self.sy_rec_r[7].value += 1
+        User Quit Function
+        :return:
+        """
+        quit_list = []
+        for i in range(self._total):
+            if self._u_d[i]['cur_status'] == 'paid-invalid':
+                if self._u_d[i]['pri_role'] == 'low-morale':
+                    if random.uniform(0, 1) > self.ev['low_morale_quit_prob']:
+                        for j in range(self._total):
+                            if self._u_d[j]['cur_sbg_num'] == self._u_d[i]['cur_sbg_num']:
+                                self._u_d[j]['sbg_reorg_cnt'] += 1
+                        if self._u_d[i]['sec_role'] == 'dependent':
+                            quit_list.append(i)
+                    else:
+                        self._poison_a_user(i)
+                        self._s_d[self.period]['quit_cnt'] += 1
+                elif self._u_d[i]['pri_role'] == 'unity':
+                    for j in range(self._total):
+                        if self._u_d[j]['cur_sbg_num'] == self._u_d[i]['cur_sbg_num']:
+                            self._u_d[j]['sbg_reorg_cnt'] += 1
+        for i in quit_list:
+            if self._u_d[i]['sbg_reorg_cnt'] < 2:
                 self._poison_a_user(i)
-            else:  # PATH 4
-                self.sy_rec_r[8].value += 1
-
-        self._checksum(6)
-        self._checksum_sr1(self.sy_rec_r[1].value, 6)
+                self._s_d[self.period]['quit_cnt'] += 1
 
     def sys_func_7(self):
         """"
-        Reorg Stage 2
+        Reorganization of Users
         """
-        invalid_users = [i for i in range(self.ev[0]) if self.get_cur_status(i) == 'paid-invalid']
+        invalid_users = [i for i in range(self._total) if self.get_cur_status(i) == 'paid-invalid']
         for path in {1, 2}:
             path_users = [i for i in invalid_users if self.get_remaining_num_cur_subgroup(i) == path]
             # First Attempt
             invalid_list = list(set([self.get_cur_subgroup(i) for i in path_users]))
             valid_list = list(set(
-                [self.get_cur_subgroup(i) for i in range(self.ev[0])
+                [self.get_cur_subgroup(i) for i in range(self._total)
                  if self.get_subgroup_status(i) == 'valid' and self.get_remaining_num_cur_subgroup(i) == (7 - path)]))
             while True:
                 # Assignment First Attempt
@@ -448,18 +437,18 @@ class TandaPaySimulatorV2(object):
                             self.set_reorg_time(i, self.get_reorg_time(i) + 1)
                             path_users.remove(i)
                     invalid_list.remove(need_match)
-                    for i in range(self.ev[0]):
+                    for i in range(self._total):
                         if self.get_cur_subgroup(i) == give_match:
                             self.set_remaining_num_cur_subgroup(i, 7)
                     valid_list.remove(give_match)
                 if not invalid_list:
                     if path_users:
-                        logger.warning(f"Period {self.counter}, SysFunc7: Path{path} invalid is empty "
+                        logger.warning(f"Period {self.period}, SysFunc7: Path{path} invalid is empty "
                                        f"but run set is not empty in the 1st attempt!")
                     break
                 elif not valid_list:      # Second attempt
                     filtered_list = list(set(
-                        [self.get_cur_subgroup(i) for i in range(self.ev[0])
+                        [self.get_cur_subgroup(i) for i in range(self._total)
                          if self.get_subgroup_status(i) == 'valid' and
                             self.get_remaining_num_cur_subgroup(i) == (6 - path)]))
                     while filtered_list:
@@ -474,13 +463,13 @@ class TandaPaySimulatorV2(object):
                                 self.set_reorg_time(i, self.get_reorg_time(i) + 1)
                                 path_users.remove(i)
                         invalid_list.remove(need_match)
-                        for i in range(self.ev[0]):
+                        for i in range(self._total):
                             if self.get_cur_subgroup(i) == give_match:
                                 self.set_remaining_num_cur_subgroup(i, 6)
                         filtered_list.remove(give_match)
                         if not invalid_list:
                             if path_users:
-                                logger.warning(f"Period {self.counter}, SysFunc7: Path{path} invalid is empty "
+                                logger.warning(f"Period {self.period}, SysFunc7: Path{path} invalid is empty "
                                                f"but run set is not empty in the 2nd attempt!")
                             break
                     break
@@ -499,7 +488,7 @@ class TandaPaySimulatorV2(object):
                     self.set_cur_status(i, 'reorg')
                     self.set_reorg_time(i, self.get_reorg_time(i) + 1)
             invalid_list.remove(need_match)
-            for i in range(self.ev[0]):
+            for i in range(self._total):
                 if self.get_cur_subgroup(i) == give_match and i not in path_3_users:
                     self.set_remaining_num_cur_subgroup(i, 6)
                     self.set_subgroup_status(i, 'valid')
@@ -512,7 +501,7 @@ class TandaPaySimulatorV2(object):
                     return
         # Path 3 Second Attempt
         valid_list = list(set(
-            [self.get_cur_subgroup(i) for i in range(self.ev[0])
+            [self.get_cur_subgroup(i) for i in range(self._total)
              if self.get_subgroup_status(i) == 'valid' and self.get_remaining_num_cur_subgroup(i) == 4]))
         # TODO: If invalid_list is empty and valid_list is not empty?
         if invalid_list and valid_list:
@@ -526,159 +515,52 @@ class TandaPaySimulatorV2(object):
                     self.set_cur_status(i, 'reorg')
                     self.set_reorg_time(i, self.get_reorg_time(i) + 1)
                     path_3_users.remove(i)
-            for i in range(self.ev[0]):
+            for i in range(self._total):
                 if self.get_cur_subgroup(i) == give_match:
                     self.set_remaining_num_cur_subgroup(i, 7)
             valid_list.remove(give_match)
             if path_3_users:
-                logger.warning(f"Period {self.counter}, SysFunc7: Path3 invalid is empty but "
+                logger.warning(f"Period {self.period}, SysFunc7: Path3 invalid is empty but "
                                f"run set is not empty in the 2nd attempt!")
 
     def sys_func_8(self):
         """"
-        Reorg Stage 4
+        Determine Claims
         """
-        if self.ev[2] > random.uniform(0, 1):
-            self.sy_rec_r[16].value = 'yes'
-        else:
-            self.sy_rec_r[16].value = "no"
-            self.sy_rec_r[17].value = self.sy_rec_r[2].value
+        x = random.uniform(0, 1)
+        claimant = random.sample([i for i in range(self.count) if self._u_d[i]['sbg_status'] == 'valid'], 1)[0]
+        for i in range(self.count):
+            if self._u_d[i]['cur_status'] == 'paid':
+                if x >= self.ev['chance_of_claim']:
+                    self._u_d[i]['cur_month_premium'] = self._u_d[i]['cur_month_balance']
+                else:   # Claim occurred
+                    self._u_d[claimant]['wallet_claim_award'] += self._u_d[i]['cur_month_balance']
+                    for m in range(self.bundling):
+                        self._u_d[claimant]['wallet_claim_award'] += self._u_d[i]['prior_premiums'][m]
+                        self._u_d[i]['prior_premiums'][m] = 0
 
-        # ___SyFunc8.5___       Reorg Stage 4.5
-        self.sy_rec_r[11].value = self.sy_rec_r[5].value * self.sy_rec_r[19].value
-        self.sy_rec_r[13].value = self.sy_rec_r[6].value * self.sy_rec_r[19].value
-
-    def sys_func_9(self):
-        """"
-        Reorg Stage 5
-        """
-        if self.sy_rec_r[1].value > 0:
-            self.sy_rec_r[2].value = self.ev[9] / self.sy_rec_r[1].value
-        self.sy_rec_r[14].value = self.sy_rec_r[9].value + self.sy_rec_r[11].value + self.sy_rec_r[13].value
-        if self.sy_rec_r[1].value > 0:
-            self.sy_rec_r[15].value = self.sy_rec_r[14].value / self.sy_rec_r[1].value
-        for i in range(self.ev[0]):
-            invalid_refund = self.get_invalid_refund_available(i)
-            if invalid_refund != 0:
-                self.set_total_payment_specific_user(
-                    i, self.sy_rec_r[2].value + self.sy_rec_r[15].value - invalid_refund)
-                self.set_invalid_refund_available(i, 0)
-            else:
-                sr18 = self.sy_rec_r[18].value
-                self.set_total_payment_specific_user(
-                    i, self.sy_rec_r[2].value + self.sy_rec_r[15].value - (sr18 if sr18 is not None else 0))
-        self.sy_rec_r[19].value = self.sy_rec_r[2].value + self.sy_rec_r[15].value
-
-    # ============   User Rec Functions   ===========================
-
-    def get_orig_subgroup(self, index):
-        # UsRec1
-        return self.sh_user.cell(index + 2, 2).value
-
-    def set_orig_subgroup(self, index, val):
-        # UsRec1
-        self.sh_user.cell(index + 2, 2).value = val
-
-    def get_remaining_num_orig_subgroup(self, index):
-        # UsRec2
-        return self.sh_user.cell(index + 2, 3).value
-
-    def set_remaining_num_orig_subgroup(self, index, num):
-        # UsRec2
-        self.sh_user.cell(index + 2, 3).value = max(num, 0)
-
-    def get_cur_subgroup(self, index):
-        # UsRec3
-        return self.sh_user.cell(index + 2, 4).value
-
-    def set_cur_subgroup(self, index, num):
-        # UsRec3
-        self.sh_user.cell(index + 2, 4).value = num
-
-    def get_remaining_num_cur_subgroup(self, index):
-        # UsRec4
-        return self.sh_user.cell(index + 2, 5).value
-
-    def set_remaining_num_cur_subgroup(self, index, num):
-        # UsRec4
-        self.sh_user.cell(index + 2, 5).value = max(num, 0)
-
-    def get_subgroup_status(self, index):
-        # UsRec5
-        return self.sh_user.cell(index + 2, 6).value
-
-    def set_subgroup_status(self, index, state):
-        # UsRec5
-        self.sh_user.cell(index + 2, 6).value = state
-
-    def get_primary_role(self, index):
-        # UsRec6
-        return self.sh_user.cell(index + 2, 7).value
-
-    def set_primary_role(self, index, role):
-        # UsRec6
-        self.sh_user.cell(index + 2, 7).value = role
-
-    def get_secondary_role(self, index):
-        # UsRec7
-        return self.sh_user.cell(index + 2, 8).value
-
-    def set_secondary_role(self, index, val):
-        # UsRec7
-        self.sh_user.cell(index + 2, 8).value = val
-
-    def get_cur_status(self, index):
-        # UsRec8
-        return self.sh_user.cell(index + 2, 9).value
-
-    def set_cur_status(self, index, state):
-        # UsRec8
-        self.sh_user.cell(index + 2, 9).value = state
-
-    def get_reorg_time(self, index):
-        # UsRec9
-        return self.sh_user.cell(index + 2, 10).value
-
-    def set_reorg_time(self, index, val):
-        # UsRec9
-        self.sh_user.cell(index + 2, 10).value = val
-
-    def get_invalid_refund_available(self, index):
-        # UsRec10
-        return self.sh_user.cell(index + 2, 11).value
-
-    def set_invalid_refund_available(self, index, val):
-        # UsRec10
-        self.sh_user.cell(index + 2, 11).value = val
-
-    def get_total_payment_specific_user(self, index):
-        # UsRec11
-        return self.sh_user.cell(index + 2, 12).value
-
-    def set_total_payment_specific_user(self, index, val):
-        # UsRec11
-        self.sh_user.cell(index + 2, 12).value = val
-
-    def get_payable(self, index):
-        # UsRec12
-        return self.sh_user.cell(index + 2, 13).value
-
-    def set_payable(self, index, state):
-        # UsRec12
-        self.sh_user.cell(index + 2, 13).value = state
-
-    def get_defect_count(self, index):
-        # UsRec13
-        return self.sh_user.cell(index + 2, 14).value
-
-    def set_defect_count(self, index, num):
-        # UsRec13
-        self.sh_user.cell(index + 2, 14).value = num
+                self._u_d[i]['cur_month_balance'] = 0
 
 
 if __name__ == '__main__':
 
-    _ev = [0, 0, 0, 0, 0, 0, 0, 0, 0., 0.]
-    _pv = []
+    _ev = {
+        'total_member_cnt': 60,
+        'monthly_premium': 0,
+        'chance_of_claim': 25,
+        'perc_honest_defectors': 0.3,
+        'perc_low_morale': 0.2,
+        'perc_independent': 20,
+        'dependent_thres': 2,
+        'low_morale_quit_prob': .3333,
+    }
+    _pv = {
+        'prem_inc_floor': 30,
+        'ph_leave_floor': 20,
+        'prem_inc_ceiling': 50,
+        'ph_leave_ceiling': 25,
+        'prem_inc_cum': 30,
+        'ph_leave_cum': 20,
+    }
     tps = TandaPaySimulatorV2(ev=_ev, pv=_pv)
     tps.start_simulation()
