@@ -1,4 +1,5 @@
 import copy
+from csv import DictWriter
 import os
 import shutil
 import time
@@ -43,7 +44,7 @@ class TandaPaySimulatorV2(object):
                 'wallet_no_claim_refund': 0,
                 'wallet_reorg_refund': 0,
                 'credit_to_savings_account': 0,
-                'prior_premiums': [0] * self.bundling,
+                'prior_premiums': [0] * max(self.bundling, 1),
                 'debit_to_savings_account': [0, ] * count,
             } for _ in range(ev['total_member_cnt'])]
 
@@ -63,6 +64,7 @@ class TandaPaySimulatorV2(object):
                 'cur_month_total_shortfall': 0,
                 'individual_shortfall_period_one_claim': 0,
                 'cur_month_individual_shortfall': 0,
+                'claimed': False,
             } for _ in range(count)
         ]
 
@@ -245,69 +247,83 @@ class TandaPaySimulatorV2(object):
 
             cmb = sum([u['cur_month_balance'] for u in self._u_d])
             if cmb != self.cov_req:
-                raise ValueError(f"Invalid month balance - {cmb}, CV: {self.cov_req}")
+                raise ValueError(f"Invalid month balance - {cmb}, CR: {self.cov_req}")
 
             self.sys_func_8()
 
             self.sys_func_7()
 
-            # ___SyFunc11___  (Reorg Stage 7)
-            total = self.sy_rec_r[3].value + self.sy_rec_r[5].value + self.sy_rec_r[7].value
-            if self.period != self.count - 1 and total > 0:
-                # copy values of previous to current
-                sy_rec_new_p = [self.sh_system.cell(2, k + 1) for k in range(23)]
-                for k in range(1, 21):
-                    sy_rec_new_p[k] = self.sh_system.cell(self.period * 3 + 2, k + 2)
-                    sy_rec_new_p[k].value = self.sy_rec_r[k].value
-
-                # Overwriting values in new row
-                sy_rec_new_p[18].value = sy_rec_new_p[17].value
-                for k in {3, 5, 6, 9, 11, 13, 14, 15, 17}:
-                    sy_rec_new_p[k].value = 0
-
-                self._checksum(11)
-                self._checksum_sr1(sy_rec_new_p[1].value, 11)
+            # Queuing(Bundling) Function
+            if self.bundling > 0 and self._s_d[self.period]['claimed']:
+                logger.info(f"Claim occurred in period{self.period + 1}")
             else:
-                self.save_to_excel('user')
-                self.save_to_excel('system')
-                logger.info(f'Complete at period {self.period}, elapsed: {time.time() - s_time}')
-                percent = round(self.sh_system.cell(3, 5).value / self._total * 100, 2)
-                inc_premium = round((self.sy_rec_f[19].value / self.sh_system.cell(2, 21).value) * 100, 2)
-                result_file = os.path.join(target_dir, "result.txt")
-                results = [
-                    self._total,
-                    self.sy_rec_r[1].value,
-                    round(((self._total - self.sy_rec_r[1].value) / self._total) * 100, 2),
-                    round(self.sh_system.cell(2, 21).value),
-                    int(self.sy_rec_f[19].value),
-                    inc_premium,
-                    self.sh_system.cell(3, 5).value,
-                    self.ev[3] * 100,
-                    percent,
-                    self.pv[4] * 100
-                ]
-                lines = [
-                    f'{results[0]} is the number of members at the start of the simulation\n',
-                    f'{results[1]} is the number of valid members remaining at the end '
-                    f'of the simulation\n',
-                    f'{results[2]}% of '
-                    f'policyholders left the group by end of simulation\n',
-                    f'{results[3]} was the initial premium members were '
-                    f'asked to pay.\n',
-                    f'{results[4]} is the final premium members were asked to pay.\n',
-                    f'Premiums increased by {results[5]}% by end of simulation\n',
-                    f'self.SyRec 3 (period 0 finalize) = {results[6]}\n',
-                    f'{results[7]}% of policyholders who were assigned to defect\n',
-                    f'{results[8]}% of policyholders who actually defected\n',
-                    f'{results[9]}% was the initial collapse threshold set for PV 5\n'
-                ]
-                logger.info('\n' + ''.join(lines))
-                if not self.matrix:
-                    with open(result_file, 'w') as f:
-                        f.writelines(lines)
-                else:
-                    shutil.rmtree(target_dir, ignore_errors=True)
-                return results
+                for i in range(self.count):
+                    if self._u_d[i]['cur_status'] != 'NR':
+                        if self.bundling in {0, 2}:
+                            self._u_d[i]['wallet_no_claim_refund'] = self._u_d[i]['prior_premiums'][0]
+                        elif self.bundling == 3:
+                            self._u_d[i]['wallet_no_claim_refund'] = self._u_d[i]['prior_premiums'][1]
+                            self._u_d[i]['prior_premiums'][1] = self._u_d[i]['prior_premiums'][0]
+                        elif self.bundling == 4:
+                            self._u_d[i]['wallet_no_claim_refund'] = self._u_d[i]['prior_premiums'][2]
+                            self._u_d[i]['prior_premiums'][2] = self._u_d[i]['prior_premiums'][1]
+                            self._u_d[i]['prior_premiums'][1] = self._u_d[i]['prior_premiums'][0]
+                        self._u_d[i]['prior_premiums'][0] = self._u_d[i]['cur_month_premium']
+                        self._u_d[i]['cur_month_premium'] = 0
+
+            if self.period > 1 and \
+                    all([self._s_d[i]['skipped_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]) and \
+                    all([self._s_d[i]['quit_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]):
+                logger.warning(f"No skipped or quited users at period{self.period + 1}, something is wrong...")
+                break
+
+        logger.info(f'Complete at period {self.period}, elapsed: {time.time() - s_time}')
+
+        with open(os.path.join(target_dir, '1 User Database.csv'), 'w') as outfile:
+            writer = DictWriter(outfile, list(self._u_d[0].keys()))
+            writer.writeheader()
+            writer.writerows(self._u_d)
+
+        with open(os.path.join(target_dir, '1 System Database.csv'), 'w') as outfile:
+            writer = DictWriter(outfile, list(self._s_d[0].keys()))
+            writer.writeheader()
+            writer.writerows(self._s_d)
+
+        defected = round(self._s_d[self.period]['defected_cnt'] / self._total * 100, 2)
+        inc_premium = round((self._s_d[self.period]['cur_month_total_shortfall'] /
+                             self._s_d[0]['cur_month_total_shortfall']) * 100, 2)
+        result_file = os.path.join(target_dir, "result.txt")
+        results = [
+            self._total,
+            self._s_d[self.period]['valid_remaining'],
+            round(((self._total - self._s_d[self.period]['valid_remaining']) / self._total) * 100, 2),
+            self._s_d[0]['cur_month_total_shortfall'],
+            self._s_d[self.period]['cur_month_total_shortfall'],
+            inc_premium,
+            self._u_d[0]['defected_cnt'],
+            self.ev['perc_honest_defectors'] * 100,
+            defected,
+            self.pv['prem_inc_cum'] * 100
+        ]
+        lines = [
+            f'{self._total} is the number of members at the start of the simulation\n',
+            f'{results[1]} is the number of valid members remaining at the end of the simulation\n',
+            f'{results[2]}% of policyholders left the group by end of simulation\n',
+            f'{results[3]} was the initial premium members were asked to pay.\n',
+            f'{results[4]} is the final premium members were asked to pay.\n',
+            f'Premiums increased by {results[5]}% by end of simulation\n',
+            f'self.SyRec 3 (period 0 finalize) = {results[6]}\n',
+            f'{results[7]}% of policyholders who were assigned to defect\n',
+            f'{defected}% of policyholders who actually defected\n',
+            f'{results[9]}% was the initial collapse threshold set for PV 5\n'
+        ]
+        logger.info('\n' + ''.join(lines))
+        if not self.matrix:
+            with open(result_file, 'w') as f:
+                f.writelines(lines)
+        else:
+            shutil.rmtree(target_dir, ignore_errors=True)
+        return results
 
     def user_func_1(self):
         """
@@ -411,123 +427,39 @@ class TandaPaySimulatorV2(object):
                 self._poison_a_user(i)
                 self._s_d[self.period]['quit_cnt'] += 1
 
+    def _reorg_subgroups(self, left=3, right=2):
+        invalid_users = [i for i in range(self._total) if self._u_d[i]['cur_status'] == 'paid-invalid']
+        ll = list(set([self._u_d[i]['cur_sbg_num'] for i in invalid_users if self._u_d[i]['members_cur_sbg'] == left]))
+        rr = list(set([self._u_d[i]['cur_sbg_num'] for i in invalid_users if self._u_d[i]['members_cur_sbg'] == right]))
+        if (ll and rr and left != right) or (len(ll) > 1 and left == right):
+            sbg_num_left = ll[0]
+            sbg_num_right = random.choice(rr if left == right else ll[1:])
+            for i in invalid_users:
+                if self._u_d[i]['cur_sbg_num'] in {sbg_num_left, sbg_num_right}:
+                    self._u_d[i]['cur_sbg_num'] = sbg_num_left if left > right else sbg_num_right
+                    self._u_d[i]['members_cur_sbg'] = left + right
+                    self._u_d[i]['sbg_status'] = 'valid'
+                    self._u_d[i]['cur_status'] = 'reorg'
+                    self._u_d[i]['reorged_cnt'] += 1
+                    self._s_d[self.period]['valid_remaining'] += 1
+            self._s_d[self.period]['reorged_cnt'] += 1
+            return True
+
     def sys_func_7(self):
         """"
         Reorganization of Users
         """
-        invalid_users = [i for i in range(self._total) if self.get_cur_status(i) == 'paid-invalid']
-        for path in {1, 2}:
-            path_users = [i for i in invalid_users if self.get_remaining_num_cur_subgroup(i) == path]
-            # First Attempt
-            invalid_list = list(set([self.get_cur_subgroup(i) for i in path_users]))
-            valid_list = list(set(
-                [self.get_cur_subgroup(i) for i in range(self._total)
-                 if self.get_subgroup_status(i) == 'valid' and self.get_remaining_num_cur_subgroup(i) == (7 - path)]))
-            while True:
-                # Assignment First Attempt
-                if invalid_list and valid_list:
-                    need_match = invalid_list[0]
-                    give_match = random.sample(valid_list, 1)[0]
-                    for i in path_users[:]:
-                        if self.get_cur_subgroup(i) == need_match:
-                            self.set_cur_subgroup(i, give_match)
-                            self.set_remaining_num_cur_subgroup(i, 7)
-                            self.set_subgroup_status(i, 'valid')
-                            self.set_cur_status(i, 'reorg')
-                            self.set_reorg_time(i, self.get_reorg_time(i) + 1)
-                            path_users.remove(i)
-                    invalid_list.remove(need_match)
-                    for i in range(self._total):
-                        if self.get_cur_subgroup(i) == give_match:
-                            self.set_remaining_num_cur_subgroup(i, 7)
-                    valid_list.remove(give_match)
-                if not invalid_list:
-                    if path_users:
-                        logger.warning(f"Period {self.period}, SysFunc7: Path{path} invalid is empty "
-                                       f"but run set is not empty in the 1st attempt!")
-                    break
-                elif not valid_list:      # Second attempt
-                    filtered_list = list(set(
-                        [self.get_cur_subgroup(i) for i in range(self._total)
-                         if self.get_subgroup_status(i) == 'valid' and
-                            self.get_remaining_num_cur_subgroup(i) == (6 - path)]))
-                    while filtered_list:
-                        need_match = invalid_list[0]
-                        give_match = random.sample(filtered_list, 1)[0]
-                        for i in path_users[:]:
-                            if self.get_cur_subgroup(i) == need_match:
-                                self.set_cur_subgroup(i, give_match)
-                                self.set_remaining_num_cur_subgroup(i, 6)
-                                self.set_subgroup_status(i, 'valid')
-                                self.set_cur_status(i, 'reorg')
-                                self.set_reorg_time(i, self.get_reorg_time(i) + 1)
-                                path_users.remove(i)
-                        invalid_list.remove(need_match)
-                        for i in range(self._total):
-                            if self.get_cur_subgroup(i) == give_match:
-                                self.set_remaining_num_cur_subgroup(i, 6)
-                        filtered_list.remove(give_match)
-                        if not invalid_list:
-                            if path_users:
-                                logger.warning(f"Period {self.period}, SysFunc7: Path{path} invalid is empty "
-                                               f"but run set is not empty in the 2nd attempt!")
-                            break
-                    break
-
-        # Path 3
-        path_3_users = [i for i in invalid_users if self.get_remaining_num_cur_subgroup(i) == 3]
-        invalid_list = list(set([self.get_cur_subgroup(i) for i in path_3_users]))
-        while len(invalid_list) >= 2:      # Path 3 Assignment first attempt
-            need_match = invalid_list[0]
-            give_match = invalid_list[1]
-            for i in path_3_users:
-                if self.get_cur_subgroup == need_match:
-                    self.set_cur_subgroup(i, give_match)
-                    self.set_remaining_num_cur_subgroup(i, 6)
-                    self.set_subgroup_status(i, 'valid')
-                    self.set_cur_status(i, 'reorg')
-                    self.set_reorg_time(i, self.get_reorg_time(i) + 1)
-            invalid_list.remove(need_match)
-            for i in range(self._total):
-                if self.get_cur_subgroup(i) == give_match and i not in path_3_users:
-                    self.set_remaining_num_cur_subgroup(i, 6)
-                    self.set_subgroup_status(i, 'valid')
-                    self.set_cur_status(i, 'reorg')
-                    self.set_reorg_time(i, self.get_reorg_time(i) + 1)
-            invalid_list.remove(give_match)
-            path_3_users = [i for i in path_3_users if self.get_cur_subgroup(i) not in {need_match, give_match}]
-            if not invalid_list:
-                if not path_3_users:
-                    return
-        # Path 3 Second Attempt
-        valid_list = list(set(
-            [self.get_cur_subgroup(i) for i in range(self._total)
-             if self.get_subgroup_status(i) == 'valid' and self.get_remaining_num_cur_subgroup(i) == 4]))
-        # TODO: If invalid_list is empty and valid_list is not empty?
-        if invalid_list and valid_list:
-            need_match = invalid_list[0]
-            give_match = random.sample(valid_list, 1)[0]
-            for i in path_3_users[:]:
-                if self.get_cur_subgroup(i) == need_match:
-                    self.set_cur_subgroup(i, give_match)
-                    self.set_remaining_num_cur_subgroup(i, 7)
-                    self.set_subgroup_status(i, 'valid')
-                    self.set_cur_status(i, 'reorg')
-                    self.set_reorg_time(i, self.get_reorg_time(i) + 1)
-                    path_3_users.remove(i)
-            for i in range(self._total):
-                if self.get_cur_subgroup(i) == give_match:
-                    self.set_remaining_num_cur_subgroup(i, 7)
-            valid_list.remove(give_match)
-            if path_3_users:
-                logger.warning(f"Period {self.period}, SysFunc7: Path3 invalid is empty but "
-                               f"run set is not empty in the 2nd attempt!")
+        for i in [3, 2, 1]:
+            for j in range(3):
+                while self._reorg_subgroups(i, 5 + j - i):
+                    pass
 
     def sys_func_8(self):
         """"
         Determine Claims
         """
         x = random.uniform(0, 1)
+        self._s_d[self.period]['claimed'] = x < self.ev['chance_of_claim']
         claimant = random.sample([i for i in range(self.count) if self._u_d[i]['sbg_status'] == 'valid'], 1)[0]
         for i in range(self.count):
             if self._u_d[i]['cur_status'] == 'paid':
@@ -546,21 +478,21 @@ if __name__ == '__main__':
 
     _ev = {
         'total_member_cnt': 60,
-        'monthly_premium': 0,
-        'chance_of_claim': 25,
+        'monthly_premium': 1000,
+        'chance_of_claim': .40,
         'perc_honest_defectors': 0.3,
         'perc_low_morale': 0.2,
-        'perc_independent': 20,
+        'perc_independent': .70,
         'dependent_thres': 2,
         'low_morale_quit_prob': .3333,
     }
     _pv = {
-        'prem_inc_floor': 30,
-        'ph_leave_floor': 20,
-        'prem_inc_ceiling': 50,
-        'ph_leave_ceiling': 25,
-        'prem_inc_cum': 30,
-        'ph_leave_cum': 20,
+        'prem_inc_floor': .30,
+        'ph_leave_floor': .20,
+        'prem_inc_ceiling': .50,
+        'ph_leave_ceiling': .25,
+        'prem_inc_cum': .30,
+        'ph_leave_cum': .20,
     }
     tps = TandaPaySimulatorV2(ev=_ev, pv=_pv)
     tps.start_simulation()
