@@ -20,7 +20,7 @@ class TandaPaySimulatorV2(object):
         self.matrix = matrix
         self.bundling = bundling
         self.count = count
-        self._u_d = [
+        self.u_d = [
             {
                 'orig_sbg_num': 0,
                 'remaining_orig_sbg': 0,
@@ -48,7 +48,7 @@ class TandaPaySimulatorV2(object):
                 'debit_to_savings_account': [0, ] * count,
             } for _ in range(ev['total_member_cnt'])]
 
-        self._s_d = [
+        self.s_d = [
             {
                 'valid_remaining': ev['total_member_cnt'],
                 'defected_cnt': 0,
@@ -75,6 +75,133 @@ class TandaPaySimulatorV2(object):
 
         logger.debug(f"Total members in the group: {self._total}")
 
+        temp_val_four = self.subgroup_setup()
+
+        self.role_assignment(temp_val_four)
+
+        # ========================================= Period =========================================
+        for self.period in range(self._total):
+            if self.period > 0:
+                self.s_d[self.period] = copy.deepcopy(self.s_d[self.period - 1])
+            # RsA
+            cur_month_1st_calc = self.cov_req / self.s_d[self.period]['valid_remaining']
+            self.s_d[self.period]['cur_month_1st_calc'] = cur_month_1st_calc
+            for i in range(self._total):
+                # Current Months First Premium Calculation
+                self.u_d[i]['cur_month_1st_calc'] = cur_month_1st_calc
+                self.u_d[i]['credit_to_savings_account'] = self.cov_req / self._total
+                if self.period == 0:
+                    self.u_d[i]['cur_month_sec_cals'][0] = cur_month_1st_calc
+                else:
+                    wallet_balance = \
+                        cur_month_1st_calc + int(self.u_d[i]['debit_to_savings_account'][self.period - 1]) - \
+                        self.u_d[i]['wallet_no_claim_refund'] - self.u_d[i]['wallet_reorg_refund'] - \
+                        self.u_d[i]['wallet_claim_award']
+                    self.u_d[i]['wallet_balance'] = wallet_balance
+                    self.u_d[i]['cur_month_sec_cals'][self.period] = wallet_balance
+
+                self.u_d[i]['total_value_refunds'][self.period] = \
+                    self.u_d[i]['wallet_no_claim_refund'] + self.u_d[i]['wallet_reorg_refund'] + \
+                    self.u_d[i]['wallet_claim_award']
+
+            if self.period == 0:       # Period 1
+                self.user_func_1()
+            else:
+                self.user_func_2()
+
+            # RsB
+            for i in range(self._total):
+                self.u_d[i]['cur_month_balance'] += self.u_d[i]['cur_month_1st_calc']
+                if self.period > 0:
+                    self.u_d[i]['debit_to_savings_account'][self.period] = 0
+
+            self.sys_func_4()
+
+            self.user_func_6()
+
+            self.rsc()
+
+            cmb = sum([u['cur_month_balance'] for u in self.u_d if u['cur_sbg_num'] != 0])
+            if cmb != self.cov_req:
+                raise ValueError(f"Invalid month balance - {cmb}, CR: {self.cov_req}")
+
+            self.sys_func_8()
+
+            self.sys_func_7()
+
+            # Queuing(Bundling) Function
+            if self.bundling > 0 and self.s_d[self.period]['claimed']:
+                logger.info(f"Claim occurred in period{self.period + 1}")
+            else:
+                for i in range(self._total):
+                    if self.u_d[i]['cur_status'] != 'NR':
+                        if self.bundling in {0, 2}:
+                            self.u_d[i]['wallet_no_claim_refund'] = self.u_d[i]['prior_premiums'][0]
+                        elif self.bundling == 3:
+                            self.u_d[i]['wallet_no_claim_refund'] = self.u_d[i]['prior_premiums'][1]
+                            self.u_d[i]['prior_premiums'][1] = self.u_d[i]['prior_premiums'][0]
+                        elif self.bundling == 4:
+                            self.u_d[i]['wallet_no_claim_refund'] = self.u_d[i]['prior_premiums'][2]
+                            self.u_d[i]['prior_premiums'][2] = self.u_d[i]['prior_premiums'][1]
+                            self.u_d[i]['prior_premiums'][1] = self.u_d[i]['prior_premiums'][0]
+                        self.u_d[i]['prior_premiums'][0] = self.u_d[i]['cur_month_premium']
+                        self.u_d[i]['cur_month_premium'] = 0
+
+            if self.period > 1 and \
+                    all([self.s_d[i]['skipped_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]) and \
+                    all([self.s_d[i]['quit_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]):
+                logger.warning(f"No skipped or quited users at period{self.period + 1}, something is wrong...")
+                break
+
+        logger.info(f'Complete at period {self.period}, elapsed: {time.time() - s_time}')
+
+        with open(os.path.join(target_dir, '1 User Database.csv'), 'w') as outfile:
+            writer = DictWriter(outfile, list(self.u_d[0].keys()))
+            writer.writeheader()
+            writer.writerows(self.u_d)
+
+        with open(os.path.join(target_dir, '1 System Database.csv'), 'w') as outfile:
+            writer = DictWriter(outfile, list(self.s_d[0].keys()))
+            writer.writeheader()
+            writer.writerows(self.s_d)
+
+        defected = round(self.s_d[self.period]['defected_cnt'] / self._total * 100, 2)
+        inc_premium = round((self.s_d[self.period]['cur_month_total_shortfall'] /
+                             self.s_d[0]['cur_month_total_shortfall']) * 100, 2)
+        result_file = os.path.join(target_dir, "result.txt")
+        results = [
+            self._total,
+            self.s_d[self.period]['valid_remaining'],
+            round(((self._total - self.s_d[self.period]['valid_remaining']) / self._total) * 100, 2),
+            self.s_d[0]['cur_month_total_shortfall'],
+            self.s_d[self.period]['cur_month_total_shortfall'],
+            inc_premium,
+            self.u_d[0]['defected_cnt'],
+            self.ev['perc_honest_defectors'] * 100,
+            defected,
+            self.pv['prem_inc_cum'] * 100
+        ]
+        lines = [
+            f'{self._total} is the number of members at the start of the simulation\n',
+            f'{results[1]} is the number of valid members remaining at the end of the simulation\n',
+            f'{results[2]}% of policyholders left the group by end of simulation\n',
+            f'{results[3]} was the initial premium members were asked to pay.\n',
+            f'{results[4]} is the final premium members were asked to pay.\n',
+            f'Premiums increased by {results[5]}% by end of simulation\n',
+            f'self.SyRec 3 (period 0 finalize) = {results[6]}\n',
+            f'{results[7]}% of policyholders who were assigned to defect\n',
+            f'{defected}% of policyholders who actually defected\n',
+            f'{results[9]}% was the initial collapse threshold set for PV 5\n'
+        ]
+        logger.info('\n' + ''.join(lines))
+        if not self.matrix:
+            with open(result_file, 'w') as f:
+                f.writelines(lines)
+        else:
+            shutil.rmtree(target_dir, ignore_errors=True)
+        return results
+
+    def subgroup_setup(self):
         # ============================== Subgroup Setup ========================================
         step1_ev1 = self._total
         step2 = self._total / 5
@@ -107,10 +234,10 @@ class TandaPaySimulatorV2(object):
         temp_val_four = step14 * 4
         offset = 0
         for i in range(temp_val_four):
-            self._u_d[i + offset]['orig_sbg_num'] = group_num
-            self._u_d[i + offset]['remaining_orig_sbg'] = 4
-            self._u_d[i + offset]['cur_sbg_num'] = group_num
-            self._u_d[i + offset]['members_cur_sbg'] = 4
+            self.u_d[i + offset]['orig_sbg_num'] = group_num
+            self.u_d[i + offset]['remaining_orig_sbg'] = 4
+            self.u_d[i + offset]['cur_sbg_num'] = group_num
+            self.u_d[i + offset]['members_cur_sbg'] = 4
             group_mem_count += 1
             if group_mem_count == 4:
                 group_num += 1
@@ -120,10 +247,10 @@ class TandaPaySimulatorV2(object):
         # condition checking for group == 5
         temp_val_five = step3 * 5
         for i in range(temp_val_five):
-            self._u_d[i + offset]['orig_sbg_num'] = group_num
-            self._u_d[i + offset]['remaining_orig_sbg'] = 5
-            self._u_d[i + offset]['cur_sbg_num'] = group_num
-            self._u_d[i + offset]['members_cur_sbg'] = 5
+            self.u_d[i + offset]['orig_sbg_num'] = group_num
+            self.u_d[i + offset]['remaining_orig_sbg'] = 5
+            self.u_d[i + offset]['cur_sbg_num'] = group_num
+            self.u_d[i + offset]['members_cur_sbg'] = 5
             group_mem_count += 1
             if group_mem_count == 5:
                 group_num += 1
@@ -133,10 +260,10 @@ class TandaPaySimulatorV2(object):
         # condition checking for group == 6
         temp_val_six = step7 * 6
         for i in range(temp_val_six):
-            self._u_d[i + offset]['orig_sbg_num'] = group_num
-            self._u_d[i + offset]['remaining_orig_sbg'] = 6
-            self._u_d[i + offset]['cur_sbg_num'] = group_num
-            self._u_d[i + offset]['members_cur_sbg'] = 6
+            self.u_d[i + offset]['orig_sbg_num'] = group_num
+            self.u_d[i + offset]['remaining_orig_sbg'] = 6
+            self.u_d[i + offset]['cur_sbg_num'] = group_num
+            self.u_d[i + offset]['members_cur_sbg'] = 6
             group_mem_count += 1
             if group_mem_count == 6:
                 group_num += 1
@@ -146,10 +273,10 @@ class TandaPaySimulatorV2(object):
         # condition checking for group == 7
         temp_val_seven = step11 * 7
         for i in range(temp_val_seven):
-            self._u_d[i + offset]['orig_sbg_num'] = group_num
-            self._u_d[i + offset]['remaining_orig_sbg'] = 7
-            self._u_d[i + offset]['cur_sbg_num'] = group_num
-            self._u_d[i + offset]['members_cur_sbg'] = 7
+            self.u_d[i + offset]['orig_sbg_num'] = group_num
+            self.u_d[i + offset]['remaining_orig_sbg'] = 7
+            self.u_d[i + offset]['cur_sbg_num'] = group_num
+            self.u_d[i + offset]['members_cur_sbg'] = 7
             group_mem_count += 1
             if group_mem_count == 7:
                 group_num += 1
@@ -163,7 +290,9 @@ class TandaPaySimulatorV2(object):
         logger.debug(
             f'Group4 members: {step14}, Group5 members: {step3}, Group6 members: {step7}, '
             f'Group7 members: {step11}, Total group: {step14 * 4 + step3 * 5 + step7 * 6 + step11 * 7}')
+        return temp_val_four
 
+    def role_assignment(self, temp_val_four):
         # ========================================= Role Assignment =========================================
         # ROLE 1
         role_honest_defectors = int(self._total * self.ev['perc_honest_defectors'])
@@ -172,7 +301,7 @@ class TandaPaySimulatorV2(object):
         role_low_morale = int(self._total * self.ev['perc_low_morale'])
         low_morales = random.sample(non_defectors, role_low_morale)
         for i in range(self._total):
-            self._u_d[i]['pri_role'] = \
+            self.u_d[i]['pri_role'] = \
                 'defector' if i in defectors else 'low-morale' if i in low_morales else 'unity-role'
 
         # ROLE 2
@@ -181,170 +310,28 @@ class TandaPaySimulatorV2(object):
         remaining = int(self.ev['perc_independent'] * self._total) - temp_val_four
         rand_dep_user = random.sample(range(temp_val_four, self._total), remaining) if remaining > 0 else []
         for i in range(self._total):
-            self._u_d[i]['sec_role'] = 'dependent' if (i < temp_val_four or i in rand_dep_user) else 'independent'
-
-        # ========================================= Period =========================================
-        for self.period in range(self.count):
-            if self.period > 0:
-                self._s_d[self.period] = copy.deepcopy(self._s_d[self.period - 1])
-            # RsA
-            cur_month_1st_calc = self.cov_req / self._s_d[self.period]['valid_remaining']
-            self._s_d[self.period]['cur_month_1st_calc'] = cur_month_1st_calc
-            for i in range(self._total):
-                # Current Months First Premium Calculation
-                self._u_d[i]['cur_month_1st_calc'] = cur_month_1st_calc
-                self._u_d[i]['credit_to_savings_account'] = self.cov_req / self._total
-                if self.period == 0:
-                    self._u_d[i]['cur_month_sec_cals'][0] = cur_month_1st_calc
-                else:
-                    wallet_balance = \
-                        cur_month_1st_calc + int(self._u_d[i]['debit_to_savings_account'][self.period - 1]) - \
-                        self._u_d[i]['wallet_no_claim_refund'] - self._u_d[i]['wallet_reorg_refund'] - \
-                        self._u_d[i]['wallet_claim_award']
-                    self._u_d[i]['wallet_balance'] = wallet_balance
-                    self._u_d[i]['cur_month_sec_cals'][self.period] = wallet_balance
-
-                self._u_d[i]['total_value_refunds'][self.period] = \
-                    self._u_d[i]['wallet_no_claim_refund'] + self._u_d[i]['wallet_reorg_refund'] + \
-                    self._u_d[i]['wallet_claim_award']
-
-            if self.period == 0:       # Period 1
-                self.user_func_1()
-            else:
-                self.user_func_2()
-
-            # RsB
-            for i in range(self.count):
-                self._u_d[i]['cur_month_balance'] += self._u_d[i]['cur_month_1st_calc']
-                if self.period > 0:
-                    self._u_d[i]['debit_to_savings_account'][self.period] = 0
-
-            self.sys_func_4()
-
-            self.user_func_6()
-
-            # RsC
-            sd = self._s_d[self.period]
-            self._s_d[self.period]['total_shortfall_period_one_claim'] = \
-                sum([sd[k] for k in {'defection_shortfall', 'skip_shortfall', 'invalid_shortfall'}])
-            self._s_d[self.period]['individual_shortfall_period_one_claim'] = \
-                self._s_d[self.period]['total_shortfall_period_one_claim'] / sd['valid_remaining']
-            self._s_d[self.period]['cur_month_total_shortfall'] = \
-                sd['skip_shortfall'] + sd['invalid_shortfall'] / sd['valid_remaining']
-            self._s_d[self.period]['cur_month_individual_shortfall'] = \
-                self._s_d[self.period]['cur_month_total_shortfall'] / sd['valid_remaining']
-
-            for i in range(self.count):
-                self._u_d[i]['debit_to_savings_account'][self.period] += \
-                    self._s_d[self.period]['individual_shortfall_period_one_claim']
-                if self._u_d[i]['debit_to_savings_account'][self.period] > self._u_d[i]['credit_to_savings_account']:
-                    msg = f"Period: {self.period}, User{i}: Debit(" \
-                          f"{self._u_d[i]['debit_to_savings_account'][self.period]}) > Credit(" \
-                          f"{self._u_d[i]['credit_to_savings_account']})"
-                    raise ValueError(msg)
-
-                self._u_d[i]['cur_month_balance'] += self._s_d[self.period]['cur_month_individual_shortfall']
-
-            cmb = sum([u['cur_month_balance'] for u in self._u_d])
-            if cmb != self.cov_req:
-                raise ValueError(f"Invalid month balance - {cmb}, CR: {self.cov_req}")
-
-            self.sys_func_8()
-
-            self.sys_func_7()
-
-            # Queuing(Bundling) Function
-            if self.bundling > 0 and self._s_d[self.period]['claimed']:
-                logger.info(f"Claim occurred in period{self.period + 1}")
-            else:
-                for i in range(self.count):
-                    if self._u_d[i]['cur_status'] != 'NR':
-                        if self.bundling in {0, 2}:
-                            self._u_d[i]['wallet_no_claim_refund'] = self._u_d[i]['prior_premiums'][0]
-                        elif self.bundling == 3:
-                            self._u_d[i]['wallet_no_claim_refund'] = self._u_d[i]['prior_premiums'][1]
-                            self._u_d[i]['prior_premiums'][1] = self._u_d[i]['prior_premiums'][0]
-                        elif self.bundling == 4:
-                            self._u_d[i]['wallet_no_claim_refund'] = self._u_d[i]['prior_premiums'][2]
-                            self._u_d[i]['prior_premiums'][2] = self._u_d[i]['prior_premiums'][1]
-                            self._u_d[i]['prior_premiums'][1] = self._u_d[i]['prior_premiums'][0]
-                        self._u_d[i]['prior_premiums'][0] = self._u_d[i]['cur_month_premium']
-                        self._u_d[i]['cur_month_premium'] = 0
-
-            if self.period > 1 and \
-                    all([self._s_d[i]['skipped_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]) and \
-                    all([self._s_d[i]['quit_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]):
-                logger.warning(f"No skipped or quited users at period{self.period + 1}, something is wrong...")
-                break
-
-        logger.info(f'Complete at period {self.period}, elapsed: {time.time() - s_time}')
-
-        with open(os.path.join(target_dir, '1 User Database.csv'), 'w') as outfile:
-            writer = DictWriter(outfile, list(self._u_d[0].keys()))
-            writer.writeheader()
-            writer.writerows(self._u_d)
-
-        with open(os.path.join(target_dir, '1 System Database.csv'), 'w') as outfile:
-            writer = DictWriter(outfile, list(self._s_d[0].keys()))
-            writer.writeheader()
-            writer.writerows(self._s_d)
-
-        defected = round(self._s_d[self.period]['defected_cnt'] / self._total * 100, 2)
-        inc_premium = round((self._s_d[self.period]['cur_month_total_shortfall'] /
-                             self._s_d[0]['cur_month_total_shortfall']) * 100, 2)
-        result_file = os.path.join(target_dir, "result.txt")
-        results = [
-            self._total,
-            self._s_d[self.period]['valid_remaining'],
-            round(((self._total - self._s_d[self.period]['valid_remaining']) / self._total) * 100, 2),
-            self._s_d[0]['cur_month_total_shortfall'],
-            self._s_d[self.period]['cur_month_total_shortfall'],
-            inc_premium,
-            self._u_d[0]['defected_cnt'],
-            self.ev['perc_honest_defectors'] * 100,
-            defected,
-            self.pv['prem_inc_cum'] * 100
-        ]
-        lines = [
-            f'{self._total} is the number of members at the start of the simulation\n',
-            f'{results[1]} is the number of valid members remaining at the end of the simulation\n',
-            f'{results[2]}% of policyholders left the group by end of simulation\n',
-            f'{results[3]} was the initial premium members were asked to pay.\n',
-            f'{results[4]} is the final premium members were asked to pay.\n',
-            f'Premiums increased by {results[5]}% by end of simulation\n',
-            f'self.SyRec 3 (period 0 finalize) = {results[6]}\n',
-            f'{results[7]}% of policyholders who were assigned to defect\n',
-            f'{defected}% of policyholders who actually defected\n',
-            f'{results[9]}% was the initial collapse threshold set for PV 5\n'
-        ]
-        logger.info('\n' + ''.join(lines))
-        if not self.matrix:
-            with open(result_file, 'w') as f:
-                f.writelines(lines)
-        else:
-            shutil.rmtree(target_dir, ignore_errors=True)
-        return results
+            self.u_d[i]['sec_role'] = 'dependent' if (i < temp_val_four or i in rand_dep_user) else 'independent'
 
     def user_func_1(self):
         """
         User defection function
         """
         for i in range(self._total):
-            if self._u_d[i]['pri_role'] == 'defector':
+            if self.u_d[i]['pri_role'] == 'defector':
                 defector_cnt = len([
-                    u for u in self._u_d
-                    if u['pri_role'] == 'defector' and u['cur_sbg_num'] == self._u_d[i]['cur_sbg_num']])
-                self._u_d[i]['defector_cnt'] = defector_cnt
-                if self._u_d[i]['sec_role'] == 'independent' or defector_cnt >= self.ev['dependent_thres']:
-                    self._s_d[self.period]['valid_remaining'] -= 1
-                    self._s_d[self.period]['defected_cnt'] += 1
-                    self._s_d[self.period]['skipped_cnt'] += 1
+                    u for u in self.u_d
+                    if u['pri_role'] == 'defector' and u['cur_sbg_num'] == self.u_d[i]['cur_sbg_num']])
+                self.u_d[i]['defector_cnt'] = defector_cnt
+                if self.u_d[i]['sec_role'] == 'independent' or defector_cnt >= self.ev['dependent_thres']:
+                    self.s_d[self.period]['valid_remaining'] -= 1
+                    self.s_d[self.period]['defected_cnt'] += 1
+                    self.s_d[self.period]['skipped_cnt'] += 1
                     self._poison_a_user(i)
                 else:
-                    self._u_d[i]['pri_role'] = 'low-morale'
-        s_d = self._s_d[self.period]
-        self._s_d[self.period]['defection_shortfall'] = s_d['defected_cnt'] * s_d['cur_month_1st_calc']
-        self._s_d[self.period]['skip_shortfall'] = s_d['skipped_cnt'] * s_d['cur_month_1st_calc']
+                    self.u_d[i]['pri_role'] = 'low-morale'
+        s_d = self.s_d[self.period]
+        self.s_d[self.period]['defection_shortfall'] = s_d['defected_cnt'] * s_d['cur_month_1st_calc']
+        self.s_d[self.period]['skip_shortfall'] = s_d['skipped_cnt'] * s_d['cur_month_1st_calc']
 
     def user_func_2(self):
         """"
@@ -354,13 +341,13 @@ class TandaPaySimulatorV2(object):
                 (self.pv['prem_inc_ceiling'] - self.pv['prem_inc_floor'])
 
         for i in range(self._total):
-            if self._u_d[i]['total_value_refunds'][self.period] == 0:
-                matches = [p for p in range(self.period - 1, -1, -1) if self._u_d[i]['total_value_refunds'][p] == 0]
+            if self.u_d[i]['total_value_refunds'][self.period] == 0:
+                matches = [p for p in range(self.period - 1, -1, -1) if self.u_d[i]['total_value_refunds'][p] == 0]
             else:
-                matches = [p for p in range(self.period - 1, -1, -1) if self._u_d[i]['total_value_refunds'][p] != 0]
+                matches = [p for p in range(self.period - 1, -1, -1) if self.u_d[i]['total_value_refunds'][p] != 0]
             mp = matches[-1] if matches else 0
             one_month_increase_perc = \
-                int(self._u_d[i]['cur_month_sec_cals'][self.period]) / int(self._u_d[i]['cur_month_sec_cals'][mp]) - 1
+                int(self.u_d[i]['cur_month_sec_cals'][self.period]) / int(self.u_d[i]['cur_month_sec_cals'][mp]) - 1
             if one_month_increase_perc >= self.pv['prem_inc_floor']:
                 ph_skip_perc = slope * (one_month_increase_perc - self.pv['prem_inc_floor']) + \
                                self.pv['ph_leave_floor']
@@ -368,37 +355,37 @@ class TandaPaySimulatorV2(object):
                     self._poison_a_user(i)
                     break
             cum_inc_perc = \
-                int(self._u_d[i]['cur_month_sec_cals'][self.period]) / self.cov_req * self.ev['total_member_cnt'] - 1
+                int(self.u_d[i]['cur_month_sec_cals'][self.period]) / self.cov_req * self.ev['total_member_cnt'] - 1
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
                     self._poison_a_user(i)
 
     def _poison_a_user(self, index):
         for j in range(self._total):
-            if self._u_d[j]['cur_sbg_num'] == self._u_d[index]['cur_sbg_num']:
-                self._u_d[j]['members_cur_sbg'] -= 1
-            if self._u_d[j]['orig_sbg_num'] == self._u_d[index]['orig_sbg_num']:
-                self._u_d[j]['remaining_orig_sbg'] -= 1
-        self._u_d[index]['cur_sbg_num'] = 0
-        self._u_d[index]['members_cur_sbg'] = 0
-        self._u_d[index]['sbg_status'] = 'NR'
-        self._u_d[index]['cur_status'] = 'NR'
-        self._u_d[index]['payable'] = 'NR'
+            if self.u_d[j]['cur_sbg_num'] == self.u_d[index]['cur_sbg_num']:
+                self.u_d[j]['members_cur_sbg'] -= 1
+            if self.u_d[j]['orig_sbg_num'] == self.u_d[index]['orig_sbg_num']:
+                self.u_d[j]['remaining_orig_sbg'] -= 1
+        self.u_d[index]['cur_sbg_num'] = 0
+        self.u_d[index]['members_cur_sbg'] = 0
+        self.u_d[index]['sbg_status'] = 'NR'
+        self.u_d[index]['cur_status'] = 'NR'
+        self.u_d[index]['payable'] = 'NR'
 
     def sys_func_4(self):
         """"
         Invalidate subgroup function
         """
         for i in range(self._total):
-            if self._u_d[i]['members_cur_sbg'] in {1, 2, 3} and self._u_d[i]['cur_status'] == 'paid':
-                self._u_d[i]['sbg_status'] = 'invalid'
-                self._u_d[i]['cur_status'] = 'paid-invalid'
-                self._s_d[self.period]['invalid_cnt'] += 1
-                self._s_d[self.period]['valid_remaining'] -= 1
-                self._u_d[i]['wallet_reorg_refund'] = self._u_d[i]['cur_month_1st_calc']
-                self._u_d[i]['cur_month_1st_calc'] = 0
-        sd = self._s_d[self.period]
-        self._s_d[self.period]['invalid_shortfall'] = sd['invalid_cnt'] * sd['cur_month_1st_calc']
+            if self.u_d[i]['members_cur_sbg'] in {1, 2, 3} and self.u_d[i]['cur_status'] == 'paid':
+                self.u_d[i]['sbg_status'] = 'invalid'
+                self.u_d[i]['cur_status'] = 'paid-invalid'
+                self.s_d[self.period]['invalid_cnt'] += 1
+                self.s_d[self.period]['valid_remaining'] -= 1
+                self.u_d[i]['wallet_reorg_refund'] = self.u_d[i]['cur_month_1st_calc']
+                self.u_d[i]['cur_month_1st_calc'] = 0
+        sd = self.s_d[self.period]
+        self.s_d[self.period]['invalid_shortfall'] = sd['invalid_cnt'] * sd['cur_month_1st_calc']
 
     def user_func_6(self):
         """
@@ -407,42 +394,65 @@ class TandaPaySimulatorV2(object):
         """
         quit_list = []
         for i in range(self._total):
-            if self._u_d[i]['cur_status'] == 'paid-invalid':
-                if self._u_d[i]['pri_role'] == 'low-morale':
+            if self.u_d[i]['cur_status'] == 'paid-invalid':
+                if self.u_d[i]['pri_role'] == 'low-morale':
                     if random.uniform(0, 1) > self.ev['low_morale_quit_prob']:
                         for j in range(self._total):
-                            if self._u_d[j]['cur_sbg_num'] == self._u_d[i]['cur_sbg_num']:
-                                self._u_d[j]['sbg_reorg_cnt'] += 1
-                        if self._u_d[i]['sec_role'] == 'dependent':
+                            if self.u_d[j]['cur_sbg_num'] == self.u_d[i]['cur_sbg_num']:
+                                self.u_d[j]['sbg_reorg_cnt'] += 1
+                        if self.u_d[i]['sec_role'] == 'dependent':
                             quit_list.append(i)
                     else:
                         self._poison_a_user(i)
-                        self._s_d[self.period]['quit_cnt'] += 1
-                elif self._u_d[i]['pri_role'] == 'unity':
+                        self.s_d[self.period]['quit_cnt'] += 1
+                elif self.u_d[i]['pri_role'] == 'unity':
                     for j in range(self._total):
-                        if self._u_d[j]['cur_sbg_num'] == self._u_d[i]['cur_sbg_num']:
-                            self._u_d[j]['sbg_reorg_cnt'] += 1
+                        if self.u_d[j]['cur_sbg_num'] == self.u_d[i]['cur_sbg_num']:
+                            self.u_d[j]['sbg_reorg_cnt'] += 1
         for i in quit_list:
-            if self._u_d[i]['sbg_reorg_cnt'] < 2:
+            if self.u_d[i]['sbg_reorg_cnt'] < 2:
                 self._poison_a_user(i)
-                self._s_d[self.period]['quit_cnt'] += 1
+                self.s_d[self.period]['quit_cnt'] += 1
+
+    def rsc(self):
+        sd = self.s_d[self.period]
+        self.s_d[self.period]['total_shortfall_period_one_claim'] = \
+            sum([sd[k] for k in {'defection_shortfall', 'skip_shortfall', 'invalid_shortfall'}])
+        self.s_d[self.period]['individual_shortfall_period_one_claim'] = \
+            self.s_d[self.period]['total_shortfall_period_one_claim'] / sd['valid_remaining']
+        self.s_d[self.period]['cur_month_total_shortfall'] = \
+            sd['skip_shortfall'] + sd['invalid_shortfall'] / sd['valid_remaining']
+        self.s_d[self.period]['cur_month_individual_shortfall'] = \
+            self.s_d[self.period]['cur_month_total_shortfall'] / sd['valid_remaining']
+
+        for i in range(self._total):
+            if self.u_d[i]['cur_sbg_num'] != 0:
+                self.u_d[i]['debit_to_savings_account'][self.period] += \
+                    self.s_d[self.period]['individual_shortfall_period_one_claim']
+                if self.u_d[i]['debit_to_savings_account'][self.period] > self.u_d[i]['credit_to_savings_account']:
+                    msg = f"Period: {self.period}, User{i}: Debit(" \
+                          f"{self.u_d[i]['debit_to_savings_account'][self.period]}) > Credit(" \
+                          f"{self.u_d[i]['credit_to_savings_account']})"
+                    raise ValueError(msg)
+
+                self.u_d[i]['cur_month_balance'] += self.s_d[self.period]['cur_month_individual_shortfall']
 
     def _reorg_subgroups(self, left=3, right=2):
-        invalid_users = [i for i in range(self._total) if self._u_d[i]['cur_status'] == 'paid-invalid']
-        ll = list(set([self._u_d[i]['cur_sbg_num'] for i in invalid_users if self._u_d[i]['members_cur_sbg'] == left]))
-        rr = list(set([self._u_d[i]['cur_sbg_num'] for i in invalid_users if self._u_d[i]['members_cur_sbg'] == right]))
+        invalid_users = [i for i in range(self._total) if self.u_d[i]['cur_status'] == 'paid-invalid']
+        ll = list(set([self.u_d[i]['cur_sbg_num'] for i in invalid_users if self.u_d[i]['members_cur_sbg'] == left]))
+        rr = list(set([self.u_d[i]['cur_sbg_num'] for i in invalid_users if self.u_d[i]['members_cur_sbg'] == right]))
         if (ll and rr and left != right) or (len(ll) > 1 and left == right):
             sbg_num_left = ll[0]
             sbg_num_right = random.choice(rr if left == right else ll[1:])
             for i in invalid_users:
-                if self._u_d[i]['cur_sbg_num'] in {sbg_num_left, sbg_num_right}:
-                    self._u_d[i]['cur_sbg_num'] = sbg_num_left if left > right else sbg_num_right
-                    self._u_d[i]['members_cur_sbg'] = left + right
-                    self._u_d[i]['sbg_status'] = 'valid'
-                    self._u_d[i]['cur_status'] = 'reorg'
-                    self._u_d[i]['reorged_cnt'] += 1
-                    self._s_d[self.period]['valid_remaining'] += 1
-            self._s_d[self.period]['reorged_cnt'] += 1
+                if self.u_d[i]['cur_sbg_num'] in {sbg_num_left, sbg_num_right}:
+                    self.u_d[i]['cur_sbg_num'] = sbg_num_left if left > right else sbg_num_right
+                    self.u_d[i]['members_cur_sbg'] = left + right
+                    self.u_d[i]['sbg_status'] = 'valid'
+                    self.u_d[i]['cur_status'] = 'reorg'
+                    self.u_d[i]['reorged_cnt'] += 1
+                    self.s_d[self.period]['valid_remaining'] += 1
+            self.s_d[self.period]['reorged_cnt'] += 1
             return True
 
     def sys_func_7(self):
@@ -459,19 +469,19 @@ class TandaPaySimulatorV2(object):
         Determine Claims
         """
         x = random.uniform(0, 1)
-        self._s_d[self.period]['claimed'] = x < self.ev['chance_of_claim']
-        claimant = random.sample([i for i in range(self.count) if self._u_d[i]['sbg_status'] == 'valid'], 1)[0]
-        for i in range(self.count):
-            if self._u_d[i]['cur_status'] == 'paid':
+        self.s_d[self.period]['claimed'] = x < self.ev['chance_of_claim']
+        claimant = random.sample([i for i in range(self._total) if self.u_d[i]['sbg_status'] == 'valid'], 1)[0]
+        for i in range(self._total):
+            if self.u_d[i]['cur_status'] == 'paid':
                 if x >= self.ev['chance_of_claim']:
-                    self._u_d[i]['cur_month_premium'] = self._u_d[i]['cur_month_balance']
+                    self.u_d[i]['cur_month_premium'] = self.u_d[i]['cur_month_balance']
                 else:   # Claim occurred
-                    self._u_d[claimant]['wallet_claim_award'] += self._u_d[i]['cur_month_balance']
+                    self.u_d[claimant]['wallet_claim_award'] += self.u_d[i]['cur_month_balance']
                     for m in range(self.bundling):
-                        self._u_d[claimant]['wallet_claim_award'] += self._u_d[i]['prior_premiums'][m]
-                        self._u_d[i]['prior_premiums'][m] = 0
+                        self.u_d[claimant]['wallet_claim_award'] += self.u_d[i]['prior_premiums'][m]
+                        self.u_d[i]['prior_premiums'][m] = 0
 
-                self._u_d[i]['cur_month_balance'] = 0
+                self.u_d[i]['cur_month_balance'] = 0
 
 
 if __name__ == '__main__':
