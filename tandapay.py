@@ -56,14 +56,14 @@ class TandaPaySimulatorV2(object):
                 'invalid_cnt': 0,
                 'quit_cnt': 0,
                 'reorged_cnt': 0,
-                'defection_shortfall': 0,
-                'skip_shortfall': 0,
-                'invalid_shortfall': 0,
+                'defection_sf': 0,
+                'skip_sf': 0,
+                'invalid_sf': 0,
                 'cur_month_1st_calc': 0,
-                'total_shortfall_period_one_claim': 0,
-                'cur_month_total_shortfall': 0,
-                'individual_shortfall_period_one_claim': 0,
-                'cur_month_individual_shortfall': 0,
+                'total_sf_period_one_claim': 0,
+                'cur_month_total_sf': 0,
+                'individual_sf_period_one_claim': 0,
+                'cur_month_individual_sf': 0,
                 'claimed': False,
             } for _ in range(count)
         ]
@@ -123,7 +123,7 @@ class TandaPaySimulatorV2(object):
 
             self.rsc()
 
-            cmb = sum([u['cur_month_balance'] for u in self.usr if u['cur_sbg_num'] != 0])
+            cmb = sum([self.usr[i]['cur_month_balance'] for i in self._active_users()])
             if cmb != self.cov_req:
                 logger.error(f">>> Invalid month balance - {cmb}, CR: {self.cov_req}")
                 break
@@ -134,7 +134,7 @@ class TandaPaySimulatorV2(object):
 
             # Queuing(Bundling) Function
             if self.bundling > 0 and self.sys[self.period]['claimed']:
-                logger.info(f"Claim occurred in period{self.period + 1}")
+                logger.info(f"Claim occurred in period {self.period + 1}")
             else:
                 for i in self._active_users():
                     if self.bundling in {0, 2}:
@@ -152,25 +152,25 @@ class TandaPaySimulatorV2(object):
             if self.period > 1 and \
                     all([self.sys[i]['skipped_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]) and \
                     all([self.sys[i]['quit_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]):
-                logger.warning(f"No skipped or quited users at period{self.period + 1}, something is wrong...")
+                logger.warning(f"No skipped or quited users at period {self.period + 1}, something is wrong...")
                 break
 
-        logger.info(f'Complete at period {self.period}, elapsed: {time.time() - s_time}')
+        logger.info(f'Complete at period {self.period + 1}, elapsed: {time.time() - s_time}')
         os.makedirs(target_dir, exist_ok=True)
 
         write_csv(data=self.usr, path=os.path.join(target_dir, '1 User Database.csv'))
         write_csv(data=self.sys, path=os.path.join(target_dir, '1 System Database.csv'))
 
         defected = round(self.sys[self.period]['defected_cnt'] / self._total * 100, 2)
-        inc_premium = round((self.sys[self.period]['cur_month_total_shortfall'] /
-                             self.sys[0]['cur_month_total_shortfall']) * 100, 2)
+        inc_premium = round((self.sys[self.period]['cur_month_total_sf'] /
+                             self.sys[0]['cur_month_total_sf']) * 100, 2)
         result_file = os.path.join(target_dir, "result.txt")
         results = [
             self._total,
             self.sys[self.period]['valid_remaining'],
             round(((self._total - self.sys[self.period]['valid_remaining']) / self._total) * 100, 2),
-            self.sys[0]['cur_month_total_shortfall'],
-            self.sys[self.period]['cur_month_total_shortfall'],
+            self.sys[0]['cur_month_total_sf'],
+            self.sys[self.period]['cur_month_total_sf'],
             inc_premium,
             self.sys[0]['defected_cnt'],
             self.ev['perc_honest_defectors'] * 100,
@@ -326,8 +326,8 @@ class TandaPaySimulatorV2(object):
                 else:
                     self.usr[i]['pri_role'] = 'low-morale'
         s_d = self.sys[self.period]
-        self.sys[self.period]['defection_shortfall'] = s_d['defected_cnt'] * s_d['cur_month_1st_calc']
-        self.sys[self.period]['skip_shortfall'] = s_d['skipped_cnt'] * s_d['cur_month_1st_calc']
+        self.sys[self.period]['defection_sf'] = s_d['defected_cnt'] * s_d['cur_month_1st_calc']
+        self.sys[self.period]['skip_sf'] = s_d['skipped_cnt'] * s_d['cur_month_1st_calc']
 
     def user_func_2(self):
         """"
@@ -386,7 +386,7 @@ class TandaPaySimulatorV2(object):
                 self.usr[i]['wallet_reorg_refund'] = self.usr[i]['cur_month_1st_calc']
                 self.usr[i]['cur_month_1st_calc'] = 0
         sd = self.sys[self.period]
-        self.sys[self.period]['invalid_shortfall'] = sd['invalid_cnt'] * sd['cur_month_1st_calc']
+        self.sys[self.period]['invalid_sf'] = sd['invalid_cnt'] * sd['cur_month_1st_calc']
 
     def user_func_6(self):
         """
@@ -417,25 +417,26 @@ class TandaPaySimulatorV2(object):
 
     def rsc(self):
         sd = self.sys[self.period]
-        self.sys[self.period]['total_shortfall_period_one_claim'] = \
-            sum([sd[k] for k in {'defection_shortfall', 'skip_shortfall', 'invalid_shortfall'}])
-        self.sys[self.period]['individual_shortfall_period_one_claim'] = \
-            self.sys[self.period]['total_shortfall_period_one_claim'] / sd['valid_remaining']
-        self.sys[self.period]['cur_month_total_shortfall'] = \
-            sd['skip_shortfall'] + sd['invalid_shortfall'] / sd['valid_remaining']
-        self.sys[self.period]['cur_month_individual_shortfall'] = \
-            self.sys[self.period]['cur_month_total_shortfall'] / sd['valid_remaining']
+        if self.period == 0:
+            self.sys[self.period]['total_sf_period_one_claim'] = \
+                sum([sd[k] for k in {'defection_sf', 'skip_sf', 'invalid_sf'}])
+            self.sys[self.period]['individual_sf_period_one_claim'] = \
+                self.sys[self.period]['total_sf_period_one_claim'] / sd['valid_remaining']
+
+        self.sys[self.period]['cur_month_total_sf'] = sd['skip_sf'] + sd['invalid_sf']
+        self.sys[self.period]['cur_month_individual_sf'] = \
+            self.sys[self.period]['cur_month_total_sf'] / sd['valid_remaining']
 
         for i in self._active_users():
-            self.usr[i]['debit_to_savings_account'][self.period] += \
-                self.sys[self.period]['individual_shortfall_period_one_claim']
+            self.usr[i]['debit_to_savings_account'][self.period] = self.sys[self.period][
+                    'individual_sf_period_one_claim' if self.period == 0 else 'cur_month_individual_sf']
             if self.usr[i]['debit_to_savings_account'][self.period] > self.usr[i]['credit_to_savings_account']:
                 msg = f"Period: {self.period}, User{i}: Debit(" \
                       f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit(" \
                       f"{self.usr[i]['credit_to_savings_account']})"
                 raise ValueError(msg)
 
-            self.usr[i]['cur_month_balance'] += self.sys[self.period]['cur_month_individual_shortfall']
+            self.usr[i]['cur_month_balance'] += self.sys[self.period]['cur_month_individual_sf']
 
     def _reorg_subgroups(self, left=3, right=2):
         invalid_users = [i for i in range(self._total) if self.usr[i]['cur_status'] == 'paid-invalid']
