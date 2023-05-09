@@ -1,5 +1,6 @@
 import os
 import sys
+from csv import DictWriter
 
 _cur_dir = os.path.dirname(os.path.realpath(__file__))
 _par_dir = os.path.join(_cur_dir, os.path.pardir)
@@ -33,3 +34,10 @@ def number_to_ordinal(n):
     Convert number to ordinal number string
     """
     return "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
+
+
+def write_csv(data, path):
+    with open(path, 'w') as outfile:
+        writer = DictWriter(outfile, list(data[0].keys()))
+        writer.writeheader()
+        writer.writerows(data)
