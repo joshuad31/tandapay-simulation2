@@ -68,6 +68,9 @@ class TandaPaySimulatorV2(object):
             } for _ in range(count)
         ]
 
+    def _active_users(self):
+        return [i for i in range(self._total) if self.usr[i]['cur_sbg_num'] != 0]
+
     def start_simulation(self, target_dir=RESULT_DIR):
         s_time = time.time()
         target_dir = os.path.join(target_dir, datetime.now().strftime('%m_%d_%Y__%H_%M_%S'))
@@ -85,7 +88,7 @@ class TandaPaySimulatorV2(object):
             # RsA
             cur_month_1st_calc = self.cov_req / self.sys[self.period]['valid_remaining']
             self.sys[self.period]['cur_month_1st_calc'] = cur_month_1st_calc
-            for i in range(self._total):
+            for i in self._active_users():
                 # Current Months First Premium Calculation
                 self.usr[i]['cur_month_1st_calc'] = cur_month_1st_calc
                 self.usr[i]['credit_to_savings_account'] = self.cov_req / self._total
@@ -109,7 +112,7 @@ class TandaPaySimulatorV2(object):
                 self.user_func_2()
 
             # RsB
-            for i in range(self._total):
+            for i in self._active_users():
                 self.usr[i]['cur_month_balance'] += self.usr[i]['cur_month_1st_calc']
                 if self.period > 0:
                     self.usr[i]['debit_to_savings_account'][self.period] = 0
@@ -122,7 +125,8 @@ class TandaPaySimulatorV2(object):
 
             cmb = sum([u['cur_month_balance'] for u in self.usr if u['cur_sbg_num'] != 0])
             if cmb != self.cov_req:
-                raise ValueError(f"Invalid month balance - {cmb}, CR: {self.cov_req}")
+                logger.error(f">>> Invalid month balance - {cmb}, CR: {self.cov_req}")
+                break
 
             self.sys_func_8()
 
@@ -132,19 +136,18 @@ class TandaPaySimulatorV2(object):
             if self.bundling > 0 and self.sys[self.period]['claimed']:
                 logger.info(f"Claim occurred in period{self.period + 1}")
             else:
-                for i in range(self._total):
-                    if self.usr[i]['cur_sbg_num'] != 0:
-                        if self.bundling in {0, 2}:
-                            self.usr[i]['wallet_no_claim_refund'] = self.usr[i]['prior_premiums'][0]
-                        elif self.bundling == 3:
-                            self.usr[i]['wallet_no_claim_refund'] = self.usr[i]['prior_premiums'][1]
-                            self.usr[i]['prior_premiums'][1] = self.usr[i]['prior_premiums'][0]
-                        elif self.bundling == 4:
-                            self.usr[i]['wallet_no_claim_refund'] = self.usr[i]['prior_premiums'][2]
-                            self.usr[i]['prior_premiums'][2] = self.usr[i]['prior_premiums'][1]
-                            self.usr[i]['prior_premiums'][1] = self.usr[i]['prior_premiums'][0]
-                        self.usr[i]['prior_premiums'][0] = self.usr[i]['cur_month_premium']
-                        self.usr[i]['cur_month_premium'] = 0
+                for i in self._active_users():
+                    if self.bundling in {0, 2}:
+                        self.usr[i]['wallet_no_claim_refund'] = self.usr[i]['prior_premiums'][0]
+                    elif self.bundling == 3:
+                        self.usr[i]['wallet_no_claim_refund'] = self.usr[i]['prior_premiums'][1]
+                        self.usr[i]['prior_premiums'][1] = self.usr[i]['prior_premiums'][0]
+                    elif self.bundling == 4:
+                        self.usr[i]['wallet_no_claim_refund'] = self.usr[i]['prior_premiums'][2]
+                        self.usr[i]['prior_premiums'][2] = self.usr[i]['prior_premiums'][1]
+                        self.usr[i]['prior_premiums'][1] = self.usr[i]['prior_premiums'][0]
+                    self.usr[i]['prior_premiums'][0] = self.usr[i]['cur_month_premium']
+                    self.usr[i]['cur_month_premium'] = 0
 
             if self.period > 1 and \
                     all([self.sys[i]['skipped_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]) and \
@@ -169,7 +172,7 @@ class TandaPaySimulatorV2(object):
             self.sys[0]['cur_month_total_shortfall'],
             self.sys[self.period]['cur_month_total_shortfall'],
             inc_premium,
-            self.usr[0]['defected_cnt'],
+            self.sys[0]['defected_cnt'],
             self.ev['perc_honest_defectors'] * 100,
             defected,
             self.pv['prem_inc_cum'] * 100
@@ -332,8 +335,8 @@ class TandaPaySimulatorV2(object):
         """
         slope = (self.pv['ph_leave_ceiling'] - self.pv['ph_leave_floor']) / \
                 (self.pv['prem_inc_ceiling'] - self.pv['prem_inc_floor'])
-
-        for i in range(self._total):
+        leave_users = []
+        for i in self._active_users():
             if self.usr[i]['total_value_refunds'][self.period] == 0:
                 matches = [p for p in range(self.period - 1, -1, -1) if self.usr[i]['total_value_refunds'][p] == 0]
             else:
@@ -345,16 +348,21 @@ class TandaPaySimulatorV2(object):
                 ph_skip_perc = slope * (one_month_increase_perc - self.pv['prem_inc_floor']) + \
                                self.pv['ph_leave_floor']
                 if random.uniform(0, 1) < ph_skip_perc:
-                    self._poison_a_user(i)
-                    break
+                    leave_users.append(i)
+                    continue
             cum_inc_perc = \
                 int(self.usr[i]['cur_month_sec_cals'][self.period]) / self.cov_req * self.ev['total_member_cnt'] - 1
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
-                    self._poison_a_user(i)
+                    leave_users.append(i)
+
+        for i in leave_users:
+            self.sys[self.period]['valid_remaining'] -= 1
+            self.sys[self.period]['skipped_cnt'] += 1
+            self._poison_a_user(i)
 
     def _poison_a_user(self, index):
-        for j in range(self._total):
+        for j in self._active_users():
             if self.usr[j]['cur_sbg_num'] == self.usr[index]['cur_sbg_num']:
                 self.usr[j]['members_cur_sbg'] -= 1
             if self.usr[j]['orig_sbg_num'] == self.usr[index]['orig_sbg_num']:
@@ -369,7 +377,7 @@ class TandaPaySimulatorV2(object):
         """"
         Invalidate subgroup function
         """
-        for i in range(self._total):
+        for i in self._active_users():
             if self.usr[i]['members_cur_sbg'] in {1, 2, 3} and self.usr[i]['cur_status'] == 'paid':
                 self.usr[i]['sbg_status'] = 'invalid'
                 self.usr[i]['cur_status'] = 'paid-invalid'
@@ -386,11 +394,11 @@ class TandaPaySimulatorV2(object):
         :return:
         """
         quit_list = []
-        for i in range(self._total):
+        for i in self._active_users():
             if self.usr[i]['cur_status'] == 'paid-invalid':
                 if self.usr[i]['pri_role'] == 'low-morale':
                     if random.uniform(0, 1) > self.ev['low_morale_quit_prob']:
-                        for j in range(self._total):
+                        for j in self._active_users():
                             if self.usr[j]['cur_sbg_num'] == self.usr[i]['cur_sbg_num']:
                                 self.usr[j]['sbg_reorg_cnt'] += 1
                         if self.usr[i]['sec_role'] == 'dependent':
@@ -399,7 +407,7 @@ class TandaPaySimulatorV2(object):
                         self._poison_a_user(i)
                         self.sys[self.period]['quit_cnt'] += 1
                 elif self.usr[i]['pri_role'] == 'unity':
-                    for j in range(self._total):
+                    for j in self._active_users():
                         if self.usr[j]['cur_sbg_num'] == self.usr[i]['cur_sbg_num']:
                             self.usr[j]['sbg_reorg_cnt'] += 1
         for i in quit_list:
@@ -418,17 +426,16 @@ class TandaPaySimulatorV2(object):
         self.sys[self.period]['cur_month_individual_shortfall'] = \
             self.sys[self.period]['cur_month_total_shortfall'] / sd['valid_remaining']
 
-        for i in range(self._total):
-            if self.usr[i]['cur_sbg_num'] != 0:
-                self.usr[i]['debit_to_savings_account'][self.period] += \
-                    self.sys[self.period]['individual_shortfall_period_one_claim']
-                if self.usr[i]['debit_to_savings_account'][self.period] > self.usr[i]['credit_to_savings_account']:
-                    msg = f"Period: {self.period}, User{i}: Debit(" \
-                          f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit(" \
-                          f"{self.usr[i]['credit_to_savings_account']})"
-                    raise ValueError(msg)
+        for i in self._active_users():
+            self.usr[i]['debit_to_savings_account'][self.period] += \
+                self.sys[self.period]['individual_shortfall_period_one_claim']
+            if self.usr[i]['debit_to_savings_account'][self.period] > self.usr[i]['credit_to_savings_account']:
+                msg = f"Period: {self.period}, User{i}: Debit(" \
+                      f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit(" \
+                      f"{self.usr[i]['credit_to_savings_account']})"
+                raise ValueError(msg)
 
-                self.usr[i]['cur_month_balance'] += self.sys[self.period]['cur_month_individual_shortfall']
+            self.usr[i]['cur_month_balance'] += self.sys[self.period]['cur_month_individual_shortfall']
 
     def _reorg_subgroups(self, left=3, right=2):
         invalid_users = [i for i in range(self._total) if self.usr[i]['cur_status'] == 'paid-invalid']
@@ -464,7 +471,7 @@ class TandaPaySimulatorV2(object):
         x = random.uniform(0, 1)
         self.sys[self.period]['claimed'] = x < self.ev['chance_of_claim']
         claimant = random.sample([i for i in range(self._total) if self.usr[i]['sbg_status'] == 'valid'], 1)[0]
-        for i in range(self._total):
+        for i in self._active_users():
             if self.usr[i]['cur_status'] == 'paid':
                 if x >= self.ev['chance_of_claim']:
                     self.usr[i]['cur_month_premium'] = self.usr[i]['cur_month_balance']
