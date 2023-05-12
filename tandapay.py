@@ -69,7 +69,7 @@ class TandaPaySimulatorV2(object):
         ]
 
     def _active_users(self):
-        return [i for i in range(self._total) if self.usr[i]['cur_sbg_num'] != 0]
+        return [i for i in range(self._total) if self.usr[i]['cur_status'] == 'paid']
 
     def start_simulation(self, target_dir=RESULT_DIR):
         s_time = time.time()
@@ -124,7 +124,7 @@ class TandaPaySimulatorV2(object):
             self.rsc()
 
             cmb = sum([self.usr[i]['cur_month_balance'] for i in self._active_users()])
-            if cmb != self.cov_req:
+            if abs(cmb - self.cov_req) > .1:
                 logger.error(f">>> Invalid month balance - {cmb}, CR: {self.cov_req}")
                 break
 
@@ -393,11 +393,12 @@ class TandaPaySimulatorV2(object):
         User Quit Function
         :return:
         """
+        val = random.uniform(0, 1)
         quit_list = []
         for i in self._active_users():
             if self.usr[i]['cur_status'] == 'paid-invalid':
                 if self.usr[i]['pri_role'] == 'low-morale':
-                    if random.uniform(0, 1) > self.ev['low_morale_quit_prob']:
+                    if val > self.ev['low_morale_quit_prob']:
                         for j in self._active_users():
                             if self.usr[j]['cur_sbg_num'] == self.usr[i]['cur_sbg_num']:
                                 self.usr[j]['sbg_reorg_cnt'] += 1
@@ -444,7 +445,7 @@ class TandaPaySimulatorV2(object):
         rr = list(set([self.usr[i]['cur_sbg_num'] for i in invalid_users if self.usr[i]['members_cur_sbg'] == right]))
         if (ll and rr and left != right) or (len(ll) > 1 and left == right):
             sbg_num_left = ll[0]
-            sbg_num_right = random.choice(rr if left == right else ll[1:])
+            sbg_num_right = random.choice(rr if left != right else ll[1:])
             for i in invalid_users:
                 if self.usr[i]['cur_sbg_num'] in {sbg_num_left, sbg_num_right}:
                     self.usr[i]['cur_sbg_num'] = sbg_num_left if left > right else sbg_num_right
