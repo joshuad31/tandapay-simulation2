@@ -13,7 +13,7 @@ class TandaPaySimulatorV2(object):
 
     def __init__(self, ev=None, pv=None, count=10, bundling=0, matrix=False):
         self.ev = ev or {}
-        self.cov_req = ev['monthly_premium'] # TODO rename to cov_req
+        self.cov_req = ev['cov_req']
         self._total = ev['total_member_cnt']
         self.pv = pv or {}
         self.period = 0
@@ -86,12 +86,12 @@ class TandaPaySimulatorV2(object):
             if self.period > 0:
                 self.sys[self.period] = copy.deepcopy(self.sys[self.period - 1])
             # RsA
-            cur_month_1st_calc = self.cov_req / self.sys[self.period]['valid_remaining']
+            cur_month_1st_calc = self.ev['cov_req'] / self.sys[self.period]['valid_remaining']
             self.sys[self.period]['cur_month_1st_calc'] = cur_month_1st_calc
             for i in self._active_users():
                 # Current Months First Premium Calculation
                 self.usr[i]['cur_month_1st_calc'] = cur_month_1st_calc
-                self.usr[i]['credit_to_savings_account'] = self.cov_req / self._total
+                self.usr[i]['credit_to_savings_account'] = self.ev['cov_req'] / self._total
                 if self.period == 0:
                     self.usr[i]['cur_month_sec_cals'][0] = cur_month_1st_calc
                 else:
@@ -124,8 +124,8 @@ class TandaPaySimulatorV2(object):
             self.rsc()
 
             cmb = sum([self.usr[i]['cur_month_balance'] for i in self._active_users()])
-            if abs(cmb - self.cov_req) > .1:
-                logger.error(f">>> Invalid month balance - {cmb}, CR: {self.cov_req}")
+            if abs(cmb - self.ev['cov_req']) > .1:
+                logger.error(f">>> Invalid month balance - {cmb}, CR: {self.ev['cov_req']}")
                 break
 
             self.sys_func_8()
@@ -322,7 +322,7 @@ class TandaPaySimulatorV2(object):
                     self.sys[self.period]['valid_remaining'] -= 1
                     self.sys[self.period]['defected_cnt'] += 1
                     self.sys[self.period]['skipped_cnt'] += 1
-                    self._poison_a_user(i)
+                    self._remove_user(i)
                 else:
                     self.usr[i]['pri_role'] = 'low-morale'
         s_d = self.sys[self.period]
@@ -351,7 +351,7 @@ class TandaPaySimulatorV2(object):
                     leave_users.append(i)
                     continue
             cum_inc_perc = \
-                int(self.usr[i]['cur_month_sec_cals'][self.period]) / self.cov_req * self.ev['total_member_cnt'] - 1
+                self.usr[i]['cur_month_sec_cals'][self.period] / self.ev['cov_req'] * self.ev['total_member_cnt'] - 1
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
                     leave_users.append(i)
@@ -359,9 +359,9 @@ class TandaPaySimulatorV2(object):
         for i in leave_users:
             self.sys[self.period]['valid_remaining'] -= 1
             self.sys[self.period]['skipped_cnt'] += 1
-            self._poison_a_user(i)
+            self._remove_user(i)
 
-    def _poison_a_user(self, index):
+    def _remove_user(self, index):
         for j in self._active_users():
             if self.usr[j]['cur_sbg_num'] == self.usr[index]['cur_sbg_num']:
                 self.usr[j]['members_cur_sbg'] -= 1
@@ -405,7 +405,7 @@ class TandaPaySimulatorV2(object):
                         if self.usr[i]['sec_role'] == 'dependent':
                             quit_list.append(i)
                     else:
-                        self._poison_a_user(i)
+                        self._remove_user(i)
                         self.sys[self.period]['quit_cnt'] += 1
                 elif self.usr[i]['pri_role'] == 'unity':
                     for j in self._active_users():
@@ -413,7 +413,7 @@ class TandaPaySimulatorV2(object):
                             self.usr[j]['sbg_reorg_cnt'] += 1
         for i in quit_list:
             if self.usr[i]['sbg_reorg_cnt'] < 2:
-                self._poison_a_user(i)
+                self._remove_user(i)
                 self.sys[self.period]['quit_cnt'] += 1
 
     def rsc(self):
@@ -490,7 +490,7 @@ if __name__ == '__main__':
 
     _ev = {
         'total_member_cnt': 60,
-        'monthly_premium': 1000, # TODO rename to cov_req
+        'cov_req': 1500,
         'chance_of_claim': .40,
         'perc_honest_defectors': 0.3,
         'perc_low_morale': 0.2,
