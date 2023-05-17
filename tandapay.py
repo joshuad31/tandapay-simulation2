@@ -86,12 +86,12 @@ class TandaPaySimulatorV2(object):
             if self.period > 0:
                 self.sys[self.period]['valid_remaining'] = self.sys[self.period - 1]['valid_remaining']
             # RsA
-            cur_month_1st_calc = self.ev['cov_req'] / self.sys[self.period]['valid_remaining']
+            cur_month_1st_calc = self.cov_req / self.sys[self.period]['valid_remaining']
             self.sys[self.period]['cur_month_1st_calc'] = cur_month_1st_calc
             for i in self._active_users():
                 # Current Months First Premium Calculation
                 self.usr[i]['cur_month_1st_calc'] = cur_month_1st_calc
-                self.usr[i]['credit_to_savings_account'] = self.ev['cov_req'] / self._total
+                self.usr[i]['credit_to_savings_account'] = self.cov_req / self._total
                 if self.period == 0:
                     self.usr[i]['cur_month_sec_cals'][0] = cur_month_1st_calc
                 else:
@@ -124,8 +124,8 @@ class TandaPaySimulatorV2(object):
             self.rsc()
 
             cmb = sum([self.usr[i]['cur_month_balance'] for i in self._active_users()])
-            if abs(cmb - self.ev['cov_req']) > .1:
-                logger.error(f">>> Invalid month balance - {cmb}, CR: {self.ev['cov_req']}")
+            if abs(cmb - self.cov_req) > .1:
+                logger.error(f">>> Invalid month balance: {cmb}, CR: {self.cov_req}")
                 break
 
             self.sys_func_8()
@@ -352,7 +352,6 @@ class TandaPaySimulatorV2(object):
                     continue
             cum_inc_perc = \
                 self.usr[i]['cur_month_sec_cals'][self.period] / (self.cov_req / self.ev['total_member_cnt']) - 1
-                # int(self.usr[i]['cur_month_sec_cals'][self.period]) / self.cov_req * self.ev['total_member_cnt'] - 1 # NOTE: 0.4399
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
                     leave_users.append(i)
