@@ -13,7 +13,7 @@ class TandaPaySimulatorV2(object):
 
     def __init__(self, ev=None, pv=None, count=10, bundling=0, matrix=False):
         self.ev = ev or {}
-        self.cov_req = ev['total_member_cnt'] * 0.025 * ev['monthly_premium']
+        self.cov_req = ev['monthly_premium'] # TODO rename to cov_req
         self._total = ev['total_member_cnt']
         self.pv = pv or {}
         self.period = 0
@@ -490,7 +490,7 @@ if __name__ == '__main__':
 
     _ev = {
         'total_member_cnt': 60,
-        'monthly_premium': 1000,
+        'monthly_premium': 1000, # TODO rename to cov_req
         'chance_of_claim': .40,
         'perc_honest_defectors': 0.3,
         'perc_low_morale': 0.2,
