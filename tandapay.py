@@ -29,7 +29,7 @@ class TandaPaySimulatorV2(object):
                 'sbg_reorg_cnt': 0,
                 'pri_role': '',
                 'sec_role': '',
-                'cur_status': 'paid',
+                'cur_status': 'valid',
                 'reorged_cnt': 0,
                 'payable': 'yes',
                 'defector_cnt': 0,
@@ -68,7 +68,7 @@ class TandaPaySimulatorV2(object):
         ]
 
     def _active_users(self):
-        return [i for i in range(self._total) if self.usr[i]['cur_status'] == 'paid']
+        return [i for i in range(self._total) if self.usr[i]['cur_status'] == 'valid']
 
     def start_simulation(self, target_dir=RESULT_DIR):
         s_time = time.time()
@@ -124,7 +124,9 @@ class TandaPaySimulatorV2(object):
 
             cmb = sum([self.usr[i]['cur_month_balance'] for i in self._active_users()])
             if abs(cmb - self.cov_req) > .1:
-                logger.error(f">>> Invalid month balance: {cmb}, CR: {self.cov_req}")
+                valid = self.sys[self.period]['valid_remaining']
+                missing = 1000 / cmb * valid - valid
+                logger.error(f">>> Invalid month balance: {cmb}, CR: {self.cov_req}, missing: {missing}")
                 break
 
             self.sys_func_8()
@@ -359,9 +361,11 @@ class TandaPaySimulatorV2(object):
             self.sys[self.period]['valid_remaining'] -= 1
             self.sys[self.period]['skipped_cnt'] += 1
             self.remove_usr(i)
+        sd = self.sys[self.period]
+        self.sys[self.period]['skip_sf'] = sd['skipped_cnt'] * sd['cur_month_1st_calc']
 
     def remove_usr(self, index):
-        for j in self._active_users():
+        for j in range(self._total):
             if self.usr[j]['cur_sbg_num'] == self.usr[index]['cur_sbg_num']:
                 self.usr[j]['members_cur_sbg'] -= 1
             if self.usr[j]['orig_sbg_num'] == self.usr[index]['orig_sbg_num']:
@@ -377,13 +381,13 @@ class TandaPaySimulatorV2(object):
         Invalidate subgroup function
         """
         for i in self._active_users():
-            if self.usr[i]['members_cur_sbg'] in {1, 2, 3} and self.usr[i]['cur_status'] == 'paid':
+            if self.usr[i]['members_cur_sbg'] in {1, 2, 3}:
                 self.usr[i]['sbg_status'] = 'invalid'
                 self.usr[i]['cur_status'] = 'paid-invalid'
-                self.sys[self.period]['invalid_cnt'] += 1
-                self.sys[self.period]['valid_remaining'] -= 1
                 self.usr[i]['wallet_reorg_refund'] = self.usr[i]['cur_month_1st_calc']
                 self.usr[i]['cur_month_1st_calc'] = 0
+                self.sys[self.period]['invalid_cnt'] += 1
+                self.sys[self.period]['valid_remaining'] -= 1
         sd = self.sys[self.period]
         self.sys[self.period]['invalid_sf'] = sd['invalid_cnt'] * sd['cur_month_1st_calc']
 
@@ -393,11 +397,11 @@ class TandaPaySimulatorV2(object):
         :return:
         """
         quit_list = []
-        for i in self._active_users():
+        for i in range(self._total):
             if self.usr[i]['cur_status'] == 'paid-invalid':
                 if self.usr[i]['pri_role'] == 'low-morale':
                     if random.uniform(0, 1) > self.ev['low_morale_quit_prob']:
-                        for j in self._active_users():
+                        for j in range(self._total):
                             if self.usr[j]['cur_sbg_num'] == self.usr[i]['cur_sbg_num']:
                                 self.usr[j]['sbg_reorg_cnt'] += 1
                         if self.usr[i]['sec_role'] == 'dependent':
@@ -406,7 +410,7 @@ class TandaPaySimulatorV2(object):
                         self.remove_usr(i)
                         self.sys[self.period]['quit_cnt'] += 1
                 elif self.usr[i]['pri_role'] == 'unity':
-                    for j in self._active_users():
+                    for j in range(self._total):
                         if self.usr[j]['cur_sbg_num'] == self.usr[i]['cur_sbg_num']:
                             self.usr[j]['sbg_reorg_cnt'] += 1
         for i in quit_list:
@@ -451,7 +455,7 @@ class TandaPaySimulatorV2(object):
                     self.usr[i]['cur_sbg_num'] = sbg_num_left if left > right else sbg_num_right
                     self.usr[i]['members_cur_sbg'] = left + right
                     self.usr[i]['sbg_status'] = 'valid'
-                    self.usr[i]['cur_status'] = 'reorg'
+                    self.usr[i]['cur_status'] = 'valid'
                     self.usr[i]['reorged_cnt'] += 1
                     self.sys[self.period]['valid_remaining'] += 1
                     self.sys[self.period]['reorged_cnt'] += 1
@@ -478,16 +482,15 @@ class TandaPaySimulatorV2(object):
         self.sys[self.period]['claimed'] = x < self.ev['chance_of_claim']
         claimant = random.sample([i for i in range(self._total) if self.usr[i]['sbg_status'] == 'valid'], 1)[0]
         for i in self._active_users():
-            if self.usr[i]['cur_status'] == 'paid':
-                if x >= self.ev['chance_of_claim']:
-                    self.usr[i]['cur_month_premium'] = self.usr[i]['cur_month_balance']
-                else:   # Claim occurred
-                    self.usr[claimant]['wallet_claim_award'] += self.usr[i]['cur_month_balance']
-                    for m in range(self.bundling):
-                        self.usr[claimant]['wallet_claim_award'] += self.usr[i]['prior_premiums'][m]
-                        self.usr[i]['prior_premiums'][m] = 0
+            if x >= self.ev['chance_of_claim']:
+                self.usr[i]['cur_month_premium'] = self.usr[i]['cur_month_balance']
+            else:   # Claim occurred
+                self.usr[claimant]['wallet_claim_award'] += self.usr[i]['cur_month_balance']
+                for m in range(self.bundling):
+                    self.usr[claimant]['wallet_claim_award'] += self.usr[i]['prior_premiums'][m]
+                    self.usr[i]['prior_premiums'][m] = 0
 
-                self.usr[i]['cur_month_balance'] = 0
+            self.usr[i]['cur_month_balance'] = 0
 
 
 if __name__ == '__main__':
