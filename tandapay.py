@@ -444,6 +444,8 @@ class TandaPaySimulatorV2(object):
         ll = list(set([self.usr[i]['cur_sbg_num'] for i in invalid_users if self.usr[i]['members_cur_sbg'] == left]))
         rr = list(set([self.usr[i]['cur_sbg_num'] for i in invalid_users if self.usr[i]['members_cur_sbg'] == right]))
         if (ll and rr and left != right) or (len(ll) > 1 and left == right):
+            # If left != right: Pick random ones from left & right groups
+            # if left == right: Pick 1st one from left, and then random one from the remaining ones(left)
             sbg_num_left = ll[0]
             sbg_num_right = random.choice(rr if left != right else ll[1:])
             for i in invalid_users:
@@ -458,8 +460,12 @@ class TandaPaySimulatorV2(object):
             return True
 
     def sys_func_7(self):
-        """"
+        """
         Reorganization of Users
+        Order:
+                3 - 2, 3 - 3, 3 - 4
+                2 - 3, 2 - 4, 2 - 5
+                1 - 4, 1 - 5, 1 - 6
         """
         for i in [3, 2, 1]:
             for j in range(3):
@@ -490,20 +496,20 @@ if __name__ == '__main__':
 
     _ev = {
         'total_member_cnt': 60,
-        'cov_req': 1500,
+        'cov_req': 1000,
         'chance_of_claim': .40,
-        'perc_honest_defectors': 0.3,
-        'perc_low_morale': 0.2,
+        'perc_honest_defectors': 0.2,
+        'perc_low_morale': 0.1,
         'perc_independent': .70,
         'dependent_thres': 2,
-        'low_morale_quit_prob': .3333,
+        'low_morale_quit_prob': .1,
     }
     _pv = {
-        'prem_inc_floor': .30,
-        'ph_leave_floor': .20,
-        'prem_inc_ceiling': .50,
-        'ph_leave_ceiling': .25,
-        'prem_inc_cum': .30,
+        'prem_inc_floor': .20,
+        'ph_leave_floor': .05,
+        'prem_inc_ceiling': .6,
+        'ph_leave_ceiling': .15,
+        'prem_inc_cum': .60,
         'ph_leave_cum': .20,
     }
     tps = TandaPaySimulatorV2(ev=_ev, pv=_pv)
