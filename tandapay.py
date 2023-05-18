@@ -84,14 +84,14 @@ class TandaPaySimulatorV2(object):
         # ========================================= Period =========================================
         for self.period in range(self.count):
             if self.period > 0:
-                self.sys[self.period] = copy.deepcopy(self.sys[self.period - 1])
+                self.sys[self.period]['valid_remaining'] = self.sys[self.period - 1]['valid_remaining']
             # RsA
-            cur_month_1st_calc = self.ev['cov_req'] / self.sys[self.period]['valid_remaining']
+            cur_month_1st_calc = self.cov_req / self.sys[self.period]['valid_remaining']
             self.sys[self.period]['cur_month_1st_calc'] = cur_month_1st_calc
             for i in self._active_users():
                 # Current Months First Premium Calculation
                 self.usr[i]['cur_month_1st_calc'] = cur_month_1st_calc
-                self.usr[i]['credit_to_savings_account'] = self.ev['cov_req'] / self._total
+                self.usr[i]['credit_to_savings_account'] = self.cov_req / self._total
                 if self.period == 0:
                     self.usr[i]['cur_month_sec_cals'][0] = cur_month_1st_calc
                 else:
@@ -124,8 +124,8 @@ class TandaPaySimulatorV2(object):
             self.rsc()
 
             cmb = sum([self.usr[i]['cur_month_balance'] for i in self._active_users()])
-            if abs(cmb - self.ev['cov_req']) > .1:
-                logger.error(f">>> Invalid month balance - {cmb}, CR: {self.ev['cov_req']}")
+            if abs(cmb - self.cov_req) > .1:
+                logger.error(f">>> Invalid month balance: {cmb}, CR: {self.cov_req}")
                 break
 
             self.sys_func_8()
@@ -351,7 +351,7 @@ class TandaPaySimulatorV2(object):
                     leave_users.append(i)
                     continue
             cum_inc_perc = \
-                self.usr[i]['cur_month_sec_cals'][self.period] / self.ev['cov_req'] * self.ev['total_member_cnt'] - 1
+                self.usr[i]['cur_month_sec_cals'][self.period] / (self.cov_req / self.ev['total_member_cnt']) - 1
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
                     leave_users.append(i)
@@ -359,9 +359,9 @@ class TandaPaySimulatorV2(object):
         for i in leave_users:
             self.sys[self.period]['valid_remaining'] -= 1
             self.sys[self.period]['skipped_cnt'] += 1
-            self._remove_user(i)
+            self.remove_usr(i)
 
-    def _remove_user(self, index):
+    def remove_usr(self, index):
         for j in self._active_users():
             if self.usr[j]['cur_sbg_num'] == self.usr[index]['cur_sbg_num']:
                 self.usr[j]['members_cur_sbg'] -= 1
@@ -393,19 +393,18 @@ class TandaPaySimulatorV2(object):
         User Quit Function
         :return:
         """
-        val = random.uniform(0, 1)
         quit_list = []
         for i in self._active_users():
             if self.usr[i]['cur_status'] == 'paid-invalid':
                 if self.usr[i]['pri_role'] == 'low-morale':
-                    if val > self.ev['low_morale_quit_prob']:
+                    if random.uniform(0, 1) > self.ev['low_morale_quit_prob']:
                         for j in self._active_users():
                             if self.usr[j]['cur_sbg_num'] == self.usr[i]['cur_sbg_num']:
                                 self.usr[j]['sbg_reorg_cnt'] += 1
                         if self.usr[i]['sec_role'] == 'dependent':
                             quit_list.append(i)
                     else:
-                        self._remove_user(i)
+                        self.remove_usr(i)
                         self.sys[self.period]['quit_cnt'] += 1
                 elif self.usr[i]['pri_role'] == 'unity':
                     for j in self._active_users():
@@ -413,7 +412,7 @@ class TandaPaySimulatorV2(object):
                             self.usr[j]['sbg_reorg_cnt'] += 1
         for i in quit_list:
             if self.usr[i]['sbg_reorg_cnt'] < 2:
-                self._remove_user(i)
+                self.remove_usr(i)
                 self.sys[self.period]['quit_cnt'] += 1
 
     def rsc(self):
@@ -456,7 +455,7 @@ class TandaPaySimulatorV2(object):
                     self.usr[i]['cur_status'] = 'reorg'
                     self.usr[i]['reorged_cnt'] += 1
                     self.sys[self.period]['valid_remaining'] += 1
-            self.sys[self.period]['reorged_cnt'] += 1
+                    self.sys[self.period]['reorged_cnt'] += 1
             return True
 
     def sys_func_7(self):

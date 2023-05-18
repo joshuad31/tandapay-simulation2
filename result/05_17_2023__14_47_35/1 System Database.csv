@@ -1,0 +1,11 @@
+valid_remaining,defected_cnt,skipped_cnt,invalid_cnt,quit_cnt,reorged_cnt,defection_sf,skip_sf,invalid_sf,cur_month_1st_calc,total_sf_period_one_claim,cur_month_total_sf,individual_sf_period_one_claim,cur_month_individual_sf,claimed
+50,7,7,3,0,0,116.66666666666667,116.66666666666667,50.0,16.666666666666668,283.33333333333337,166.66666666666669,5.666666666666668,3.333333333333334,False
+36,0,5,9,0,0,0,0,180.0,20.0,0,180.0,0,5.0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False
+60,0,0,0,0,0,0,0,0,0,0,0,0,0,False

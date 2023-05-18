@@ -1,0 +1,10 @@
+60 is the number of members at the start of the simulation
+40 is the number of valid members remaining at the end of the simulation
+33.33% of policyholders left the group by end of simulation
+233.33333333333334 was the initial premium members were asked to pay.
+325.64102564102564 is the final premium members were asked to pay.
+Premiums increased by 139.56% by end of simulation
+self.SyRec 3 (period 0 finalize) = 8
+20.0% of policyholders who were assigned to defect
+13.33% of policyholders who actually defected
+60.0% was the initial collapse threshold set for PV 5
