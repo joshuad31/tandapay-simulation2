@@ -1,4 +1,3 @@
-import copy
 import os
 import shutil
 import time
@@ -322,7 +321,7 @@ class TandaPaySimulatorV2(object):
                     self.sys[self.period]['valid_remaining'] -= 1
                     self.sys[self.period]['defected_cnt'] += 1
                     self.sys[self.period]['skipped_cnt'] += 1
-                    self._remove_user(i)
+                    self.remove_usr(i)
                 else:
                     self.usr[i]['pri_role'] = 'low-morale'
         s_d = self.sys[self.period]
