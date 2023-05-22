@@ -93,8 +93,7 @@ class TandaPaySimulatorV2(object):
                 else:
                     wallet_balance = \
                         cur_mon_1st_calc + int(self.usr[i]['debit_to_savings_account'][self.period - 1]) - \
-                        self.usr[i]['wallet_no_claim_refund'] - self.usr[i]['wallet_reorg_refund'] - \
-                        self.usr[i]['wallet_claim_award']
+                        self.usr[i]['wallet_no_claim_refund'] - self.usr[i]['wallet_reorg_refund']
                     self.usr[i]['wallet_balance'] = wallet_balance
                     self.usr[i]['cur_mon_sec_cals'][self.period] = wallet_balance
 
