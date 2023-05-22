@@ -25,7 +25,6 @@ class TandaPaySimulatorV2(object):
                 'remaining_orig_sbg': 0,
                 'cur_sbg_num': 0,
                 'members_cur_sbg': 0,
-                'sbg_status': 'valid',
                 'sbg_reorg_cnt': 0,
                 'pri_role': '',
                 'sec_role': '',
@@ -370,7 +369,6 @@ class TandaPaySimulatorV2(object):
                 self.usr[j]['remaining_orig_sbg'] -= 1
         self.usr[index]['cur_sbg_num'] = 0
         self.usr[index]['members_cur_sbg'] = 0
-        self.usr[index]['sbg_status'] = 'NR'
         self.usr[index]['cur_status'] = 'NR'
         self.usr[index]['payable'] = 'NR'
 
@@ -380,7 +378,6 @@ class TandaPaySimulatorV2(object):
         """
         for i in self._active_users():
             if self.usr[i]['members_cur_sbg'] in {1, 2, 3}:
-                self.usr[i]['sbg_status'] = 'invalid'
                 self.usr[i]['cur_status'] = 'paid-invalid'
                 self.usr[i]['wallet_reorg_refund'] = self.usr[i]['cur_month_1st_calc']
                 self.usr[i]['cur_month_1st_calc'] = 0
@@ -452,7 +449,6 @@ class TandaPaySimulatorV2(object):
                 if self.usr[i]['cur_sbg_num'] in {sbg_num_left, sbg_num_right}:
                     self.usr[i]['cur_sbg_num'] = sbg_num_left if left > right else sbg_num_right
                     self.usr[i]['members_cur_sbg'] = left + right
-                    self.usr[i]['sbg_status'] = 'valid'
                     self.usr[i]['cur_status'] = 'valid'
                     self.usr[i]['reorged_cnt'] += 1
                     self.sys[self.period]['valid_remaining'] += 1
