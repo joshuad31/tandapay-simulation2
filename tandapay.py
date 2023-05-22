@@ -42,7 +42,6 @@ class TandaPaySimulatorV2(object):
                 'wallet_claim_award': 0,
                 'wallet_no_claim_refund': 0,
                 'wallet_reorg_refund': 0,
-                'credit_to_savings_account': 0,
                 'prior_premiums': [0] * max(self.bundling, 1),
                 'debit_to_savings_account': [0, ] * count,
             } for _ in range(ev['total_member_cnt'])]
@@ -90,7 +89,6 @@ class TandaPaySimulatorV2(object):
             for i in self._active_users():
                 # Current Months First Premium Calculation
                 self.usr[i]['cur_month_1st_calc'] = cur_month_1st_calc
-                self.usr[i]['credit_to_savings_account'] = self.cov_req / self._total
                 if self.period == 0:
                     self.usr[i]['cur_month_sec_cals'][0] = cur_month_1st_calc
                 else:
@@ -430,13 +428,13 @@ class TandaPaySimulatorV2(object):
         self.sys[self.period]['cur_month_individual_sf'] = \
             self.sys[self.period]['cur_month_total_sf'] / sd['valid_remaining']
 
+        credit_to_savings_account = self.cov_req / self._total
         for i in self._active_users():
             self.usr[i]['debit_to_savings_account'][self.period] = self.sys[self.period][
                     'individual_sf_period_one_claim' if self.period == 0 else 'cur_month_individual_sf']
-            if self.usr[i]['debit_to_savings_account'][self.period] > self.usr[i]['credit_to_savings_account']:
+            if self.usr[i]['debit_to_savings_account'][self.period] > credit_to_savings_account:
                 msg = f"Period: {self.period}, User{i}: Debit(" \
-                      f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit(" \
-                      f"{self.usr[i]['credit_to_savings_account']})"
+                      f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit({self.cov_req / self._total})"
                 raise ValueError(msg)
 
             self.usr[i]['cur_month_balance'] += self.sys[self.period]['cur_month_individual_sf']
