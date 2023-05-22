@@ -478,13 +478,10 @@ class TandaPaySimulatorV2(object):
         """"
         Determine Claims
         """
-        x = random.uniform(0, 1)
-        self.sys[self.period]['claimed'] = x < self.ev['chance_of_claim']
-        claimant = random.choice(self._active_users())
-        if x >= self.ev['chance_of_claim']:
-            for i in self._active_users():
-                self.usr[i]['cur_month_premium'] = self.usr[i]['cur_month_balance']
-        else:   # Claim occurred
+        claimed = random.uniform(0, 1) < self.ev['chance_of_claim']
+        self.sys[self.period]['claimed'] = claimed
+        if claimed:
+            claimant = random.choice(self._active_users())
             logger.warning(f">>> Claim occurred by user{claimant} in period{self.period + 1}")
             for i in self._active_users():
                 self.usr[claimant]['wallet_claim_award'] += self.usr[i]['cur_month_balance']
@@ -492,6 +489,9 @@ class TandaPaySimulatorV2(object):
                     self.usr[claimant]['wallet_claim_award'] += self.usr[i]['prior_premiums'][m]
                     self.usr[i]['prior_premiums'][m] = 0
                 self.usr[i]['cur_month_balance'] = 0
+        else:
+            for i in self._active_users():
+                self.usr[i]['cur_month_premium'] = self.usr[i]['cur_month_balance']
 
 
 if __name__ == '__main__':
