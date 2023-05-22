@@ -480,17 +480,18 @@ class TandaPaySimulatorV2(object):
         """
         x = random.uniform(0, 1)
         self.sys[self.period]['claimed'] = x < self.ev['chance_of_claim']
-        claimant = random.sample([i for i in range(self._total) if self.usr[i]['sbg_status'] == 'valid'], 1)[0]
-        for i in self._active_users():
-            if x >= self.ev['chance_of_claim']:
+        claimant = random.choice(self._active_users())
+        if x >= self.ev['chance_of_claim']:
+            for i in self._active_users():
                 self.usr[i]['cur_month_premium'] = self.usr[i]['cur_month_balance']
-            else:   # Claim occurred
+        else:   # Claim occurred
+            logger.warning(f">>> Claim occurred by user{claimant} in period{self.period + 1}")
+            for i in self._active_users():
                 self.usr[claimant]['wallet_claim_award'] += self.usr[i]['cur_month_balance']
                 for m in range(self.bundling):
                     self.usr[claimant]['wallet_claim_award'] += self.usr[i]['prior_premiums'][m]
                     self.usr[i]['prior_premiums'][m] = 0
-
-            self.usr[i]['cur_month_balance'] = 0
+                self.usr[i]['cur_month_balance'] = 0
 
 
 if __name__ == '__main__':
