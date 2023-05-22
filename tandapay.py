@@ -486,6 +486,7 @@ class TandaPaySimulatorV2(object):
         else:
             for i in self._active_users():
                 self.usr[i]['cur_month_premium'] = self.usr[i]['cur_month_balance']
+                self.usr[i]['cur_month_balance'] = 0
 
 
 if __name__ == '__main__':
