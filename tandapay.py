@@ -5,32 +5,7 @@ from datetime import datetime
 import random
 from settings import RESULT_DIR
 from utils.common import write_csv
-# from utils.logger import logger
-import logging
-
-FILENAME = 'log.log'
-
-# Create a logger instance
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Create a formatter for the log messages
-formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
-
-# Create a file handler for the log messages
-file_handler = logging.FileHandler('log.log')
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(formatter)
-
-# Create a console handler for the log messages
-console_formatter = logging.Formatter('%(levelname)s - %(message)s')
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(console_formatter)
-
-# Add the handlers to the logger
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
+from utils.logger import logger
 
 
 class TandaPaySimulatorV2(object):
@@ -117,7 +92,7 @@ class TandaPaySimulatorV2(object):
                     self.usr[i]['cur_mon_sec_cals'][0] = cur_mon_1st_calc
                 else:
                     wallet_balance = \
-                        (cur_mon_1st_calc + self.usr[i]['debit_to_savings_account'][self.period - 1]) - \
+                        (cur_mon_1st_calc + float(self.usr[i]['debit_to_savings_account'][self.period - 1])) - \
                         self.usr[i]['wallet_no_claim_refund'] - self.usr[i]['wallet_reorg_refund']
                     self.usr[i]['wallet_balance'] = wallet_balance
                     self.usr[i]['cur_mon_sec_cals'][self.period] = wallet_balance
@@ -136,8 +111,8 @@ class TandaPaySimulatorV2(object):
                 if self.period == 0:
                     self.usr[i]['cur_mon_balance'] += self.usr[i]['cur_mon_1st_calc']
                 if self.period > 0:
-                    self.usr[i]['cur_mon_balance'] = self.usr[i]['cur_mon_sec_cals'][self.period] - \
-                        self.usr[i]['debit_to_savings_account'][self.period - 1]
+                    self.usr[i]['cur_mon_balance'] = float(self.usr[i]['cur_mon_sec_cals'][self.period]) - \
+                        float(self.usr[i]['debit_to_savings_account'][self.period - 1])
                     self.usr[i]['debit_to_savings_account'][self.period] = 0
 
             self.sys_func_4()
@@ -151,7 +126,8 @@ class TandaPaySimulatorV2(object):
                 valid = self.sys[self.period]['valid_remaining']
                 missing = 1000 / cmb * valid - valid
                 logger.error(f'{[self.usr[i]["cur_mon_balance"] for i in self._active_users()]}')
-                logger.error(f">>> Invalid mon balance: {cmb}, CR: {self.cov_req}, _active: {len(self._active_users())}, missing: {missing}")
+                logger.error(f">>> Invalid mon balance: {cmb}, CR: {self.cov_req}, "
+                             f"_active: {len(self._active_users())}, missing: {missing}")
                 break
 
             self.sys_func_8()
@@ -370,16 +346,17 @@ class TandaPaySimulatorV2(object):
                 matches = [p for p in range(self.period - 1, -1, -1) if self.usr[i]['total_value_refunds'][p] != 0]
             mp = matches[-1] if matches else 0
             one_mon_inc_perc = \
-                self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][mp] - 1
+                float(self.usr[i]['cur_mon_sec_cals'][self.period]) / float(self.usr[i]['cur_mon_sec_cals'][mp]) - 1
             if one_mon_inc_perc >= self.pv['prem_inc_floor']:
                 ph_skip_perc = slope * (one_mon_inc_perc - self.pv['prem_inc_floor']) + self.pv['ph_leave_floor']
                 rando = random.uniform(0, 1)
-                logger.info(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc=}, Random num: {rando}')
+                logger.info(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc=}, '
+                            f'Random num: {rando}')
                 if rando < ph_skip_perc:
                     leave_users.append(i)
                     continue
-            cum_inc_perc = \
-                self.usr[i]['cur_mon_sec_cals'][self.period] / self.cov_req * self.ev['total_member_cnt'] - 1
+            cum_inc_perc = float(self.usr[i]['cur_mon_sec_cals'][self.period]) / float(
+                self.cov_req * self.ev['total_member_cnt']) - 1
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
                     leave_users.append(i)
