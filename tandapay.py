@@ -42,7 +42,7 @@ class TandaPaySimulatorV2(object):
                 'wallet_no_claim_refund': 0,
                 'wallet_reorg_refund': 0,
                 'prior_premiums': [0] * max(self.bundling, 1),
-                'debit_to_savings_account': [0, ] * count,
+                'debit_to_savings_account': [0., ] * count,
             } for _ in range(ev['total_member_cnt'])]
 
         self.sys = [
@@ -91,8 +91,7 @@ class TandaPaySimulatorV2(object):
                 if self.period == 0:
                     self.usr[i]['cur_mon_sec_cals'][0] = cur_mon_1st_calc
                 else:
-                    wallet_balance = \
-                        (cur_mon_1st_calc + float(self.usr[i]['debit_to_savings_account'][self.period - 1])) - \
+                    wallet_balance = cur_mon_1st_calc + self.usr[i]['debit_to_savings_account'][self.period - 1] - \
                         self.usr[i]['wallet_no_claim_refund'] - self.usr[i]['wallet_reorg_refund']
                     self.usr[i]['wallet_balance'] = wallet_balance
                     self.usr[i]['cur_mon_sec_cals'][self.period] = wallet_balance
@@ -110,9 +109,9 @@ class TandaPaySimulatorV2(object):
             for i in self._active_users():
                 if self.period == 0:
                     self.usr[i]['cur_mon_balance'] += self.usr[i]['cur_mon_1st_calc']
-                if self.period > 0:
-                    self.usr[i]['cur_mon_balance'] = float(self.usr[i]['cur_mon_sec_cals'][self.period]) - \
-                        float(self.usr[i]['debit_to_savings_account'][self.period - 1])
+                else:
+                    self.usr[i]['cur_mon_balance'] = self.usr[i]['cur_mon_sec_cals'][self.period] - \
+                        self.usr[i]['debit_to_savings_account'][self.period - 1]
                     self.usr[i]['debit_to_savings_account'][self.period] = 0
 
             self.sys_func_4()
@@ -125,7 +124,7 @@ class TandaPaySimulatorV2(object):
             if abs(cmb - self.cov_req) > .1:
                 valid = self.sys[self.period]['valid_remaining']
                 missing = 1000 / cmb * valid - valid
-                logger.error(f'{[self.usr[i]["cur_mon_balance"] for i in self._active_users()]}')
+                # logger.error(f'{[self.usr[i]["cur_mon_balance"] for i in self._active_users()]}')
                 logger.error(f">>> Invalid mon balance: {cmb}, CR: {self.cov_req}, "
                              f"_active: {len(self._active_users())}, missing: {missing}")
                 break
@@ -346,17 +345,16 @@ class TandaPaySimulatorV2(object):
                 matches = [p for p in range(self.period - 1, -1, -1) if self.usr[i]['total_value_refunds'][p] != 0]
             mp = matches[-1] if matches else 0
             one_mon_inc_perc = \
-                float(self.usr[i]['cur_mon_sec_cals'][self.period]) / float(self.usr[i]['cur_mon_sec_cals'][mp]) - 1
+                self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][mp] - 1
             if one_mon_inc_perc >= self.pv['prem_inc_floor']:
                 ph_skip_perc = slope * (one_mon_inc_perc - self.pv['prem_inc_floor']) + self.pv['ph_leave_floor']
                 rando = random.uniform(0, 1)
-                logger.info(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc=}, '
-                            f'Random num: {rando}')
+                # logger.debug(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc=}, '
+                #              f'Random num: {rando}')
                 if rando < ph_skip_perc:
                     leave_users.append(i)
                     continue
-            cum_inc_perc = float(self.usr[i]['cur_mon_sec_cals'][self.period]) / float(
-                self.cov_req * self.ev['total_member_cnt']) - 1
+            cum_inc_perc = self.usr[i]['cur_mon_sec_cals'][self.period] / self.cov_req * self.ev['total_member_cnt'] - 1
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
                     leave_users.append(i)
