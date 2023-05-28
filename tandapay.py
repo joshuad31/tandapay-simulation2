@@ -122,11 +122,8 @@ class TandaPaySimulatorV2(object):
 
             cmb = sum([self.usr[i]['cur_mon_balance'] for i in self._active_users()])
             if abs(cmb - self.cov_req) > .1:
-                valid = self.sys[self.period]['valid_remaining']
-                missing = 1000 / cmb * valid - valid
-                # logger.error(f'{[self.usr[i]["cur_mon_balance"] for i in self._active_users()]}')
-                logger.error(f">>> Invalid mon balance: {cmb}, CR: {self.cov_req}, "
-                             f"_active: {len(self._active_users())}, missing: {missing}")
+                logger.warning([self.usr[i]['cur_mon_balance'] for i in self._active_users()])
+                logger.error(f">>> Invalid mon balance: {cmb}, CR: {self.cov_req}, active: {len(self._active_users())}")
                 break
 
             self.sys_func_8()
@@ -155,6 +152,8 @@ class TandaPaySimulatorV2(object):
                     all([self.sys[i]['quit_cnt'] == 0 for i in range(self.period, self.period - 3, -1)]):
                 logger.warning(f"No skipped or quited users at period {self.period + 1}, something is wrong...")
                 break
+
+            logger.debug(f">>> Finished period {self.period + 1}, active users: {len(self._active_users())}")
 
         logger.info(f'Complete at period {self.period + 1}, elapsed: {time.time() - s_time}')
         os.makedirs(target_dir, exist_ok=True)
@@ -336,7 +335,6 @@ class TandaPaySimulatorV2(object):
         """
         slope = (self.pv['ph_leave_ceiling'] - self.pv['ph_leave_floor']) / \
                 (self.pv['prem_inc_ceiling'] - self.pv['prem_inc_floor'])
-        logger.info(f'Slope:\t\t{slope}')
         leave_users = []
         for i in self._active_users():
             if self.usr[i]['total_value_refunds'][self.period] == 0:
@@ -346,15 +344,18 @@ class TandaPaySimulatorV2(object):
             mp = matches[-1] if matches else 0
             one_mon_inc_perc = \
                 self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][mp] - 1
+            one_mon_inc_perc = min(one_mon_inc_perc, self.pv['prem_inc_ceiling'])
             if one_mon_inc_perc >= self.pv['prem_inc_floor']:
                 ph_skip_perc = slope * (one_mon_inc_perc - self.pv['prem_inc_floor']) + self.pv['ph_leave_floor']
+                if not self.pv['ph_leave_floor'] <= ph_skip_perc <= self.pv['ph_leave_ceiling']:
+                    raise ValueError(f"Something is wrong with PH skip percentage - {ph_skip_perc}")
                 rando = random.uniform(0, 1)
-                # logger.debug(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc=}, '
-                #              f'Random num: {rando}')
                 if rando < ph_skip_perc:
+                    logger.debug(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc}, '
+                                 f'Random num: {rando}')
                     leave_users.append(i)
                     continue
-            cum_inc_perc = self.usr[i]['cur_mon_sec_cals'][self.period] / self.cov_req * self.ev['total_member_cnt'] - 1
+            cum_inc_perc = self.usr[i]['cur_mon_sec_cals'][self.period] / (self.cov_req / self._total) - 1
             if cum_inc_perc > self.pv['prem_inc_cum']:
                 if random.uniform(0, 1) < self.pv['ph_leave_cum']:
                     leave_users.append(i)
@@ -362,11 +363,12 @@ class TandaPaySimulatorV2(object):
         for i in leave_users:
             self.sys[self.period]['valid_remaining'] -= 1
             self.sys[self.period]['skipped_cnt'] += 1
-            self.remove_usr(i)
+            self.remove_usr(i, reason='pricing')
         sd = self.sys[self.period]
         self.sys[self.period]['skip_sf'] = sd['skipped_cnt'] * sd['cur_mon_1st_calc']
 
-    def remove_usr(self, index):
+    def remove_usr(self, index, reason=''):
+        logger.debug(f"Removing a user - {index}, reason: {reason}")
         for j in range(self._total):
             if self.usr[j]['cur_sbg_num'] == self.usr[index]['cur_sbg_num']:
                 self.usr[j]['members_cur_sbg'] -= 1
@@ -383,6 +385,7 @@ class TandaPaySimulatorV2(object):
         """
         for i in self._active_users():
             if self.usr[i]['members_cur_sbg'] in {1, 2, 3}:
+                logger.debug(f"Marking a user as paid-invalid: {i}(sbg: {self.usr[i]['cur_sbg_num']})")
                 self.usr[i]['cur_status'] = 'paid-invalid'
                 self.usr[i]['wallet_reorg_refund'] = self.usr[i]['cur_mon_1st_calc']
                 self.usr[i]['cur_mon_1st_calc'] = 0
@@ -407,7 +410,7 @@ class TandaPaySimulatorV2(object):
                         if self.usr[i]['sec_role'] == 'dependent':
                             quit_list.append(i)
                     else:
-                        self.remove_usr(i)
+                        self.remove_usr(i, reason='low-morale')
                         self.sys[self.period]['quit_cnt'] += 1
                 elif self.usr[i]['pri_role'] == 'unity':
                     for j in range(self._total):
@@ -415,7 +418,7 @@ class TandaPaySimulatorV2(object):
                             self.usr[j]['sbg_reorg_cnt'] += 1
         for i in quit_list:
             if self.usr[i]['sbg_reorg_cnt'] < 2:
-                self.remove_usr(i)
+                self.remove_usr(i, reason='low-morale-dependent')
                 self.sys[self.period]['quit_cnt'] += 1
 
     def rsc(self):
@@ -431,10 +434,11 @@ class TandaPaySimulatorV2(object):
             self.sys[self.period]['cur_mon_total_sf'] / sd['valid_remaining']
 
         credit_to_savings_account = self.cov_req / self._total
-        for i in self._active_users():
+        for i in range(self._total):
             self.usr[i]['debit_to_savings_account'][self.period] = self.sys[self.period][
                     'individual_sf_period_one_claim' if self.period == 0 else 'cur_mon_individual_sf']
-            if self.usr[i]['debit_to_savings_account'][self.period] > credit_to_savings_account:
+            if self.usr[i]['debit_to_savings_account'][self.period] > credit_to_savings_account \
+                    and i in self._active_users():
                 msg = f"Period: {self.period}, User{i}: Debit(" \
                       f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit({self.cov_req / self._total})"
                 raise ValueError(msg)
@@ -452,7 +456,9 @@ class TandaPaySimulatorV2(object):
             sbg_num_right = random.choice(rr if left != right else ll[1:])
             for i in invalid_users:
                 if self.usr[i]['cur_sbg_num'] in {sbg_num_left, sbg_num_right}:
-                    self.usr[i]['cur_sbg_num'] = sbg_num_left if left > right else sbg_num_right
+                    sbg_num = sbg_num_left if left > right else sbg_num_right
+                    logger.debug(f"Reorganization of user {i}, {self.usr[i]['cur_sbg_num']} => {sbg_num}")
+                    self.usr[i]['cur_sbg_num'] = sbg_num
                     self.usr[i]['members_cur_sbg'] = left + right
                     self.usr[i]['cur_status'] = 'valid'
                     self.usr[i]['reorged_cnt'] += 1
@@ -478,6 +484,7 @@ class TandaPaySimulatorV2(object):
         Determine Claims
         """
         claimed = random.uniform(0, 1) < self.ev['chance_of_claim']
+        claimed = False
         self.sys[self.period]['claimed'] = claimed
         if claimed:
             claimant = random.choice(self._active_users())
@@ -489,7 +496,7 @@ class TandaPaySimulatorV2(object):
                     self.usr[i]['prior_premiums'][m] = 0
                 self.usr[i]['cur_mon_balance'] = 0
         else:
-            for i in self._active_users():
+            for i in range(self._total):
                 self.usr[i]['cur_mon_premium'] = self.usr[i]['cur_mon_balance']
                 self.usr[i]['cur_mon_balance'] = 0
 
