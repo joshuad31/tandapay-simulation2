@@ -484,6 +484,7 @@ class TandaPaySimulatorV2(object):
         Determine Claims
         """
         claimed = random.uniform(0, 1) < self.ev['chance_of_claim']
+        # TODO: REMOVE THIS!
         claimed = False
         self.sys[self.period]['claimed'] = claimed
         if claimed:
