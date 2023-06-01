@@ -93,6 +93,7 @@ class TandaPaySimulatorV2(object):
                 else:
                     wallet_balance = cur_mon_1st_calc + self.usr[i]['debit_to_savings_account'][self.period - 1] - \
                         self.usr[i]['wallet_no_claim_refund'] - self.usr[i]['wallet_reorg_refund']
+                    wallet_balance = max(wallet_balance, 0)
                     self.usr[i]['wallet_balance'] = wallet_balance
                     self.usr[i]['cur_mon_sec_cals'][self.period] = wallet_balance
 
@@ -110,9 +111,15 @@ class TandaPaySimulatorV2(object):
                 if self.period == 0:
                     self.usr[i]['cur_mon_balance'] += self.usr[i]['cur_mon_1st_calc']
                 else:
-                    self.usr[i]['cur_mon_balance'] = self.usr[i]['cur_mon_sec_cals'][self.period] - \
-                        self.usr[i]['debit_to_savings_account'][self.period - 1]
-                    self.usr[i]['debit_to_savings_account'][self.period] = 0
+                    if self.usr[i]['cur_mon_balance'] > self.usr[i]['cur_mon_1st_calc']:
+                        self.usr[i]['cur_mon_balance'] = self.usr[i]['cur_mon_sec_cals'][self.period] - \
+                            self.usr[i]['debit_to_savings_account'][self.period - 1]
+                        self.usr[i]['debit_to_savings_account'][self.period] = 0
+                    elif self.usr[i]['cur_mon_balance'] < self.usr[i]['cur_mon_1st_calc']:
+                        self.usr[i]['cur_mon_balance'] = self.usr[i]['cur_mon_1st_calc']
+
+                    if self.usr[i]['cur_mon_balance'] != self.usr[i]['cur_mon_1st_calc']:
+                        logger.error(f"Balance not matching with 1st calc for user{i}")
 
             self.sys_func_4()
 
@@ -351,8 +358,8 @@ class TandaPaySimulatorV2(object):
                     raise ValueError(f"Something is wrong with PH skip percentage - {ph_skip_perc}")
                 rando = random.uniform(0, 1)
                 if rando < ph_skip_perc:
-                    logger.debug(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc}, '
-                                 f'Random num: {rando}')
+                    # logger.debug(f'Run {self.period} PH Skip Pct: {ph_skip_perc} User: {i}, {one_mon_inc_perc}, '
+                    #              f'Random num: {rando}')
                     leave_users.append(i)
                     continue
             cum_inc_perc = self.usr[i]['cur_mon_sec_cals'][self.period] / (self.cov_req / self._total) - 1
