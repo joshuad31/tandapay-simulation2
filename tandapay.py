@@ -71,6 +71,7 @@ class TandaPaySimulatorV2(object):
     def start_simulation(self, target_dir=RESULT_DIR):
         s_time = time.time()
         target_dir = os.path.join(target_dir, datetime.now().strftime('%m_%d_%Y__%H_%M_%S'))
+        os.makedirs(target_dir, exist_ok=True)
 
         logger.debug(f"Total members in the group: {self._total}")
 
@@ -161,9 +162,10 @@ class TandaPaySimulatorV2(object):
                 break
 
             logger.debug(f">>> Finished period {self.period + 1}, active users: {len(self._active_users())}")
+            write_csv(data=self.usr, path=os.path.join(target_dir, f'Period {self.period + 1} User Database.csv'))
+            write_csv(data=self.sys, path=os.path.join(target_dir, f'Period {self.period + 1} System Database.csv'))
 
         logger.info(f'Complete at period {self.period + 1}, elapsed: {time.time() - s_time}')
-        os.makedirs(target_dir, exist_ok=True)
 
         write_csv(data=self.usr, path=os.path.join(target_dir, '1 User Database.csv'))
         write_csv(data=self.sys, path=os.path.join(target_dir, '1 System Database.csv'))
