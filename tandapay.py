@@ -350,9 +350,18 @@ class TandaPaySimulatorV2(object):
                 matches = [p for p in range(self.period - 1, -1, -1) if self.usr[i]['total_value_refunds'][p] == 0]
             else:
                 matches = [p for p in range(self.period - 1, -1, -1) if self.usr[i]['total_value_refunds'][p] != 0]
-            mp = matches[-1] if matches else 0
+            print(f"this is the value {matches} variable")
+            if not matches:
+                print(f"the user number is {i}")
+                continue
+
+            mp = matches[-1]
+            print(f"The user number is {i}")
+            print(f"The current month sec calc for this period {self.usr[i]['cur_mon_sec_cals'][self.period]}")
+            print(f"The current month sec calc for matching period {self.usr[i]['cur_mon_sec_cals'][mp]}")
+            print(f"The one_month_inc_perc is {(self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][self.period - 1]) - 1}")
             one_mon_inc_perc = \
-                self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][mp] - 1
+                (self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][self.period - 1]) - 1
             one_mon_inc_perc = min(one_mon_inc_perc, self.pv['prem_inc_ceiling'])
             if one_mon_inc_perc >= self.pv['prem_inc_floor']:
                 ph_skip_perc = slope * (one_mon_inc_perc - self.pv['prem_inc_floor']) + self.pv['ph_leave_floor']
@@ -449,7 +458,7 @@ class TandaPaySimulatorV2(object):
             if self.usr[i]['debit_to_savings_account'][self.period] > credit_to_savings_account \
                     and i in self._active_users():
                 msg = f"Period: {self.period}, User{i}: Debit(" \
-                      f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit({self.cov_req / self._total})"
+                      f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit({self.cov_req / self._total}) and the number of users is {len(self._active_users())}"
                 raise ValueError(msg)
 
             self.usr[i]['cur_mon_balance'] += self.sys[self.period]['cur_mon_individual_sf']
