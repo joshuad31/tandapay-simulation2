@@ -354,14 +354,12 @@ class TandaPaySimulatorV2(object):
             if not matches:
                 print(f"the user number is {i}")
                 continue
-
-            mp = matches[-1]
             print(f"The user number is {i}")
             print(f"The current month sec calc for this period {self.usr[i]['cur_mon_sec_cals'][self.period]}")
-            print(f"The current month sec calc for matching period {self.usr[i]['cur_mon_sec_cals'][mp]}")
-            print(f"The one_month_inc_perc is {(self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][self.period - 1]) - 1}")
+            print(f"The current month sec calc for matching period {self.usr[i]['cur_mon_sec_cals'][matches[-1]]}")
             one_mon_inc_perc = \
                 (self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][self.period - 1]) - 1
+            print(f"The one_month_inc_perc is {one_mon_inc_perc}")
             one_mon_inc_perc = min(one_mon_inc_perc, self.pv['prem_inc_ceiling'])
             if one_mon_inc_perc >= self.pv['prem_inc_floor']:
                 ph_skip_perc = slope * (one_mon_inc_perc - self.pv['prem_inc_floor']) + self.pv['ph_leave_floor']
