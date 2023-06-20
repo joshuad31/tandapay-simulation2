@@ -1,3 +1,4 @@
+import copy
 import os
 import shutil
 import time
@@ -350,16 +351,19 @@ class TandaPaySimulatorV2(object):
                 matches = [p for p in range(self.period - 1, -1, -1) if self.usr[i]['total_value_refunds'][p] == 0]
             else:
                 matches = [p for p in range(self.period - 1, -1, -1) if self.usr[i]['total_value_refunds'][p] != 0]
-            print(f"this is the value {matches} variable")
             if not matches:
-                print(f"the user number is {i}")
+                logger.debug(f"User {i} - cannot find the matching period!")
                 continue
-            print(f"The user number is {i}")
-            print(f"The current month sec calc for this period {self.usr[i]['cur_mon_sec_cals'][self.period]}")
-            print(f"The current month sec calc for matching period {self.usr[i]['cur_mon_sec_cals'][matches[-1]]}")
+            # print(f"The user number is {i}")
+            # print(f"The current month sec calc for this period {self.usr[i]['cur_mon_sec_cals'][self.period]}")
+            # print(f"The current month sec calc for matching period {self.usr[i]['cur_mon_sec_cals'][matches[-1]]}")
+            if self.usr[i]['cur_mon_sec_cals'][self.period - 1] == 0:
+                logger.warning(f"Pricing Function: User{i} sec cals in period {self.period} "
+                               f"- {self.usr[i]['cur_mon_sec_cals']}")
+                continue
             one_mon_inc_perc = \
                 (self.usr[i]['cur_mon_sec_cals'][self.period] / self.usr[i]['cur_mon_sec_cals'][self.period - 1]) - 1
-            print(f"The one_month_inc_perc is {one_mon_inc_perc}")
+            # print(f"The one_month_inc_perc is {one_mon_inc_perc}")
             one_mon_inc_perc = min(one_mon_inc_perc, self.pv['prem_inc_ceiling'])
             if one_mon_inc_perc >= self.pv['prem_inc_floor']:
                 ph_skip_perc = slope * (one_mon_inc_perc - self.pv['prem_inc_floor']) + self.pv['ph_leave_floor']
@@ -456,7 +460,8 @@ class TandaPaySimulatorV2(object):
             if self.usr[i]['debit_to_savings_account'][self.period] > credit_to_savings_account \
                     and i in self._active_users():
                 msg = f"Period: {self.period}, User{i}: Debit(" \
-                      f"{self.usr[i]['debit_to_savings_account'][self.period]}) > Credit({self.cov_req / self._total}) and the number of users is {len(self._active_users())}"
+                      f"{self.usr[i]['debit_to_savings_account'][self.period]}) > " \
+                      f"Credit({self.cov_req / self._total}) and the number of users is {len(self._active_users())}"
                 raise ValueError(msg)
 
             self.usr[i]['cur_mon_balance'] += self.sys[self.period]['cur_mon_individual_sf']
@@ -482,6 +487,31 @@ class TandaPaySimulatorV2(object):
                     self.sys[self.period]['reorged_cnt'] += 1
             return True
 
+    def _reorg_with_valid_users(self, left=3, right=2):
+        invalid_users = [i for i in range(self._total) if self.usr[i]['cur_status'] == 'paid-invalid']
+        ll = list(set([self.usr[i]['cur_sbg_num'] for i in invalid_users if self.usr[i]['members_cur_sbg'] == left]))
+        rr = list(set([
+            self.usr[i]['cur_sbg_num'] for i in self._active_users() if self.usr[i]['members_cur_sbg'] == right]))
+        if ll and rr:
+            # Pick random ones from left & right groups
+            logger.debug(f"Reorganization of invalid({left}) & valid({right}) users")
+            sbg_num_left = random.choice(ll)
+            sbg_num_right = random.choice(rr)
+            for i in range(self._total):
+                if self.usr[i]['cur_sbg_num'] == sbg_num_left:
+                    logger.debug(f"Reorganization of invalid user {i}, {self.usr[i]['cur_sbg_num']} => {sbg_num_right}")
+                    self.usr[i]['cur_sbg_num'] = sbg_num_right
+                    self.usr[i]['members_cur_sbg'] = left + right
+                    self.usr[i]['cur_status'] = 'valid'
+                    self.usr[i]['reorged_cnt'] += 1
+                    self.sys[self.period]['valid_remaining'] += 1
+                    self.sys[self.period]['reorged_cnt'] += 1
+                elif self.usr[i]['cur_sbg_num'] == sbg_num_right:
+                    logger.debug(f"Reorganization of valid user {i}, {self.usr[i]['cur_sbg_num']} => {sbg_num_right}")
+                    self.usr[i]['members_cur_sbg'] = left + right
+                    self.usr[i]['reorged_cnt'] += 1
+            return True
+
     def sys_func_7(self):
         """
         Reorganization of Users
@@ -490,10 +520,24 @@ class TandaPaySimulatorV2(object):
                 2 - 3, 2 - 4, 2 - 5
                 1 - 4, 1 - 5, 1 - 6
         """
+        val_remain = copy.copy(self.sys[self.period]['valid_remaining'])
         for i in [3, 2, 1]:
             for j in range(3):
                 while self._reorg_subgroups(i, 5 + j - i):
                     pass
+        for i in [3, 2, 1]:
+            for j in range(3):
+                while self._reorg_with_valid_users(i, 5 + j - i):
+                    pass
+        # ALL paid-invalid users should be reorganized..
+        invalid_users = [i for i in range(self._total) if self.usr[i]['cur_status'] == 'paid-invalid']
+        if invalid_users:
+            raise ValueError(F"Not all invalid users are reorganized - {len(invalid_users)}")
+        sd = self.sys[self.period]
+        if sd['reorged_cnt'] + sd['quit_cnt'] != sd['invalid_cnt']:
+            raise ValueError("Invalid values after function7!")
+        if val_remain + sd['reorged_cnt'] != sd['valid_remaining']:
+            raise ValueError("Valid remaining mismatch after function7!")
 
     def sys_func_8(self):
         """"
@@ -501,7 +545,7 @@ class TandaPaySimulatorV2(object):
         """
         claimed = random.uniform(0, 1) < self.ev['chance_of_claim']
         # TODO: REMOVE THIS!
-        claimed = False
+        # claimed = False
         self.sys[self.period]['claimed'] = claimed
         if claimed:
             claimant = random.choice(self._active_users())
