@@ -1,3 +1,4 @@
+from enum import Enum
 
 class ValidityEnum(Enum):
     VALID = 0
