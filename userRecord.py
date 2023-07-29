@@ -61,29 +61,3 @@ class UserRecord:
 
         debit_to_savings_account_list = [0] * count # amount debited to savings account in period (i+1)
 
-    
-
-#        self.usr = [
-#            {
-#                'orig_sbg_num': 0,
-#                'remaining_orig_sbg': 0,
-#                'cur_sbg_num': 0,
-#                'members_cur_sbg': 0,
-#                'sbg_reorg_cnt': 0,
-#                'pri_role': '',
-#                'sec_role': '',
-#                'cur_status': 'valid',
-#                'reorged_cnt': 0,
-#                'payable': 'yes',
-#                'defector_cnt': 0,
-#                'cur_mon_balance': 0,
-#                'cur_mon_premium': 0,
-#                'cur_mon_1st_calc': 0,
-#                'cur_mon_sec_cals': [0, ] * count,
-#                'total_value_refunds': [0, ] * count,
-#                'wallet_balance': 0,
-#                'wallet_claim_award': 0,
-#                'wallet_no_claim_refund': 0,
-#                'wallet_reorg_refund': 0,
-#                'prior_premiums': [0] * max(self.bundling, 1),
-#                'debit_to_savings_account': [0., ] * count,
