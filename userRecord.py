@@ -62,25 +62,25 @@ class UserRecord:
 # TODO: Add logic as needed for interacting with lists, avoid hacky encapsulation-breaking fixes.
 
 # Getters with bounds checking for the lists
-    def get_current_month_second_premium_calculation(self, period)
+    def get_current_month_second_premium_calculation(self, period):
         if (0 < period <= len(self._cur_month_second_calc_list)):
             return self._cur_month_second_calc_list[period-1]
         else:
             raise IndexError("Attempting to access out of bounds index for cur_month_second_calc_list.")
     
-    def get_prior_month_premium(self, num_months_ago)
+    def get_prior_month_premium(self, num_months_ago):
         if(0 < num_months_ago <= len(self._prior_month_premium_list)):
             return self._prior_month_premium_list[num_months_ago - 1]
         else:    
             raise IndexError("Attempting to access out of bounds index for prior_month_premium_list")
          
-    def get_total_refund_value(self, period)
+    def get_total_refund_value(self, period):
         if(0 < period <= len(self._total_value_refund_list)):
             return self._total_value_refund_list[period - 1]
         else:
             raise IndexError("Attempting to access out of bounds index for total_value_refund_list")
 
-    def get_debit_to_savings_account(self, period)
+    def get_debit_to_savings_account(self, period):
         if(0 < period <= len(self._debit_to_savings_account_list)):
             return self._debit_to_savings_account_list[period - 1]
         else:

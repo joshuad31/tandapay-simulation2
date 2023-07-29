@@ -3,8 +3,8 @@ import math
 from enum import Enum
 from userRecord import UserRecord
 
-# subgroupSetup method. Documentation can be found at: https://www.notion.so/Subgroup-Setup-7e7852c10715423699fc522ca9e6536a
-def subgroupSetup(total_member_cnt, user_list):
+# subgroup_setup method. Documentation can be found at: https://www.notion.so/Subgroup-Setup-7e7852c10715423699fc522ca9e6536a
+def subgroup_setup(total_member_cnt, user_list):
     assert isinstance(total_member_cnt, int), "total_member_cnt must be an integer!"
     assert isinstance(user_list, list), "user_list must be a list!"
 
@@ -75,14 +75,14 @@ def subgroupSetup(total_member_cnt, user_list):
 
     return (num_four_member_groups, num_five_member_groups, num_six_member_groups, num_seven_member_groups)
 
-# unit test for subgroupSetup function
-def test_subgroupSetup_basic_print():
+# unit test for subgroup_setup function
+def test_subgroup_setup_basic_print():
     # create a list of 100 userRecord objects
     user_list = [UserRecord(100, 0) for _ in range(100)]
 
     # call your function with the user_list
     print("number of users: " + str(len(user_list)))
-    data = subgroupSetup(len(user_list), user_list)
+    data = subgroup_setup(len(user_list), user_list)
 
     num_four_member_groups = data[0]
     num_five_member_groups = data[1]
@@ -98,12 +98,12 @@ def test_subgroupSetup_basic_print():
         print("user " + str(i) + ": " + str(user_list[i].orig_sbg_num))
         
 
-def test_subgroupSetup():
+def test_subgroup_setup():
     # Create a list of 100 distinct UserRecord objects
     user_list = [UserRecord(100, 0) for _ in range(100)]
 
     # Call your function with the user_list
-    data = subgroupSetup(len(user_list), user_list)
+    data = subgroup_setup(len(user_list), user_list)
 
     num_four_member_groups = data[0]
     num_five_member_groups = data[1]
@@ -121,5 +121,5 @@ def test_subgroupSetup():
 
     print("All tests passed!")
 
-test_subgroupSetup_basic_print()
-test_subgroupSetup()
+test_subgroup_setup_basic_print()
+test_subgroup_setup()
