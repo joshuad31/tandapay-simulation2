@@ -36,7 +36,6 @@ def subgroupSetup(total_member_cnt, user_list):
     num_four_member_groups = num_remaining_members / 4
     num_four_member_groups = math.floor(num_four_member_groups)
     num_members_in_four_member_group = num_four_member_groups * 4
-
     num_remaining_members = num_remaining_members % 4
 
     # step 9 adjustments
@@ -65,7 +64,6 @@ def subgroupSetup(total_member_cnt, user_list):
                 user = user_list[i]
 
                 user.orig_sbg_num = group_num
-                print("setting user " + str(i) + " to group_num: " + str(group_num))
                 user.cur_sbg_num = group_num
                 
                 user.remaining_orig_sbg = group_size
@@ -78,12 +76,12 @@ def subgroupSetup(total_member_cnt, user_list):
     return (num_four_member_groups, num_five_member_groups, num_six_member_groups, num_seven_member_groups)
 
 # unit test for subgroupSetup function
-def test_subgroupSetup():
+def test_subgroupSetup_basic_print():
     # create a list of 100 userRecord objects
     user_list = [UserRecord(100, 0) for _ in range(100)]
 
     # call your function with the user_list
-    print(len(user_list))
+    print("number of users: " + str(len(user_list)))
     data = subgroupSetup(len(user_list), user_list)
 
     num_four_member_groups = data[0]
@@ -91,15 +89,37 @@ def test_subgroupSetup():
     num_six_member_groups = data[2]
     num_seven_member_groups = data[3]
     
-    print(num_four_member_groups)
-    print(num_five_member_groups)
-    print(num_six_member_groups)
-    print(num_seven_member_groups)
+    print("num_four_member_groups: " + str(num_four_member_groups))
+    print("num_five_member_groups: " + str(num_five_member_groups))
+    print("num_six_member_groups: " + str(num_six_member_groups))
+    print("num_seven_member_groups: " + str(num_seven_member_groups))
     
     for i in range(len(user_list)):
-
         print("user " + str(i) + ": " + str(user_list[i].orig_sbg_num))
         
+
+def test_subgroupSetup():
+    # Create a list of 100 distinct UserRecord objects
+    user_list = [UserRecord(100, 0) for _ in range(100)]
+
+    # Call your function with the user_list
+    data = subgroupSetup(len(user_list), user_list)
+
+    num_four_member_groups = data[0]
+    num_five_member_groups = data[1]
+    num_six_member_groups = data[2]
+    num_seven_member_groups = data[3]
+
+    # Ensure that the correct number of groups have been created
+    assert len(set(user.orig_sbg_num for user in user_list)) == num_four_member_groups + num_five_member_groups + num_six_member_groups + num_seven_member_groups
+
+    # Ensure that each user is correctly assigned to their group
+    for i in range(len(user_list)):
+        group_size = user_list[i].remaining_orig_sbg
+        assert group_size in [4, 5, 6, 7], "Group size is not correct"
+        assert sum(user.orig_sbg_num == user_list[i].orig_sbg_num for user in user_list) == group_size, "User has been assigned to wrong group size"
+
     print("All tests passed!")
 
+test_subgroupSetup_basic_print()
 test_subgroupSetup()
