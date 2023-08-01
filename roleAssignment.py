@@ -118,7 +118,7 @@ def test_role_assignment(b_printAllRoles):
     print("passed all tests!")
 
 
-test_role_assignment(True)
+#test_role_assignment(True)
 
 
 

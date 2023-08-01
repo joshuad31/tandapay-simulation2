@@ -121,5 +121,5 @@ def test_subgroup_setup():
 
     print("All tests passed!")
 
-test_subgroup_setup_basic_print()
-test_subgroup_setup()
+#test_subgroup_setup_basic_print()
+#test_subgroup_setup()

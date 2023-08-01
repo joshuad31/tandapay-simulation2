@@ -109,6 +109,7 @@ class UserRecord:
     def cur_sbg_num(self):
         return self._cur_sbg_num
 
+        
     @cur_sbg_num.setter
     def cur_sbg_num(self, value):
         self._cur_sbg_num = value
@@ -184,6 +185,7 @@ class UserRecord:
     @defector_cnt.setter
     def defector_cnt(self, value):
         self._defector_cnt = value
+        
 
 # User's wallet balance
     @property
