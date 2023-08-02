@@ -4,7 +4,7 @@ from subgroupSetup import *
 from environmentVariables import EnvironmentVariables
 from systemRecord import SystemRecord
 from userRecord import *
-
+from utility import remove_user
 
 def uf1_determine_defectors(env_vars, sys_record, user_list):
     if not isinstance(env_vars, EnvironmentVariables):
@@ -89,27 +89,27 @@ def uf1_determine_defectors(env_vars, sys_record, user_list):
     assert (sys_record.skip_shortfall == sys_record.skipped_cnt * sys_record.cur_month_1st_calc), "something went wrong with the skip_shortfall calculation in UF1."
 
 
-def remove_user(user_list, index, reason = "No reason provided."):
-    if not isinstance(index, int):
-        raise TypeError("Index must be an integer.")
-    if not isinstance(user_list, list):
-        raise TypeError("user_list must be a list.")
-    if not 0 <= index < len(user_list):
-        raise IndexError("Index out of bounds for user_list!")
-    #TODO: investigate if the reason parameter is needed
-    
-    for user in user_list:
-        if user.cur_sbg_num == user_list[index].cur_sbg_num:
-            user.members_cur_sbg -= 1
-        if user.orig_sbg_num == user_list[index].orig_sbg_num:
-            user.remaining_orig_sbg -= 1
-
-    user_list[index].cur_sbg_num = 0
-    user_list[index].members_cur_sbg = 0
-    user_list[index].sbg_status = ValidityEnum.NR 
-    user_list[index].cur_status = CurrentStatusEnum.NR 
-    user_list[index].payable = PayableEnum.NR
-    print(reason)
+#def remove_user(user_list, index, reason = "No reason provided."):
+#    if not isinstance(index, int):
+#        raise TypeError("Index must be an integer.")
+#    if not isinstance(user_list, list):
+#        raise TypeError("user_list must be a list.")
+#    if not 0 <= index < len(user_list):
+#        raise IndexError("Index out of bounds for user_list!")
+#    #TODO: investigate if the reason parameter is needed
+#    
+#    for user in user_list:
+#        if user.cur_sbg_num == user_list[index].cur_sbg_num:
+#            user.members_cur_sbg -= 1
+#        if user.orig_sbg_num == user_list[index].orig_sbg_num:
+#            user.remaining_orig_sbg -= 1
+#
+#    user_list[index].cur_sbg_num = 0
+#    user_list[index].members_cur_sbg = 0
+#    user_list[index].sbg_status = ValidityEnum.NR 
+#    user_list[index].cur_status = CurrentStatusEnum.NR 
+#    user_list[index].payable = PayableEnum.NR
+#    print(reason)
 
 def test_uf1_determine_defectors(debugPrint = True):
     

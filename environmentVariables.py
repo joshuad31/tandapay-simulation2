@@ -24,12 +24,12 @@ class EnvironmentVariables:
     
     def calculate_member_variables(self):
         # calculate number of members in each primary role
-        self._member_cnt_defectors = int(self._total_member_cnt * (self._perc_honest_defectors / 100))
-        self._member_cnt_low_morale = int(self._total_member_cnt * (self._perc_low_morale / 100))
+        self._member_cnt_defectors = int(self._total_member_cnt * self._perc_honest_defectors)
+        self._member_cnt_low_morale = int(self._total_member_cnt * self._perc_low_morale)
         self._member_cnt_unity = int((self._total_member_cnt - self._member_cnt_defectors) - self._member_cnt_low_morale)
         
         #calculate number of members in each secondary role
-        self._member_cnt_independent = int(self._total_member_cnt * (self._perc_independent / 100))
+        self._member_cnt_independent = int(self._total_member_cnt * self._perc_independent)
         self._member_cnt_dependent = int(self._total_member_cnt - self._member_cnt_independent)
         
         # calculate coverage requirement
@@ -62,7 +62,7 @@ class EnvironmentVariables:
     @chance_of_claim.setter
     def chance_of_claim(self, chance):
         assert isinstance(chance, (int, float)), "attempting to set chance_of_claim EV to non-numeric value!"
-        if 25 <= chance <= 75:
+        if 0.25 <= chance <= 0.75:
             self._chance_of_claim = chance
             self.calculate_member_variables()
         else:
@@ -75,7 +75,7 @@ class EnvironmentVariables:
     @perc_honest_defectors.setter
     def perc_honest_defectors(self, perc):
         assert isinstance(perc, (int, float)), "attempting to set perc_honest_defectors EV to non-numeric value!"
-        if 10 <= perc <= 45:
+        if 0.10 <= perc <= 0.45:
             self._perc_honest_defectors = perc
             self.calculate_member_variables()
         else:
@@ -92,7 +92,7 @@ class EnvironmentVariables:
     @perc_low_morale.setter
     def perc_low_morale(self, perc):
         assert isinstance(perc, (int, float)), "attempting to set perc_low_morale EV to non-numeric value!"
-        if 10 <= perc <= 30:
+        if 0.10 <= perc <= 0.30:
             self._perc_low_morale = perc
             self.calculate_member_variables()
         else:
@@ -109,7 +109,7 @@ class EnvironmentVariables:
     @perc_independent.setter
     def perc_independent(self, perc):
         assert isinstance(perc, (int, float)), "attempting to set perc_independent EV to non-numeric value!"
-        if 20 <= perc <= 80:
+        if 0.20 <= perc <= 0.80:
             self._perc_independent = perc
             self.calculate_member_variables()
         else:

@@ -4,3 +4,7 @@ __pycache__
 local_settings.py
 note.txt
 result/
+input.txt
+output.txt
+process_notion.py
+
