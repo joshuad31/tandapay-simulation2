@@ -22,6 +22,7 @@ class SystemRecord:
     def calculate_vars(self):
         self._defection_shortfall = self._defected_cnt * self._cur_month_1st_calc
         self._skip_shortfall = self._skipped_cnt * self._cur_month_1st_calc
+        self._invalid_shortfall = self._invalid_cnt * self._cur_month_1st_calc
 
     @property
     def valid_remaining(self):
@@ -55,6 +56,7 @@ class SystemRecord:
     @invalid_cnt.setter
     def invalid_cnt(self, value):
         self._invalid_cnt = value
+        self.calculate_vars()
 
     @property
     def reorged_cnt(self):
@@ -63,6 +65,7 @@ class SystemRecord:
     @reorged_cnt.setter
     def reorged_cnt(self, value):
         self._reorged_cnt = value
+        self.calculate_vars()
 
     @property
     def quit_cnt(self):
@@ -71,30 +74,32 @@ class SystemRecord:
     @quit_cnt.setter
     def quit_cnt(self, value):
         self._quit_cnt = value
+        self.calculate_vars()
 
     @property
     def defection_shortfall(self):
         return self._defection_shortfall
 
-    @defection_shortfall.setter
-    def defection_shortfall(self, value):
-        self._defection_shortfall = value
+#    @defection_shortfall.setter
+#    def defection_shortfall(self, value):
+#        self._defection_shortfall = value
 
     @property
     def invalid_shortfall(self):
         return self._invalid_shortfall
 
-    @invalid_shortfall.setter
-    def invalid_shortfall(self, value):
-        self._invalid_shortfall = value
+#    @invalid_shortfall.setter
+#    def invalid_shortfall(self, value):
+#        self._invalid_shortfall = value
+#        
 
     @property
     def skip_shortfall(self):
         return self._skip_shortfall
 
-    @skip_shortfall.setter
-    def skip_shortfall(self, value):
-        self._skip_shortfall = value
+#    @skip_shortfall.setter
+#    def skip_shortfall(self, value):
+#        self._skip_shortfall = value
 
     @property
     def individual_shortfall_period_one_claim(self):

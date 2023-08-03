@@ -49,17 +49,17 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
 
             # 1d. IF one_month_increase_percentage >= prem_inc_floor
             if one_month_increase_percentage >= pricing_vars.prem_inc_floor:
-                # 1d-1. calculate ph_skip_percentage (broke down a messy arithmetic operation into multiple):
-                ph_skip_percentage = 0
-                ph_skip_percentage += pricing_slope * one_month_increase_percentage
-                ph_skip_percentage -= pricing_slope * pricing_vars.prem_inc_floor
-                ph_skip_percentage += pricing_vars.ph_leave_floor
+                # 1d-1. calculate pricing_vars.ph_skip_percentage (broke down a messy arithmetic operation into multiple):
+                pricing_vars.ph_skip_percentage = 0
+                pricing_vars.ph_skip_percentage += pricing_slope * one_month_increase_percentage
+                pricing_vars.ph_skip_percentage -= pricing_slope * pricing_vars.prem_inc_floor
+                pricing_vars.ph_skip_percentage += pricing_vars.ph_leave_floor
                 
                 # 1d-2. generate a random number between 0 and 1
                 random_number = random.uniform(0, 1)
 
-                # 1d-3. if random_number < ph_skip_percentage, add user to the "leave list"
-                if random_number < ph_skip_percentage:
+                # 1d-3. if random_number < pricing_vars.ph_skip_percentage, add user to the "leave list"
+                if random_number < pricing_vars.ph_skip_percentage:
                     leave_list.append(user_index)
             
             # 1e. ELSE evaluate user for cumulative_increase_percentage. ONLY run in periods 5 - 10

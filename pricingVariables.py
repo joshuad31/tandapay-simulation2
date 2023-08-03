@@ -1,14 +1,12 @@
-
-
 class PricingVariables:
     def __init__(self):
-        self._prem_inc_cum = 0                    # Premum price increase cumulative
-        self._prem_inc_floor = 0                  # Premium Price increase floor
-        self._prem_inc_ceiling = 0                # Premium Price increase ceiling
+        self._prem_inc_cum = .60                  # Premum price increase cumulative
+        self._prem_inc_floor = .20                # Premium Price increase floor
+        self._prem_inc_ceiling = .60              # Premium Price increase ceiling
         
-        self._ph_leave_cum = 0                    # Policyholders leave cumulative
-        self._ph_leave_floor = 0                  # Policyholders leave floor
-        self._ph_leave_ceiling = 0                # Policyholders leave ceiling
+        self._ph_leave_cum = .20                  # Policyholders leave cumulative
+        self._ph_leave_floor = .05                # Policyholders leave floor
+        self._ph_leave_ceiling = .15              # Policyholders leave ceiling
 
         self._pricing_slope = 0                   # Pricing Slope
         self._ph_skip_percentage = 0              # Percentage of policyholders that skip
