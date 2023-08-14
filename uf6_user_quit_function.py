@@ -1,13 +1,13 @@
 from utility import remove_user
 from userRecord import *
 
-def uf6_user_quit_function(env_vars, sys_rec, user_list, will_reorg = []):
+def uf6_user_quit_function(env_vars, sys_rec, user_list, will_reorg = [], paid_invalid_user_indices = []):
    
     # generate a list of indices with all of the PAID INVALID users
-    paid_invalid_user_indices = []
-    for i in range(len(user_list)):
-        if user_list[i].cur_status == CurrentStatusEnum.PAID_INVALID:
-            paid_invalid_user_indices.append(i)
+    if len(paid_invalid_user_indices) == 0:
+        for i in range(len(user_list)):
+            if user_list[i].cur_status == CurrentStatusEnum.PAID_INVALID:
+                paid_invalid_user_indices.append(i)
    
     evaluate_for_quit = []
     # for each user with PAID_INVALID status
@@ -57,7 +57,7 @@ def uf6_user_quit_function(env_vars, sys_rec, user_list, will_reorg = []):
             sys_rec.quit_cnt += 1
 
     # will_reorg will be returned.
-    return will_reorg
+    return (will_reorg, paid_invalid_user_indices)
 
 # This is a helper function that runs when we need to increment the sbg_reorg_cnt for
 # all the other members in the same subgroup as the member at user_list[index].

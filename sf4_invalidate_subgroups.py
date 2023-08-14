@@ -1,14 +1,17 @@
 from systemRecord import SystemRecord
 
-def sf4_invalidate_subgroups(sys_rec, user_list):
-    for user in user_list:
+def sf4_invalidate_subgroups(sys_rec, user_list, invalid_indices = []):
+    invalid_indices = []
+    for i in range(len(user_list)):
+        user = user_list[i]
         # 1. if members_cur_sbg = 1, 2, or 3
         if 1 <= user.members_cur_sbg <= 3:
             user.sbg_status = ValidityEnum.INVALID
             user.cur_status = CurrentStatusEnum.PAID_INVALID
             sys_rec.invalid_cnt += 1
             sys_rec.valid_remaining -= 1
-        
+            invalid_indices.append(i)
+
         # 2. set wallet_reorg_refund to cur_month_1st_calc
         user.wallet_reorg_refund = sys_rec.cur_month_1st_calc
         
