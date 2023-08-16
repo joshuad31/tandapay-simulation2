@@ -1,4 +1,3 @@
-
 import random
 import heapq
 import pdb
@@ -71,10 +70,12 @@ def combine_groups(group1, group2):
     new_size = group1.group_size + group2.group_size
     new_indices = group1.indices + group2.indices
 
-    if group1.group_num != group2.group_num:
-        new_num = max(group1.group_num, group2.group_num)
-    else:
+    if group1.group_size == group2.group_size:
         new_num = random.choice([group1.group_num, group2.group_num])
+    elif group1.group_size > group2.group_size:
+        new_num = group1.group_num
+    else:
+        new_num = group2.group_num
 
     return group_data(new_num, new_size, new_indices)
 
