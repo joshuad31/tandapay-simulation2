@@ -80,15 +80,82 @@ def RSB(env_vars, sys_rec, user_list, period):
                 user.cur_month_balance = user.cur_month_second_calc_list[period]
 
 
+def RSC(env_vars, sys_rec, user_list, period):
+    if period == 0:
+        # calculate total_shortfall_period_one_claim
+        sys_rec.total_shortfall_period_one_claim = sys_rec.defection_shortfall
+        sys_rec.total_shortfall_period_one_claim += sys_rec.skip_shortfall
+        sys_rec.total_shortfall_period_one_claim += sys_rec.invalid_shortfall
+
+        # calculate individual_shortfall_period_one_claim
+        sys_rec.individual_shortfall_period_one_claim = sys_rec.total_shortfall_period_one_claim
+        sys_rec.individual_shortfall_period_one_claim /= sys_rec.valid_remaining
+
+        # calculate cur_month_total_shortfall
+        sys_rec.cur_month_total_shortfall = sys_rec.skip_shortfall + sys_rec.invalid_shortfall
+
+        # calculate cur_month_individual_shortfall
+        sys_rec.cur_month_individual_shortfall = sys_rec.cur_month_total_shortfall / sys_rec.valid_remaining
+    
+        # will sum the current month's balance for all users, for an error check at the end
+        cur_month_balance_sum = 0
+        
+        # iterate through each user
+        for user in user_list:
+            # skip invalid users
+            if user.sbg_status != ValidityEnum.VALID:
+                continue
+            
+            # for each user, add individual shortfall to their "debit to savings account" for this period
+            user.debit_to_savings_account_list[period] += sys_rec.individual_shortfall_period_one_claim
+           
+            # check for fatal error. This would cause them to get money without a claim.
+            if user.credit_to_savings_account < user.debit_to_savings_account_list[period]:
+                raise ValueError("Fatal Error: Credit to savings account is less than debit to savings account!")
+
+            # update current month's balance
+            user.cur_month_balance += sys_rec.cur_month_individual_shortfall
+
+            # add to the sum
+            cur_month_balance_sum += user.cur_month_balance
+       
+        # finally, make sure the sum of current month balances is equal to cov_req. If not, there is an error
+        if cur_month_balance_sum != env_vars.cov_req
+            raise ValueError("Fatal Error: The sum of current month balances does not equal cov_req!")
+    else:
+        # calculate cur_month_total_shortfall
+        sys_rec.cur_month_total_shortfall = sys_rec.skip_shortfall + sys_rec.invalid_shortfall
+
+        # calculate cur_month_individual_shortfall
+        sys_rec.cur_month_individual_shortfall = sys_rec.cur_month_total_shortfall / sys_rec.valid_remaining
+        
+        # will sum the current month's balance for all users, for an error check at the end
+        cur_month_balance_sum = 0
+        
+        # iterate through each user
+        for user in user_list:
+            # skip invalid users
+            if user.sbg_status != ValidityEnum.VALID:
+                continue
+           
+            # set user's debit to savings account equal to this month's individual shortfall
+            user.debit_to_savings_account_list[period] = sys_rec.cur_month_individual_shortfall
+          
+            # check for fatal error. This would cause them to get money without a claim.
+            if user.credit_to_savings_account < user.debit_to_savings_account_list[period]:
+                raise ValueError("Fatal Error: Credit to savings account is less than debit to savings account!")
+
+            # update current month's balance
+            user.cur_month_balance += sys_rec.cur_month_individual_shortfall
+
+            # add to the sum
+            cur_month_balance_sum += user.cur_month_balance
+       
+        # finally, make sure the sum of current month balances is equal to cov_req. If not, there is an error
+        if cur_month_balance_sum != env_vars.cov_req
+            raise ValueError("Fatal Error: The sum of current month balances does not equal cov_req!")
+
 
 #########################################################################
 
 
-
-
-
-
-
-
-
-            

@@ -98,14 +98,32 @@ def test_combine_size():
         print(f"Group {group.group_num} of size {group.group_size} with indices: {group.indices}")
 
 
-#def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
-#    groups = [None] * len(user_list)
-#    for i, user in enumerate(user_list):
-#        if user    
+def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
+    groups = [None] * len(user_list)
+    for i, user in enumerate(user_list):
+        # skip invalid user
+        if user.sbg_status != ValidityEnum.VALID:
+            continue
+        
+        # build the groups list 
+        if groups[user.cur_sbg_num] == None:
+            groups[user.cur_sbg_num] = group_data(user.cur_sbg_num, user.members_cur_sbg, [i])
+        else:
+            groups[user.cur_sbg_num].indices.append(i)
+    
+    # filter the list to only have valid groups, no "none" elements
+    groups = [x for x in groups if x is not None]
 
-
-
-
+    # perform the reorganization operation
+    groups = combine_size(groups, 3, [2, 3, 4])
+    groups = combine_size(groups, 2, [3, 4, 5])
+    groups = combine_size(groups, 1, [4, 5, 6])
+    
+    # extrapolate data from reorganized groups back into users
+    for group in groups:
+        for i in group.indices:
+            user_list[i].cur_sbg_num = group.group_num
+            user_list[i].members_cut_sbg = group.group_size
 
 
 

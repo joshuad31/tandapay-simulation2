@@ -1,7 +1,7 @@
 from role_assignment import *
 from subgroup_setup import *
 
-from environment_variables import Environemnt_Variables
+from environment_variables import Environment_Variables
 from system_record import System_Record
 from user_record import *
 from utility import remove_user

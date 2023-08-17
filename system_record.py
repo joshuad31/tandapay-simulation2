@@ -1,5 +1,5 @@
 
-class SystemRecord:
+class System_Record:
     def __init__(self, total_member_cnt):
         self._valid_remaining = total_member_cnt          # SysRec1:  Number of valid remembers remaining (init to EV1 a.k.a total_member_cnt)
         self._defected_cnt = 0                            # SysRec3:  Number of defected members (init to 0)
