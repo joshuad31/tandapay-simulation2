@@ -1,7 +1,7 @@
 import math
 
 from enum import Enum
-from userRecord import UserRecord
+from User_Record import User_Record
 
 # subgroup_setup method. Documentation can be found at: https://www.notion.so/Subgroup-Setup-7e7852c10715423699fc522ca9e6536a
 def subgroup_setup(total_member_cnt, user_list):
@@ -78,7 +78,7 @@ def subgroup_setup(total_member_cnt, user_list):
 # unit test for subgroup_setup function
 def test_subgroup_setup_basic_print():
     # create a list of 100 userRecord objects
-    user_list = [UserRecord(100, 0) for _ in range(100)]
+    user_list = [User_Record(100, 0) for _ in range(100)]
 
     # call your function with the user_list
     print("number of users: " + str(len(user_list)))
@@ -99,8 +99,8 @@ def test_subgroup_setup_basic_print():
         
 
 def test_subgroup_setup():
-    # Create a list of 100 distinct UserRecord objects
-    user_list = [UserRecord(100, 0) for _ in range(100)]
+    # Create a list of 100 distinct User_Record objects
+    user_list = [User_Record(100, 0) for _ in range(100)]
 
     # Call your function with the user_list
     data = subgroup_setup(len(user_list), user_list)

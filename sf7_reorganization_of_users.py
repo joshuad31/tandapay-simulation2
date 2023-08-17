@@ -79,14 +79,6 @@ def combine_groups(group1, group2):
 
     return group_data(new_num, new_size, new_indices)
 
-
-def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
-    # Create a list of users with cur_status = Paid_Invalid
-    pi_indices = []
-    for i, user in enumerate(user_list):
-        if user.cur_status == CurrentStatusEnum.PAID_INVALID:
-
-
 # Unit test:
 def test_combine_size():
     groups = [
@@ -104,3 +96,25 @@ def test_combine_size():
 
     for group in groups:
         print(f"Group {group.group_num} of size {group.group_size} with indices: {group.indices}")
+
+
+#def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
+#    groups = [None] * len(user_list)
+#    for i, user in enumerate(user_list):
+#        if user    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

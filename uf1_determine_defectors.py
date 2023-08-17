@@ -1,16 +1,16 @@
-from roleAssignment import *
-from subgroupSetup import *
+from role_assignment import *
+from subgroup_setup import *
 
-from environmentVariables import EnvironmentVariables
-from systemRecord import SystemRecord
-from userRecord import *
+from environment_variables import Environemnt_Variables
+from system_record import System_Record
+from user_record import *
 from utility import remove_user
 
 def uf1_determine_defectors(env_vars, sys_record, user_list):
-    if not isinstance(env_vars, EnvironmentVariables):
-        raise TypeError("in UF1, env_vars is not of type EnvironmentVariables!")
-    if not isinstance(sys_record, SystemRecord):
-        raise TypeError("in UF1, sys_record is not of type SystemRecord!")
+    if not isinstance(env_vars, Environemnt_Variables):
+        raise TypeError("in UF1, env_vars is not of type Environemnt_Variables!")
+    if not isinstance(sys_record, System_Record):
+        raise TypeError("in UF1, sys_record is not of type System_Record!")
     if not isinstance(user_list, list):
         raise TypeError("in UF1, user_list is not a list!")
     if not env_vars.total_member_cnt == len(user_list):
@@ -113,8 +113,8 @@ def uf1_determine_defectors(env_vars, sys_record, user_list):
 
 def test_uf1_determine_defectors(debugPrint = True):
     
-    # Create a list of 100 distinct UserRecord objects
-    user_list = [UserRecord(100, 0) for _ in range(100)]
+    # Create a list of 100 distinct User_Record objects
+    user_list = [User_Record(100, 0) for _ in range(100)]
 
     # subgroup setup for all the users
     data = subgroup_setup(len(user_list), user_list)
@@ -123,10 +123,10 @@ def test_uf1_determine_defectors(debugPrint = True):
     num_four_member_groups = data[0]
     
     # set up environment variables
-    env_vars = EnvironmentVariables()
+    env_vars = Environemnt_Variables()
     env_vars.total_member_cnt = len(user_list)
     
-    sys_record = SystemRecord(env_vars.total_member_cnt) 
+    sys_record = System_Record(env_vars.total_member_cnt) 
 
     # assign roles
     role_assignment(env_vars, user_list, num_four_member_groups * 4) 

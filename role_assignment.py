@@ -1,11 +1,11 @@
 import random
 
-from subgroupSetup import subgroup_setup
+from subgroup_setup import subgroup_setup
 from environmentVariables import EnvironmentVariables
 
-from userRecord import UserRecord
-from userRecord import PrimaryRoleEnum
-from userRecord import SecondaryRoleEnum
+from User_Record import User_Record
+from User_Record import PrimaryRoleEnum
+from User_Record import SecondaryRoleEnum
 
 def role_assignment(env_vars, user_list, num_members_in_four_member_group):
 # Check validity of parameters passed to the function
@@ -69,8 +69,8 @@ def role_assignment(env_vars, user_list, num_members_in_four_member_group):
 def test_role_assignment(b_printAllRoles):
     assert isinstance(b_printAllRoles, bool), "b_printAllRoles must be True or False!"
 
-    # Create a list of 100 distinct UserRecord objects
-    user_list = [UserRecord(100, 0) for _ in range(100)]
+    # Create a list of 100 distinct User_Record objects
+    user_list = [User_Record(100, 0) for _ in range(100)]
 
     # Call your function with the user_list
     data = subgroup_setup(len(user_list), user_list)

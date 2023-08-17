@@ -1,5 +1,5 @@
 
-class EnvironmentVariables:
+class Environment_Variables:
     def __init__(self):
         self._total_member_cnt = 0            # EV1: How many members are in the group?
         self._monthly_premium = 0             # EV2: Monthly premium
