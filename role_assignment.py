@@ -1,15 +1,15 @@
 import random
 
 from subgroup_setup import subgroup_setup
-from environmentVariables import EnvironmentVariables
+from environment_variables import Environment_Variables
 
-from User_Record import User_Record
-from User_Record import PrimaryRoleEnum
-from User_Record import SecondaryRoleEnum
+from user_record import User_Record
+from user_record import PrimaryRoleEnum
+from user_record import SecondaryRoleEnum
 
 def role_assignment(env_vars, user_list, num_members_in_four_member_group):
 # Check validity of parameters passed to the function
-    assert isinstance(env_vars, EnvironmentVariables), "env_vars must be of type EnvironmentVariables!"
+    assert isinstance(env_vars, Environment_Variables), "env_vars must be of type EnvironmentVariables!"
     assert isinstance(user_list, list), "user_list must be a list!"
     assert isinstance(num_members_in_four_member_group, int), "num_members_in_four_member_group must be an int!"
     assert (env_vars.total_member_cnt == len(user_list)), "Error: total_member_cnt not equal to length of user_list!"
@@ -19,6 +19,8 @@ def role_assignment(env_vars, user_list, num_members_in_four_member_group):
     # This will result in a list of indices between 0 and total_member_cnt (which should be the size of user_list)
     # the size of the list will be member_cnt_defectors, basically allowing us to assign the users at each index
     # to the "defector" role, and thus we have randomly selected member_cnt_defectors defectors in user_list.
+    print(f"total member count: {env_vars.total_member_cnt}")
+    print(f"number of defector: {env_vars.member_cnt_defectors}")
     defector_indices = random.sample(range(env_vars.total_member_cnt), env_vars.member_cnt_defectors)
     
     # This will store all of the indices that were not selected as defector indices, so that we can effectively
@@ -117,8 +119,6 @@ def test_role_assignment(b_printAllRoles):
 
     print("passed all tests!")
 
-
-#test_role_assignment(True)
 
 
 

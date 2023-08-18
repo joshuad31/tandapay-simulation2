@@ -54,13 +54,15 @@ class User_Record:
         self._cur_month_first_calc = 0                      # Current month's first premium calculation
         self._cur_month_balance = 0                         # Current month's balance
         self._cur_month_premium = 0                         # Current month's premium
-        self._credit_to_savings_account                     # amount credited to saving's account
-        self._cur_month_second_calc_list = [0] * count      # cur_month_second_calc_list[i] = Current month's second premium calculation from (i+1) period
-        self._prior_month_premium_list = [0] * bundling     # prior_month_premium_list[i] = premium from i+1 months ago
-        self._total_value_refund_list = [0] * count         # total value of the refund from period (i+1)
-        self._debit_to_savings_account_list = [0] * count   # amount debited to savings account in period (i+1)                                                                      
+        self._credit_to_savings_account = 0                 # amount credited to saving's account
+        self._sbg_reorg_cnt = 0                             # additional variable that had to be added later (?) TODO: add desc
+        self.cur_month_second_calc_list = [0] * count       # cur_month_second_calc_list[i] = Current month's second premium calculation from (i+1) period
+        self.prior_month_premium_list = [0] * bundling      # prior_month_premium_list[i] = premium from i+1 months ago
+        self.total_value_refund_list = [0] * count          # total value of the refund from period (i+1)
+        self.debit_to_savings_account_list = [0] * count    # amount debited to savings account in period (i+1)                                                                      
 
 # TODO: Add logic as needed for interacting with lists, avoid hacky encapsulation-breaking fixes.
+
 
 # Getters with bounds checking for the lists
     def get_current_month_second_premium_calculation(self, period):
@@ -86,6 +88,8 @@ class User_Record:
             return self._debit_to_savings_account_list[period - 1]
         else:
             raise IndexError("Attempting to access out of bounds index for debit_to_savings_account_list")
+
+    @property
 
 # Credit to saving's account (added a bit later):
     @property

@@ -7,7 +7,7 @@ from user_record import *
 from utility import remove_user
 
 def uf1_determine_defectors(env_vars, sys_record, user_list):
-    if not isinstance(env_vars, Environemnt_Variables):
+    if not isinstance(env_vars, Environment_Variables):
         raise TypeError("in UF1, env_vars is not of type Environemnt_Variables!")
     if not isinstance(sys_record, System_Record):
         raise TypeError("in UF1, sys_record is not of type System_Record!")
@@ -123,7 +123,7 @@ def test_uf1_determine_defectors(debugPrint = True):
     num_four_member_groups = data[0]
     
     # set up environment variables
-    env_vars = Environemnt_Variables()
+    env_vars = Environment_Variables()
     env_vars.total_member_cnt = len(user_list)
     
     sys_record = System_Record(env_vars.total_member_cnt) 
@@ -143,4 +143,3 @@ def test_uf1_determine_defectors(debugPrint = True):
     print(f"SR3 Defected Cnt: {sys_record.defected_cnt}")
     print(f"SR5 Skipped Cnt: {sys_record.skipped_cnt}")
 
-test_uf1_determine_defectors()

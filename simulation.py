@@ -17,4 +17,77 @@ from system_record import System_Record
 from pricing_variables import Pricing_Variables
 from user_record import User_Record
 
+from collections import deque
+import pdb
 
+def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
+    period = 0
+    last_three_quit_cnt = deque()
+    last_three_skipped_cnt = deque()
+
+    while True:
+        RSA(env_vars, sys_rec, user_list, period)
+
+        if period == 0:
+            uf1_determine_defectors(env_vars, sys_rec, user_list)
+        else:
+            uf2_pricing_function(env_vars, sys_rec, user_list, period)
+        
+        RSB(env_vars, sys_rec, user_list, period)
+        
+        sf4_invalidate_subgroups(sys_rec, user_list)
+
+        uf6_user_quit_function(env_vars, sys_rec, user_list)
+
+        sf8_determine_claims(env_vars, user_list)
+
+        sf7_reorganization_of_users(env_vars, sys_rec, user_list)
+        
+        # keep track of last 3 skipped/quit cnt so that we can terminate 
+        # the simulation if they are 0 for three periods in a row.
+        last_three_quit_cnt.append(sys_rec.quit_cnt)
+        last_three_skipped_cnt.append(sys_rec.skipped_cnt)
+        
+
+        if period < 9:
+            if len(last_three_quit_cnt) == 3:
+                nonzero = False
+                for i, j in last_three_quit_cnt, last_three_skipped_cnt:
+                    if (i + j) != 0:
+                        nonzero = True
+                        break
+
+                if not nonzero:
+                    print("Simulation terminated since last three quit/skipped counts are 0")
+                    break
+                
+                last_three_quit_cnt.popleft()
+                last_three_skipped_cnt.popleft()
+        else:
+            print("Simulation reached 10th period and successfully terminated.")
+            break
+
+        sys_rec = System_Record(sys_rec.valid_remaining)  
+
+def test_simulation():
+    # initialize a list of users
+    user_list = [User_Record(100, 0) for _ in range(100)]
+    
+    # subgroup setup for all the users
+    data = subgroup_setup(len(user_list), user_list)
+    num_four_member_groups = data[0]
+
+    # initialize environment variables
+    env_vars = Environment_Variables()
+    env_vars.total_member_cnt = len(user_list)
+
+    # initialize system record
+    sys_record = System_Record(env_vars.total_member_cnt)
+
+    # assign roles
+    role_assignment(env_vars, user_list, num_four_member_groups * 4)
+
+    # execute simulation with these values
+    run_simulation(env_vars, sys_record, Pricing_Variables(), user_list)
+
+test_simulation()

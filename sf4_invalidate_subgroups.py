@@ -1,7 +1,12 @@
-from systemRecord import SystemRecord
+from system_record import System_Record
+from user_record import *
 
 def sf4_invalidate_subgroups(sys_rec, user_list, invalid_indices = []):
-    invalid_indices = []
+    
+    if len(invalid_indices) > 0:
+        print("Warning: non empty invalid_indices[] array passed to sf4! resetting to empty.")
+        invalid_indices = []
+
     for i in range(len(user_list)):
         user = user_list[i]
         # 1. if members_cur_sbg = 1, 2, or 3
@@ -20,3 +25,4 @@ def sf4_invalidate_subgroups(sys_rec, user_list, invalid_indices = []):
 
     # Calculate individual shortfall -- this step should happen because invalid_cnt has a setter which will automatically calculate this variable.
 
+    return invalid_indices

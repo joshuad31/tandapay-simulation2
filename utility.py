@@ -1,3 +1,4 @@
+from user_record import *
 
 def remove_user(user_list, index, reason = "No reason provided."):
     if not isinstance(index, int):
@@ -19,4 +20,4 @@ def remove_user(user_list, index, reason = "No reason provided."):
     user_list[index].sbg_status = ValidityEnum.NR 
     user_list[index].cur_status = CurrentStatusEnum.NR 
     user_list[index].payable = PayableEnum.NR
-    print(reason)
+    #print(reason)

@@ -1,6 +1,6 @@
-from environmentVariables import EnvironmentVariables
-from pricingVariables import PricingVariables
-from systemRecord import SystemRecord
+from environment_variables import Environment_Variables
+from pricing_variables import Pricing_Variables
+from system_record import System_Record
 from utility import remove_user
 
 def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_period):

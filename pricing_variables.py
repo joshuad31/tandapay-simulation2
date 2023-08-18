@@ -1,4 +1,4 @@
-class PricingVariables:
+class Pricing_Variables:
     def __init__(self):
         self._prem_inc_cum = .60                  # Premum price increase cumulative
         self._prem_inc_floor = .20                # Premium Price increase floor

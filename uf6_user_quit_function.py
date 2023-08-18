@@ -1,5 +1,5 @@
 from utility import remove_user
-from User_Record import *
+from user_record import *
 
 def uf6_user_quit_function(env_vars, sys_rec, user_list, will_reorg = [], paid_invalid_user_indices = []):
    
