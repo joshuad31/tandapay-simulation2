@@ -4,7 +4,8 @@ from user_record import *
 def RSA(env_vars, sys_rec, user_list, period):
     # calculate current month's first calculation
     cur_month_first_calc = env_vars.cov_req / sys_rec.valid_remaining
-    
+    print(f"current month first calc: {cur_month_first_calc}")
+
     # perform operations for period 1
     if period == 0:
         # iterate through each user
@@ -17,6 +18,7 @@ def RSA(env_vars, sys_rec, user_list, period):
             user.cur_month_first_calc = cur_month_first_calc
             # for this period only: current month second calc = current month 1st calc   
             user.cur_month_second_calc_list[period] = cur_month_first_calc
+#            print(f"Setting cur_month_second_list[{period}] = {cur_month_first_calc}")
     # perform operations for period 2+
     else:
         # iterate through each user
@@ -32,12 +34,13 @@ def RSA(env_vars, sys_rec, user_list, period):
 
             # determine wallet balance
             user.wallet_balance = cur_month_first_calc
-            user.wallet_balance += debit_to_savings_account_list[period - 1]
+            user.wallet_balance += user.debit_to_savings_account_list[period - 1]
             user.wallet_balance -= user.wallet_no_claim_refund
             user.wallet_balance -= user.wallet_reorg_refund
             
             # set current month second calculation for this period to wallet balance
             user.cur_month_second_calc_list[period] = user.wallet_balance
+#            print(f"Setting cur_month_second_list[{period}] = {user.wallet_balance}")
             # reset wallet balance to 0
             user.wallet_balance = 0
 

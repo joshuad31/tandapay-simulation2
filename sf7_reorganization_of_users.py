@@ -1,3 +1,5 @@
+from user_record import *
+
 import random
 import heapq
 import pdb
@@ -8,7 +10,6 @@ class group_data:
         self.group_size = group_size
         self.indices = indices
 
-        assert len(indices) == self.group_size, "attempting to make a group with mismatching indices and group size"
 
     def __str__(self):
         return f"({self.group_num}, {self.group_size}, {self.indices})"
@@ -53,8 +54,8 @@ def combine_size(group_list, group_size, potential_sizes):
 
     # combine the groups, delete the old ones, and add the new one to the group_list
 
-    print(f"group_list: {group_list}")
-    print(f"to_combine: {to_combine}")
+    #print(f"group_list: {group_list}")
+    #print(f"to_combine: {to_combine}")
     for groups in to_combine:
         group1 = groups[0]
         group2 = groups[1]

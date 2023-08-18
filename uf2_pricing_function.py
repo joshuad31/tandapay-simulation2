@@ -1,6 +1,7 @@
 from environment_variables import Environment_Variables
 from pricing_variables import Pricing_Variables
 from system_record import System_Record
+from user_record import *
 from utility import remove_user
 
 def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_period):
@@ -19,7 +20,7 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
             continue
         
         # Determine if this user is a qualifying user or if they should be skipped
-        cm_sec_calc = user.current_month_second_calc_list[current_period]
+        cm_sec_calc = user.cur_month_second_calc_list[current_period]
         threshold = pricing_vars.prem_inc_floor * (env_vars.cov_req / env_vars.total_member_cnt)
         # skip this user because they are not qualifying
         if cm_sec_calc < threshold:
@@ -39,10 +40,10 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
                 raise ValueError("In uf2, matching = -1 after trying to find most recent previous month where total refund value == 0")
         
             # 1b. Calculate the one month increase percentage:
-            pm_sec_calc = user.current_month_second_calc_list[matching]
+            pm_sec_calc = user.cur_month_second_calc_list[matching]
             one_month_increase_percentage = (cm_sec_calc / pm_sec_calc) - 1
             
-            print(f"one month increase percentage (with -1): f{one_month_increase_percentage}")
+            #print(f"one month increase percentage (with -1): f{one_month_increase_percentage}")
 
             # 1c. one_month_increase_percentage should not exceed prem_inc_ceiling
             one_month_increase_percentage = min(one_month_increase_percentage, pricing_vars.prem_inc_ceiling)

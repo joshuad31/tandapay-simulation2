@@ -31,7 +31,7 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
         if period == 0:
             uf1_determine_defectors(env_vars, sys_rec, user_list)
         else:
-            uf2_pricing_function(env_vars, sys_rec, user_list, period)
+            uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
         
         RSB(env_vars, sys_rec, user_list, period)
         
@@ -47,12 +47,14 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
         # the simulation if they are 0 for three periods in a row.
         last_three_quit_cnt.append(sys_rec.quit_cnt)
         last_three_skipped_cnt.append(sys_rec.skipped_cnt)
-        
+        print(f"period {period}: quit_cnt = {sys_rec.quit_cnt}")
+        print(f"period {period}: skipped_cnt = {sys_rec.skipped_cnt}")
 
+        period += 1
         if period < 9:
             if len(last_three_quit_cnt) == 3:
                 nonzero = False
-                for i, j in last_three_quit_cnt, last_three_skipped_cnt:
+                for i, j in zip(last_three_quit_cnt, last_three_skipped_cnt):
                     if (i + j) != 0:
                         nonzero = True
                         break

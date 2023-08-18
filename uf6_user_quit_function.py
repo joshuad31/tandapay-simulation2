@@ -1,3 +1,5 @@
+import random
+
 from utility import remove_user
 from user_record import *
 
@@ -52,7 +54,7 @@ def uf6_user_quit_function(env_vars, sys_rec, user_list, will_reorg = [], paid_i
             will_reorg.append(i)
         else:
             # remove user
-            remove_user(user_list[i])
+            remove_user(user_list, i, "removed in uf6 quit function")
             # increment quit count
             sys_rec.quit_cnt += 1
 
