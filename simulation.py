@@ -26,18 +26,24 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
     last_three_skipped_cnt = deque()
 
     while True:
+#        pdb.set_trace()
         RSA(env_vars, sys_rec, user_list, period)
 
         if period == 0:
             uf1_determine_defectors(env_vars, sys_rec, user_list)
+            print(f"uf1 valid remaining: {sys_rec.valid_remaining}")
         else:
             uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
+            print(f"uf2 valid remaining: {sys_rec.valid_remaining}")
         
         RSB(env_vars, sys_rec, user_list, period)
         
         sf4_invalidate_subgroups(sys_rec, user_list)
+        print(f"sf4 valid remaining: {sys_rec.valid_remaining}")
 
         uf6_user_quit_function(env_vars, sys_rec, user_list)
+        
+        RSC(env_vars, sys_rec, user_list, period)
 
         sf8_determine_claims(env_vars, user_list)
 
@@ -50,6 +56,17 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
         print(f"period {period}: quit_cnt = {sys_rec.quit_cnt}")
         print(f"period {period}: skipped_cnt = {sys_rec.skipped_cnt}")
 
+        
+
+        # advance period logic:
+        
+        # win condition: valid_remaining below 50% of original total_member_cnt.
+        # if this happens, win no matter what, so we don't even have to do the
+        # advance period logic to advance to the next period.
+        if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.50:
+            print("WIN: valid_remaining below 50% of total_member_cnt")
+            break
+
         period += 1
         if period < 9:
             if len(last_three_quit_cnt) == 3:
@@ -60,16 +77,38 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
                         break
 
                 if not nonzero:
-                    print("Simulation terminated since last three quit/skipped counts are 0")
+                    # draw condition: 3 periods in a row where nobody quits or leaves and
+                    # valid_remaining is less than 60% of total_member_cnt
+                    if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.60:
+                        print("DRAW: 3 periods in a row where nobody quits or leaves, and valid_remaining below 60% of total_member_cnt")
+                    else:
+                        print("LOSS: 3 periods in a row where nobody quits or leaves, and valid_remaining above 60% of total_member_cnt")
+                    
+                    # end simulation no matter what if this happens
                     break
-                
+
                 last_three_quit_cnt.popleft()
                 last_three_skipped_cnt.popleft()
         else:
-            print("Simulation reached 10th period and successfully terminated.")
+            # win condition: If we're in the final period and valid_remaining is
+            # below 55 percent of total_member_cnt
+            if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.55:
+                print("WIN: final period completed with valid_remaining below 55% of total_member_cnt")
+
+            # draw condition: If we're in the final period and valid_remaining is
+            # less than 65 percent, but not less than 55 percent of total_member_cnt
+            elif (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.65:
+                print("DRAW: final period completed with valid_remaining below 65% of total_member_cnt")
+            
+            # loss condition: Reached the final period with valid_remaining still above 65% of total_member_cnt
+            else:
+                print("LOSS: reached final period with valid_remaining above 65% of total_member_cnt")
+            
+            # always end the simulation in the final period.
             break
 
         sys_rec = System_Record(sys_rec.valid_remaining)  
+        print("---------------------------------------")
 
 def test_simulation():
     # initialize a list of users

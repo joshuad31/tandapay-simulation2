@@ -17,7 +17,11 @@ class group_data:
     def __repr__(self):
         return f"({self.group_num}, {self.group_size}, {self.indices})"
 
-def combine_size(group_list, group_size, potential_sizes):
+def combine_size(group_list, group_size, potential_sizes, reorged = None):
+    # store all of the members who were reorged into larger groups
+    if reorged is None:
+        reorged = []
+
     # group_size_indices[group_size][...indices of groups of that size...]
     group_size_indices = [set() for _ in range(8)]
     
@@ -33,8 +37,8 @@ def combine_size(group_list, group_size, potential_sizes):
     # if the set has elements, that means there are groups of this size to be processed
     while group_size_indices[group_size]:
         # pop a group off out of the set to be processed
-        i = group_size_indices[group_size].pop()
-            
+        i = group_size_indices[group_size].pop()   
+
         # try to combine it with another group of one of the sizes in potential_sizes.
         # potential sizes is ordered from 1st priority -> last priority
         for other_size in potential_sizes:
@@ -48,14 +52,18 @@ def combine_size(group_list, group_size, potential_sizes):
             # now, because of the pop statements, both groups have been removed from the pool.
             # and we can simply add them to the list to be combined.
             to_combine.append((i, j))
-            
+
+            # do this to track which members were in a group smaller than 4 members, and were
+            # reorged into a larger group
+            reorged.append(i)
+
             # break out so we don't accidentally combine the same group twice
             break
 
     # combine the groups, delete the old ones, and add the new one to the group_list
 
-    #print(f"group_list: {group_list}")
-    #print(f"to_combine: {to_combine}")
+#    print(f"group_list: {group_list}")
+#    print(f"to_combine: {to_combine}")
     for groups in to_combine:
         group1 = groups[0]
         group2 = groups[1]
@@ -122,11 +130,25 @@ def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
     
     # extrapolate data from reorganized groups back into users
     for group in groups:
+#        print(f"group: {group}")
         for i in group.indices:
+            # if this is true, that means they reorged. Perform
+            # the following operations only for users who have reorged...
+            if user_list[i].members_cur_sbg < 4:
+                # set their status to reorg
+                user_list[i].cur_status = CurrentStatusEnum.REORG
+                # increment their reorged_cnt variable (number of times this user in particular has reorged)
+                user_list[i].reorged_cnt += 1
+                # increment system reorged_cnt (total number of times users have reorged)
+                sys_rec.reorged_cnt += 1
+                # increment valid_remaining
+                sys_rec.valid_remaining += 1
+            
+            # perform these operations for every user in the subgroup
             user_list[i].cur_sbg_num = group.group_num
-            user_list[i].members_cut_sbg = group.group_size
-
-
+            user_list[i].members_cur_sbg = group.group_size
+            user_list[i].sbg_status = ValidityEnum.VALID
+            
 
 
 

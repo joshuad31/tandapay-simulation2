@@ -3,6 +3,7 @@ from pricing_variables import Pricing_Variables
 from system_record import System_Record
 from user_record import *
 from utility import remove_user
+import random
 
 def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_period):
     # Calculate the pricing slope:
@@ -80,14 +81,14 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
         
             # 2b. else, continue to the next user (no code needed).
 
-        # 3. Evaluate leave list
-        for i in leave_list:
-            sys_rec.valid_remaining -= 1
-            sys_rec.skipped_cnt += 1
-            remove_user(user_list, i, "User was in leave list in uf2.")
+    # 3. Evaluate leave list
+    for i in leave_list:
+        sys_rec.valid_remaining -= 1
+        sys_rec.skipped_cnt += 1
+        remove_user(user_list, i, "User was in leave list in uf2.")
 
-        # 4. since sys_rec.skipped_cnt uses a setter, it will calculate skip_shortfall automatically
-        # when skipped_cnt is updated. Therefore, no code is needed here.
+    # 4. since sys_rec.skipped_cnt uses a setter, it will calculate skip_shortfall automatically
+    # when skipped_cnt is updated. Therefore, no code is needed here.
 
 def cumulative_increase_percentage(env_vars, pricing_vars, user, current_period, LOWER_PERIOD = 4, UPPER_PERIOD = 9, NUM_MONTHS_TO_AVG = 3):
     # run only if the period is 5-10
@@ -98,7 +99,8 @@ def cumulative_increase_percentage(env_vars, pricing_vars, user, current_period,
     debug_total_iterations = 0
     average = 0
     for i in range(current_period, current_period - NUM_MONTHS_TO_AVG, -1):
-        average += user.current_month_second_calc_list[i]
+        average += user.cur_month_second_calc_list[i]
+        debug_total_iterations += 1
 
     assert debug_total_iterations == NUM_MONTHS_TO_AVG, f"loop iterated more than {NUM_MONTHS_TO_AVG} times!"
     average /= NUM_MONTHS_TO_AVG

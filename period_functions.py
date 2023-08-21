@@ -4,6 +4,7 @@ from user_record import *
 def RSA(env_vars, sys_rec, user_list, period):
     # calculate current month's first calculation
     cur_month_first_calc = env_vars.cov_req / sys_rec.valid_remaining
+    print(f"cov_req: {env_vars.cov_req} / valid_remaining: {sys_rec.valid_remaining}")
     print(f"current month first calc: {cur_month_first_calc}")
 
     # perform operations for period 1
@@ -125,7 +126,7 @@ def RSC(env_vars, sys_rec, user_list, period):
        
         # finally, make sure the sum of current month balances is equal to cov_req. If not, there is an error
         if cur_month_balance_sum != env_vars.cov_req:
-            raise ValueError("Fatal Error: The sum of current month balances does not equal cov_req!")
+            raise ValueError(f"Fatal Error: The sum of current month balances {cur_month_balance_sum} does not equal cov_req {env_vars.cov_req}!")
     else:
         # calculate cur_month_total_shortfall
         sys_rec.cur_month_total_shortfall = sys_rec.skip_shortfall + sys_rec.invalid_shortfall
@@ -157,7 +158,7 @@ def RSC(env_vars, sys_rec, user_list, period):
        
         # finally, make sure the sum of current month balances is equal to cov_req. If not, there is an error
         if cur_month_balance_sum != env_vars.cov_req:
-            raise ValueError("Fatal Error: The sum of current month balances does not equal cov_req!")
+            raise ValueError(f"Fatal Error: The sum of current month balances {cur_month_balance_sum} does not equal cov_req {env_vars.cov_req}!")
 
 #########################################################################
 
