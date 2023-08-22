@@ -9,9 +9,15 @@ class Environment_Variables:
         self._perc_independent = .20           # EV6: What is the percentage of members who are unwilling to act alone? (allowed values: 20 - 80)
         self._dependent_thres = 2              # EV7: What is the member threshold needed for dependent members to defect? (allowed values: 2, 3)
         self._low_morale_quit_prob = 1/3       # EV9: Probability a low-morale member will quit if forced to reorg (Must be 1/3)
-
+        
     ### All member variables past this point must be calculated from the others:
         self._cov_req = 0                     # EV10: Coverage Requirement. (must be total_member_cnt * monthly_premium)
+
+    # NOTE: this was retroactively added later on
+        self._queueing = 0                    # EV11: Queueing.
+
+    # NOTE: this was retroactively added later on
+        self._max_period = 10                 # EV12: Number of periods the simulation will run for
 
     # number of members in each primary role
         self._member_cnt_unity = 0            # Number of members with the primary role “Unity”
@@ -34,6 +40,26 @@ class Environment_Variables:
         
         # calculate coverage requirement
         self._cov_req = self._total_member_cnt * self._monthly_premium
+
+    @property
+    def max_period(self):
+        return self._max_period
+
+    @max_period.setter
+    def max_period(self, value):
+        assert isinstance(value, int), "attempting to set max_period in EV to non integer"
+        self._max_period = value
+
+
+    @property
+    def queueing(self):
+        return self._queueing
+
+    @queueing.setter
+    def queueing(self, value):
+        assert isinstance(value, int), "attempting to set queueing in EV to non integer!"
+        assert 0 <= value <= 3, "attempting to set queueing to a value outside of the range [0, 3]"
+        self._queueing = value
 
     @property
     def total_member_cnt(self):

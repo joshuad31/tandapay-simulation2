@@ -83,11 +83,11 @@ def uf1_determine_defectors(env_vars, sys_record, user_list):
     
     # 6. Calculate defection_shortfall = defected_cnt * cur_month_1st_calc --- This should be done in the setter for SystemVariable.
     # An assertion to ensure that the number is correct should suffice
+#    print(f"end of UF1, defection_shortfall = {sys_record.defection_shortfall} = defected_cnt {sys_record.defected_cnt} * cur_month_1st_calc {sys_record.cur_month_1st_calc}")
     assert (sys_record.defection_shortfall == sys_record.defected_cnt * sys_record.cur_month_1st_calc), "something went wrong with the defection_shortfall calculation in UF1."
-
     # 7. same thing as 6 except calculates skip shortfall
+#    print(f"end of UF1, skip_shortfall = {sys_record.skip_shortfall} = skipped_cnt {sys_record.skipped_cnt} * cur_month_1st_calc {sys_record.cur_month_1st_calc}")
     assert (sys_record.skip_shortfall == sys_record.skipped_cnt * sys_record.cur_month_1st_calc), "something went wrong with the skip_shortfall calculation in UF1."
-
 
 #def remove_user(user_list, index, reason = "No reason provided."):
 #    if not isinstance(index, int):

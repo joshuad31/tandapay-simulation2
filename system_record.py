@@ -48,6 +48,7 @@ class System_Record:
     @skipped_cnt.setter
     def skipped_cnt(self, value):
         self._skipped_cnt = value
+        self.calculate_vars()
 
     @property
     def invalid_cnt(self):

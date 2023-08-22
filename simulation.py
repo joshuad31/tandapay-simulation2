@@ -10,6 +10,7 @@ from sf8_determine_claims import sf8_determine_claims
 from role_assignment import role_assignment
 from subgroup_setup import subgroup_setup
 from period_functions import *
+from queueing import *
 
 # import necessary data structures
 from environment_variables import Environment_Variables
@@ -27,7 +28,8 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
 
     while True:
 #        pdb.set_trace()
-        RSA(env_vars, sys_rec, user_list, period)
+        #RSA(env_vars, sys_rec, user_list, period)
+        RSAB(env_vars, sys_rec, user_list, period)
 
         if period == 0:
             uf1_determine_defectors(env_vars, sys_rec, user_list)
@@ -36,7 +38,7 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
             uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
             print(f"uf2 valid remaining: {sys_rec.valid_remaining}")
         
-        RSB(env_vars, sys_rec, user_list, period)
+        #RSB(env_vars, sys_rec, user_list, period)
         
         sf4_invalidate_subgroups(sys_rec, user_list)
         print(f"sf4 valid remaining: {sys_rec.valid_remaining}")
@@ -48,7 +50,9 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
         sf8_determine_claims(env_vars, user_list)
 
         sf7_reorganization_of_users(env_vars, sys_rec, user_list)
-        
+
+        queueing_function(user_list)
+
         # keep track of last 3 skipped/quit cnt so that we can terminate 
         # the simulation if they are 0 for three periods in a row.
         last_three_quit_cnt.append(sys_rec.quit_cnt)
@@ -112,15 +116,17 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
 
 def test_simulation():
     # initialize a list of users
-    user_list = [User_Record(100, 0) for _ in range(100)]
+    num_users = 100
+    
+    # initialize environment variables
+    env_vars = Environment_Variables()
+    env_vars.total_member_cnt = num_users 
+
+    user_list = [User_Record(env_vars) for _ in range(100)]
     
     # subgroup setup for all the users
     data = subgroup_setup(len(user_list), user_list)
     num_four_member_groups = data[0]
-
-    # initialize environment variables
-    env_vars = Environment_Variables()
-    env_vars.total_member_cnt = len(user_list)
 
     # initialize system record
     sys_record = System_Record(env_vars.total_member_cnt)

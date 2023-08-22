@@ -70,11 +70,11 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
         # 2. ELSE IF total_value_refund (current period) is NOT equal to 0
         elif user.total_value_refund_list[current_period] != 0:
             # 2a. if current_month_sec_calc is less than or equal to 0, continue to next user
-            if user.current_month_second_calc_list[current_period] <= 0:
+            if user.cur_month_second_calc_list[current_period] <= 0:
                 continue
             
             # evaluate user for cumulative_increase_percentage
-            if user.current_month_second_calc_list[current_period] >= threshold:
+            if user.cur_month_second_calc_list[current_period] >= threshold:
                 if cumulative_increase_percentage(env_vars, pricing_vars, user, current_period):
                     leave_list.append(user_index)
 

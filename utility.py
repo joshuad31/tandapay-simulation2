@@ -21,3 +21,6 @@ def remove_user(user_list, index, reason = "No reason provided."):
     user_list[index].cur_status = CurrentStatusEnum.NR 
     user_list[index].payable = PayableEnum.NR
     #print(reason)
+
+def is_approx_equal(a, b, epsilon):
+    return abs(a - b) < epsilon
