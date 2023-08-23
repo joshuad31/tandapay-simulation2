@@ -21,6 +21,15 @@ from user_record import User_Record
 from collections import deque
 import pdb
 
+def print_vars(env_vars, sys_rec, pricing_vars, user_list, label):
+    
+    print(f"----------[printing variables: {label}]----------")
+    print(f"number of defector/skipped/invalid: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}")
+    print(f"defector/skipped/invalid shortfall: {sys_rec.defection_shortfall}/{sys_rec.skip_shortfall}/{sys_rec.invalid_shortfall}")
+    print(f"valid_remaining: {sys_rec.valid_remaining}")
+    print(f"user[0] balance: {user_list[0].cur_month_balance}")
+    print(f"----------[finished printing:  {label}]----------\n")
+
 def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
     period = 0
     last_three_quit_cnt = deque()
@@ -29,23 +38,26 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
     while True:
 #        pdb.set_trace()
         #RSA(env_vars, sys_rec, user_list, period)
+        print_vars(env_vars, sys_rec, pricing_vars, user_list, "before RSAB")
         RSAB(env_vars, sys_rec, user_list, period)
+        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSAB")
 
         if period == 0:
             uf1_determine_defectors(env_vars, sys_rec, user_list)
-            print(f"uf1 valid remaining: {sys_rec.valid_remaining}")
+            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF1")
         else:
             uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
-            print(f"uf2 valid remaining: {sys_rec.valid_remaining}")
+            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF2")
         
         #RSB(env_vars, sys_rec, user_list, period)
         
         sf4_invalidate_subgroups(sys_rec, user_list)
-        print(f"sf4 valid remaining: {sys_rec.valid_remaining}")
+        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF4")
 
         uf6_user_quit_function(env_vars, sys_rec, user_list)
         
         RSC(env_vars, sys_rec, user_list, period)
+        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSC")
 
         sf8_determine_claims(env_vars, user_list)
 
@@ -57,8 +69,8 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
         # the simulation if they are 0 for three periods in a row.
         last_three_quit_cnt.append(sys_rec.quit_cnt)
         last_three_skipped_cnt.append(sys_rec.skipped_cnt)
-        print(f"period {period}: quit_cnt = {sys_rec.quit_cnt}")
-        print(f"period {period}: skipped_cnt = {sys_rec.skipped_cnt}")
+#        print(f"period {period}: quit_cnt = {sys_rec.quit_cnt}")
+#        print(f"period {period}: skipped_cnt = {sys_rec.skipped_cnt}")
 
         
 
@@ -112,7 +124,7 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
             break
 
         sys_rec = System_Record(sys_rec.valid_remaining)  
-        print("---------------------------------------")
+        print("\n---------------------------------------\n")
 
 def test_simulation():
     # initialize a list of users
