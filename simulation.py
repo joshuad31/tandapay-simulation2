@@ -27,7 +27,7 @@ def print_vars(env_vars, sys_rec, pricing_vars, user_list, label):
     print(f"number of defector/skipped/invalid: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}")
     print(f"defector/skipped/invalid shortfall: {sys_rec.defection_shortfall}/{sys_rec.skip_shortfall}/{sys_rec.invalid_shortfall}")
     print(f"valid_remaining: {sys_rec.valid_remaining}")
-    print(f"user[0] balance: {user_list[0].cur_month_balance}")
+    print(f"user[0] balance: {user_list[0].premium_balance}")
     print(f"----------[finished printing:  {label}]----------\n")
 
 def run_simulation(env_vars, sys_rec, pricing_vars, user_list):

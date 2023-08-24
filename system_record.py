@@ -12,17 +12,17 @@ class System_Record:
         self._invalid_shortfall = 0                       # SysRec12: Fracture debt from invalid new (init to 0)
         self._skip_shortfall = 0                          # SysRec10: Fracture debt from skips new (init to 0)
         
-        self._individual_shortfall_period_one_claim = 0  
-        self._total_shortfall_period_one_claim = 0        # Fracture Debt total (init to 0)
+        self._shortfall_debt_individual = 0  
+        self._shortfall_debt_total = 0        # Fracture Debt total (init to 0)
         self._cur_month_individual_shortfall = 0
         self._cur_month_total_shortfall = 0
-        self._cur_month_1st_calc = 0
+        self._first_premium_calc = 0
         self._claimed = False
 
     def calculate_vars(self):
-        self._defection_shortfall = self._defected_cnt * self._cur_month_1st_calc
-        self._skip_shortfall = self._skipped_cnt * self._cur_month_1st_calc
-        self._invalid_shortfall = self._invalid_cnt * self._cur_month_1st_calc
+        self._defection_shortfall = self._defected_cnt * self._first_premium_calc
+        self._skip_shortfall = self._skipped_cnt * self._first_premium_calc
+        self._invalid_shortfall = self._invalid_cnt * self._first_premium_calc
 
     @property
     def valid_remaining(self):
@@ -103,20 +103,20 @@ class System_Record:
 #        self._skip_shortfall = value
 
     @property
-    def individual_shortfall_period_one_claim(self):
-        return self._individual_shortfall_period_one_claim
+    def shortfall_debt_individual(self):
+        return self._shortfall_debt_individual
 
-    @individual_shortfall_period_one_claim.setter
-    def individual_shortfall_period_one_claim(self, value):
-        self._individual_shortfall_period_one_claim = value
+    @shortfall_debt_individual.setter
+    def shortfall_debt_individual(self, value):
+        self._shortfall_debt_individual = value
 
     @property
-    def total_shortfall_period_one_claim(self):
-        return self._total_shortfall_period_one_claim
+    def shortfall_debt_total(self):
+        return self._shortfall_debt_total
 
-    @total_shortfall_period_one_claim.setter
-    def total_shortfall_period_one_claim(self, value):
-        self._total_shortfall_period_one_claim = value
+    @shortfall_debt_total.setter
+    def shortfall_debt_total(self, value):
+        self._shortfall_debt_total = value
 
     @property
     def cur_month_individual_shortfall(self):
@@ -135,12 +135,12 @@ class System_Record:
         self._cur_month_total_shortfall = value
 
     @property
-    def cur_month_1st_calc(self):
-        return self._cur_month_1st_calc
+    def first_premium_calc(self):
+        return self._first_premium_calc
 
-    @cur_month_1st_calc.setter
-    def cur_month_1st_calc(self, value):
-        self._cur_month_1st_calc = value
+    @first_premium_calc.setter
+    def first_premium_calc(self, value):
+        self._first_premium_calc = value
         self.calculate_vars()
 
     @property

@@ -21,7 +21,7 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
             continue
         
         # Determine if this user is a qualifying user or if they should be skipped
-        cm_sec_calc = user.cur_month_second_calc_list[current_period]
+        cm_sec_calc = user.second_premium_calc_list[current_period]
         threshold = pricing_vars.prem_inc_floor * (env_vars.cov_req / env_vars.total_member_cnt)
         # skip this user because they are not qualifying
         if cm_sec_calc < threshold:
@@ -41,7 +41,7 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
                 raise ValueError("In uf2, matching = -1 after trying to find most recent previous month where total refund value == 0")
         
             # 1b. Calculate the one month increase percentage:
-            pm_sec_calc = user.cur_month_second_calc_list[matching]
+            pm_sec_calc = user.second_premium_calc_list[matching]
             one_month_increase_percentage = (cm_sec_calc / pm_sec_calc) - 1
             
             #print(f"one month increase percentage (with -1): f{one_month_increase_percentage}")
@@ -70,11 +70,11 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
         # 2. ELSE IF total_value_refund (current period) is NOT equal to 0
         elif user.total_value_refund_list[current_period] != 0:
             # 2a. if current_month_sec_calc is less than or equal to 0, continue to next user
-            if user.cur_month_second_calc_list[current_period] <= 0:
+            if user.second_premium_calc_list[current_period] <= 0:
                 continue
             
             # evaluate user for cumulative_increase_percentage
-            if user.cur_month_second_calc_list[current_period] >= threshold:
+            if user.second_premium_calc_list[current_period] >= threshold:
                 if cumulative_increase_percentage(env_vars, pricing_vars, user, current_period):
                     leave_list.append(user_index)
 
@@ -99,7 +99,7 @@ def cumulative_increase_percentage(env_vars, pricing_vars, user, current_period,
     debug_total_iterations = 0
     average = 0
     for i in range(current_period, current_period - NUM_MONTHS_TO_AVG, -1):
-        average += user.cur_month_second_calc_list[i]
+        average += user.second_premium_calc_list[i]
         debug_total_iterations += 1
 
     assert debug_total_iterations == NUM_MONTHS_TO_AVG, f"loop iterated more than {NUM_MONTHS_TO_AVG} times!"

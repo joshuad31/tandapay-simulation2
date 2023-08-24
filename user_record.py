@@ -49,17 +49,17 @@ class User_Record:
         self.defector_cnt = 0                              # UsRec13: Defector counter
         self.wallet_balance = 0                            # User's wallet balance
         self.wallet_claim_award = 0                        # TODO: No description provided
-        self.wallet_no_claim_refund = 0                    # No claim in the previous month refund (?)
-        self.wallet_reorg_refund = 0                       # Reorganiztion from previous month refund. This refund is awarded to the user if they were reorged in the previous month.
-#        self.cur_month_first_calc = 0                      # Current month's first premium calculation
-        self.cur_month_balance = 0                         # Current month's balance
+        self.claim_refund = 0                    # No claim in the previous month refund (?)
+        self.invalid_refund = 0                       # Reorganiztion from previous month refund. This refund is awarded to the user if they were reorged in the previous month.
+#        self.first_premium_calc = 0                      # Current month's first premium calculation
+        self.premium_balance = 0                         # Current month's balance
         self.cur_month_premium = 0                         # Current month's premium
         self._credit_to_savings_account = env_vars.cov_req / env_vars.total_member_cnt                # amount credited to saving's account
         self.sbg_reorg_cnt = 0                                                                       # additional variable that had to be added later (?) TODO: add desc
-        self.cur_month_second_calc_list = [0] * env_vars.max_period                                  # cur_month_second_calc_list[i] = Current month's second premium calculation from (i+1) period
+        self.second_premium_calc_list = [0] * env_vars.max_period                                  # second_premium_calc_list[i] = Current month's second premium calculation from (i+1) period
         self.prior_month_premium_list = [None] * (env_vars.queueing + 1)                             # prior_month_premium_list[i] = premium from i+1 months ago
         self.total_value_refund_list = [0] * env_vars.max_period                                     # total value of the refund from period (i+1)
-        self.debit_to_savings_account_list = [0] * env_vars.max_period                               # amount debited to savings account in period (i+1)                                                                      
+        self.debt_to_savings_account_list = [0] * env_vars.max_period                               # amount debted to savings account in period (i+1)                                                                      
         
     @property
     def credit_to_savings_account(self):
@@ -70,10 +70,10 @@ class User_Record:
 
 ## Getters with bounds checking for the lists
 #    def get_current_month_second_premium_calculation(self, period):
-#        if (0 < period <= len(self._cur_month_second_calc_list)):
-#            return self._cur_month_second_calc_list[period-1]
+#        if (0 < period <= len(self._second_premium_calc_list)):
+#            return self._second_premium_calc_list[period-1]
 #        else:
-#            raise IndexError("Attempting to access out of bounds index for cur_month_second_calc_list.")
+#            raise IndexError("Attempting to access out of bounds index for second_premium_calc_list.")
 #    
 #    def get_prior_month_premium(self, num_months_ago):
 #        if(0 < num_months_ago <= len(self._prior_month_premium_list)):
@@ -87,11 +87,11 @@ class User_Record:
 #        else:
 #            raise IndexError("Attempting to access out of bounds index for total_value_refund_list")
 #
-#    def get_debit_to_savings_account(self, period):
-#        if(0 < period <= len(self._debit_to_savings_account_list)):
-#            return self._debit_to_savings_account_list[period - 1]
+#    def get_debt_to_savings_account(self, period):
+#        if(0 < period <= len(self._debt_to_savings_account_list)):
+#            return self._debt_to_savings_account_list[period - 1]
 #        else:
-#            raise IndexError("Attempting to access out of bounds index for debit_to_savings_account_list")
+#            raise IndexError("Attempting to access out of bounds index for debt_to_savings_account_list")
 #
 #    @property
 #
@@ -225,39 +225,39 @@ class User_Record:
 #
 ## No claim in the previous month refund
 #    @property
-#    def wallet_no_claim_refund(self):
-#        return self._wallet_no_claim_refund
+#    def claim_refund(self):
+#        return self._claim_refund
 #
-#    @wallet_no_claim_refund.setter
-#    def wallet_no_claim_refund(self, value):
-#        self._wallet_no_claim_refund = value
+#    @claim_refund.setter
+#    def claim_refund(self, value):
+#        self._claim_refund = value
 #
 ## Reorganiztion from previous month refund
 #    @property
-#    def wallet_reorg_refund(self):
-#        return self._wallet_reorg_refund
+#    def invalid_refund(self):
+#        return self._invalid_refund
 #
-#    @wallet_reorg_refund.setter
-#    def wallet_reorg_refund(self, value):
-#        self._wallet_reorg_refund = value
+#    @invalid_refund.setter
+#    def invalid_refund(self, value):
+#        self._invalid_refund = value
 #
 ## Current month's first premium calculation
 #    @property
-#    def cur_month_first_calc(self):
-#        return self._cur_month_first_calc
+#    def first_premium_calc(self):
+#        return self._first_premium_calc
 #
-#    @cur_month_first_calc.setter
-#    def cur_month_first_calc(self, value):
-#        self._cur_month_first_calc = value
+#    @first_premium_calc.setter
+#    def first_premium_calc(self, value):
+#        self._first_premium_calc = value
 #
 ## Current month's balance
 #    @property
-#    def cur_month_balance(self):
-#        return self._cur_month_balance
+#    def premium_balance(self):
+#        return self._premium_balance
 #
-#    @cur_month_balance.setter
-#    def cur_month_balance(self, value):
-#        self._cur_month_balance = value
+#    @premium_balance.setter
+#    def premium_balance(self, value):
+#        self._premium_balance = value
 #
 ## Current month's premium
 #    @property
