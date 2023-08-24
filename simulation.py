@@ -37,10 +37,8 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
 
     while True:
 #        pdb.set_trace()
-        #RSA(env_vars, sys_rec, user_list, period)
-        print_vars(env_vars, sys_rec, pricing_vars, user_list, "before RSAB")
-        RSAB(env_vars, sys_rec, user_list, period)
-        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSAB")
+        rsa_calculate_premiums(env_vars, sys_rec, user_list, period) 
+        
 
         if period == 0:
             uf1_determine_defectors(env_vars, sys_rec, user_list)
@@ -49,15 +47,13 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
             uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
             print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF2")
         
-        #RSB(env_vars, sys_rec, user_list, period)
-        
-        sf4_invalidate_subgroups(sys_rec, user_list)
-        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF4")
+        rsb_payback_debt(env_vars, sys_rec, user_list, period)
 
+        sf4_invalidate_subgroups(sys_rec, user_list)
+        
         uf6_user_quit_function(env_vars, sys_rec, user_list)
         
-        RSC(env_vars, sys_rec, user_list, period)
-        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSC")
+        rsc_calculate_shortfall(env_vars, sys_rec, user_list, period)
 
         sf8_determine_claims(env_vars, user_list)
 

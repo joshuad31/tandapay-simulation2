@@ -14,8 +14,8 @@ class System_Record:
         
         self._shortfall_debt_individual = 0  
         self._shortfall_debt_total = 0        # Fracture Debt total (init to 0)
-        self._cur_month_individual_shortfall = 0
-        self._cur_month_total_shortfall = 0
+        self._shortfall_credit_individual = 0
+        self._shortfall_credit_total = 0
         self._first_premium_calc = 0
         self._claimed = False
 
@@ -119,20 +119,20 @@ class System_Record:
         self._shortfall_debt_total = value
 
     @property
-    def cur_month_individual_shortfall(self):
-        return self._cur_month_individual_shortfall
+    def shortfall_credit_individual(self):
+        return self._shortfall_credit_individual
 
-    @cur_month_individual_shortfall.setter
-    def cur_month_individual_shortfall(self, value):
-        self._cur_month_individual_shortfall = value
+    @shortfall_credit_individual.setter
+    def shortfall_credit_individual(self, value):
+        self._shortfall_credit_individual = value
 
     @property
-    def cur_month_total_shortfall(self):
-        return self._cur_month_total_shortfall
+    def shortfall_credit_total(self):
+        return self._shortfall_credit_total
 
-    @cur_month_total_shortfall.setter
-    def cur_month_total_shortfall(self, value):
-        self._cur_month_total_shortfall = value
+    @shortfall_credit_total.setter
+    def shortfall_credit_total(self, value):
+        self._shortfall_credit_total = value
 
     @property
     def first_premium_calc(self):
