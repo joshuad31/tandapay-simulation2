@@ -3,8 +3,10 @@ import random
 from utility import remove_user
 from user_record import *
 
-def uf6_user_quit_function(env_vars, sys_rec, user_list, will_reorg = [], paid_invalid_user_indices = []):
-   
+def uf6_user_quit_function(env_vars, sys_rec, user_list):
+    paid_invalid_user_indices = []
+    will_reorg = [] 
+
     # generate a list of indices with all of the PAID INVALID users
     if len(paid_invalid_user_indices) == 0:
         for i in range(len(user_list)):

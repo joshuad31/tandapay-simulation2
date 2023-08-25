@@ -130,7 +130,7 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
         sys_rec = System_Record(sys_rec.valid_remaining)  
         #print("\n---------------------------------------\n")
 
-def test_simulation():
+def test_simulation(shouldPrint = False):
     # initialize a list of users
     num_users = 100
     
@@ -151,21 +151,25 @@ def test_simulation():
     role_assignment(env_vars, user_list, num_four_member_groups * 4)
 
     result = run_simulation(env_vars, sys_record, Pricing_Variables(), user_list)
-    
+   
+    if not shouldPrint:
+        return result
+
     if result == ResultsEnum.WIN:
         print("win")
     elif result == ResultsEnum.DRAW:
         print("draw")
     else:
         print("loss")
-    
+   
+    return result
 
 def test_multiple():
     num_wins = 0
     num_draws = 0
     num_losses = 0
     
-    for i in range(100):
+    for i in range(40000):
         result = test_simulation()
         
         if result == ResultsEnum.WIN:
@@ -177,4 +181,4 @@ def test_multiple():
     
     print(f"wins/draws/losses/total: {num_wins}/{num_draws}/{num_losses}/{num_wins + num_draws + num_losses}")
 
-test_simulation()
+test_multiple()
