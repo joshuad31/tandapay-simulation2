@@ -69,8 +69,9 @@ class TandaPaySimulatorV2(object):
     def _active_users(self):
         return [i for i in range(self._total) if self.usr[i]['cur_status'] == 'valid']
 
+
     def start_simulation(self, target_dir=RESULT_DIR):
-        s_time = time.time()
+        s_time = time.time();
         target_dir = os.path.join(target_dir, datetime.now().strftime('%m_%d_%Y__%H_%M_%S'))
         os.makedirs(target_dir, exist_ok=True)
 
