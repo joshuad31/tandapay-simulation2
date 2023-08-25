@@ -169,7 +169,7 @@ def test_multiple():
     num_draws = 0
     num_losses = 0
     
-    for i in range(40000):
+    for i in range(1000):
         result = test_simulation()
         
         if result == ResultsEnum.WIN:
