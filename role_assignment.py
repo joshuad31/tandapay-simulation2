@@ -19,7 +19,7 @@ def role_assignment(env_vars, user_list, num_members_in_four_member_group):
     # This will result in a list of indices between 0 and total_member_cnt (which should be the size of user_list)
     # the size of the list will be member_cnt_defectors, basically allowing us to assign the users at each index
     # to the "defector" role, and thus we have randomly selected member_cnt_defectors defectors in user_list.
-    print(f"total member count: {env_vars.total_member_cnt}")
+#    print(f"total member count: {env_vars.total_member_cnt}")
     defector_indices = random.sample(range(env_vars.total_member_cnt), env_vars.member_cnt_defectors)
     
     # This will store all of the indices that were not selected as defector indices, so that we can effectively

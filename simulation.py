@@ -21,8 +21,12 @@ from user_record import User_Record
 from collections import deque
 import pdb
 
+class ResultsEnum(Enum):
+    WIN = 0
+    LOSS = 1
+    DRAW = 2
+
 def print_vars(env_vars, sys_rec, pricing_vars, user_list, label):
-    
     print(f"----------[printing variables: {label}]----------")
     print(f"number of defector/skipped/invalid: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}")
     print(f"defector/skipped/invalid shortfall: {sys_rec.defection_shortfall}/{sys_rec.skip_shortfall}/{sys_rec.invalid_shortfall}")
@@ -42,10 +46,8 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
 
         if period == 0:
             uf1_determine_defectors(env_vars, sys_rec, user_list)
-            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF1")
         else:
             uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
-            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF2")
         
         rsb_payback_debt(env_vars, sys_rec, user_list, period)
 
@@ -76,8 +78,9 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
         # if this happens, win no matter what, so we don't even have to do the
         # advance period logic to advance to the next period.
         if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.50:
-            print("WIN: valid_remaining below 50% of total_member_cnt")
-            break
+            return ResultsEnum.WIN
+            #print("WIN: valid_remaining below 50% of total_member_cnt")
+            #break
 
         period += 1
         if period < 9:
@@ -92,12 +95,14 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
                     # draw condition: 3 periods in a row where nobody quits or leaves and
                     # valid_remaining is less than 60% of total_member_cnt
                     if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.60:
-                        print("DRAW: 3 periods in a row where nobody quits or leaves, and valid_remaining below 60% of total_member_cnt")
+                        return ResultsEnum.DRAW
+                        #print("DRAW: 3 periods in a row where nobody quits or leaves, and valid_remaining below 60% of total_member_cnt")
                     else:
-                        print("LOSS: 3 periods in a row where nobody quits or leaves, and valid_remaining above 60% of total_member_cnt")
+                        return ResultsEnum.LOSS
+                        #print("LOSS: 3 periods in a row where nobody quits or leaves, and valid_remaining above 60% of total_member_cnt")
                     
                     # end simulation no matter what if this happens
-                    break
+                    #break
 
                 last_three_quit_cnt.popleft()
                 last_three_skipped_cnt.popleft()
@@ -105,22 +110,25 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
             # win condition: If we're in the final period and valid_remaining is
             # below 55 percent of total_member_cnt
             if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.55:
-                print("WIN: final period completed with valid_remaining below 55% of total_member_cnt")
+                return ResultsEnum.WIN
+                #print("WIN: final period completed with valid_remaining below 55% of total_member_cnt")
 
             # draw condition: If we're in the final period and valid_remaining is
             # less than 65 percent, but not less than 55 percent of total_member_cnt
             elif (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.65:
-                print("DRAW: final period completed with valid_remaining below 65% of total_member_cnt")
+                return ResultsEnum.DRAW
+                #print("DRAW: final period completed with valid_remaining below 65% of total_member_cnt")
             
             # loss condition: Reached the final period with valid_remaining still above 65% of total_member_cnt
             else:
-                print("LOSS: reached final period with valid_remaining above 65% of total_member_cnt")
+                return ResultsEnum.LOSS
+                #print("LOSS: reached final period with valid_remaining above 65% of total_member_cnt")
             
             # always end the simulation in the final period.
             break
 
         sys_rec = System_Record(sys_rec.valid_remaining)  
-        print("\n---------------------------------------\n")
+        #print("\n---------------------------------------\n")
 
 def test_simulation():
     # initialize a list of users
@@ -142,7 +150,31 @@ def test_simulation():
     # assign roles
     role_assignment(env_vars, user_list, num_four_member_groups * 4)
 
-    # execute simulation with these values
-    run_simulation(env_vars, sys_record, Pricing_Variables(), user_list)
+    result = run_simulation(env_vars, sys_record, Pricing_Variables(), user_list)
+    
+    if result == ResultsEnum.WIN:
+        print("win")
+    elif result == ResultsEnum.DRAW:
+        print("draw")
+    else:
+        print("loss")
+    
+
+def test_multiple():
+    num_wins = 0
+    num_draws = 0
+    num_losses = 0
+    
+    for i in range(100):
+        result = test_simulation()
+        
+        if result == ResultsEnum.WIN:
+            num_wins += 1
+        elif result == ResultsEnum.DRAW:
+            num_draws += 1
+        else:
+            num_losses += 1
+    
+    print(f"wins/draws/losses/total: {num_wins}/{num_draws}/{num_losses}/{num_wins + num_draws + num_losses}")
 
 test_simulation()

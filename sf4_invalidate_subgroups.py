@@ -18,11 +18,11 @@ def sf4_invalidate_subgroups(sys_rec, user_list):
             sys_rec.valid_remaining -= 1
             invalid_indices.append(i)
 
-        # 2. set invalid_refund to cur_month_1st_calc
-        user.invalid_refund = sys_rec.cur_month_1st_calc
+        # 2. set invalid_refund to first_premium_calc
+        user.invalid_refund = sys_rec.first_premium_calc
         
         # 3. THIS STEP is incorrect and nolonger makes sense. User nolonger has this variable
-        # user.cur_month_1st_calc = 0
+        # user.first_premium_calc = 0
 
     # Calculate individual shortfall -- this step should happen because invalid_cnt has a setter which will automatically calculate this variable.
 
