@@ -181,4 +181,3 @@ def test_multiple():
     
     print(f"wins/draws/losses/total: {num_wins}/{num_draws}/{num_losses}/{num_wins + num_draws + num_losses}")
 
-test_multiple()

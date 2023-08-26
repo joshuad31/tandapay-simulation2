@@ -9,9 +9,10 @@ from PySide2.QtCore import Qt, QSize
 
 from environment_variables import *
 from pricing_variables import *
+from simulation_info import *
 
 class SettingsDialog(QDialog):
-    def __init__(self, env_vars, pricing_vars, parent=None):
+    def __init__(self, env_vars, pricing_vars, simulation_info, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setFixedSize(800, 600)  # Fixed size for the settings window
@@ -214,6 +215,11 @@ class SettingsDialog(QDialog):
         # Sample Size
         self.sample_size_spinbox = QSpinBox()
         self.sample_size_spinbox.setMinimum(1)
+        self.sample_size_spinbox.setMaximum(2147483647)
+        self.sample_size_spinbox.setValue(simulation_info.sample_size)
+        self.sample_size_spinbox.valueChanged.connect(
+            lambda value: self.updateValue(simulation_info, 'sample_size', value)
+        )
         self.sample_size_spinbox.setFixedWidth(self.widget_width)
         sample_size_label = QLabel("Sample Size")
         sample_size_label.setToolTip("Number of times the simulation will run")

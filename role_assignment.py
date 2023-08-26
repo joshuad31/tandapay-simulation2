@@ -34,7 +34,7 @@ def role_assignment(env_vars, user_list, num_members_in_four_member_group):
     unity_indices = [i for i in non_defector_indices if i not in low_morale_indices]
     
     # check to make sure the correct number were selected
-    assert (len(unity_indices) == env_vars.member_cnt_unity), "Error: member_cnt_unity != len(unity_indices)"
+    assert (len(unity_indices) == env_vars.member_cnt_unity), f"Error: member_cnt_unity {env_vars.member_cnt_unity} != len(unity_indices) {len(unity_indices)}"
 
     # assign each user's primary role
     for i in range(env_vars.total_member_cnt):

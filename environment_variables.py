@@ -27,7 +27,9 @@ class Environment_Variables:
     # number of members in each secondary role   
         self._member_cnt_independent = 0      # Number of members with the secondary role "Independent"
         self._member_cnt_dependent = 0        # Number of members with the secondary role "Dependent"
-    
+
+        self.calculate_member_variables()
+
     def calculate_member_variables(self):
         # calculate number of members in each primary role
         self._member_cnt_defectors = int(self._total_member_cnt * self._perc_honest_defectors)
