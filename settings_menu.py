@@ -24,8 +24,6 @@ class SettingsDialog(QDialog):
 
         self.widget_width = 120
 
-        env_vars = Environment_Variables()
-
         # Left column
         self.left_layout = QVBoxLayout()
 
@@ -139,7 +137,7 @@ class SettingsDialog(QDialog):
         self.left_layout.addLayout(ev9_hbox)
 
         # EV10
-        self.ev10_textbox = QLineEdit(str(env_vars.cov_req))  # Initialize with 0 or any starting value
+        self.ev10_textbox = QLineEdit(str(env_vars.cov_req)) 
         self.ev10_textbox.setReadOnly(True)
         self.ev10_textbox.setFixedWidth(self.widget_width)
         ev10_label = QLabel("EV10: Coverage Requirement")
@@ -149,19 +147,20 @@ class SettingsDialog(QDialog):
         ev10_hbox.addWidget(self.ev10_textbox)
         self.left_layout.addLayout(ev10_hbox)
 
-        # EV 11
-        self.ev11_combobox = QComboBox()
-        self.ev11_combobox.addItem("0")
-        self.ev11_combobox.addItem("1")
-        self.ev11_combobox.addItem("2")
-        self.ev11_combobox.addItem("3")
-        self.ev11_combobox.setFixedWidth(self.widget_width)
+        # EV11 
+        self.ev11_spinbox = QSpinBox()
+        self.ev11_spinbox.setMinimum(0)
+        self.ev11_spinbox.setMaximum(3)
+        self.ev11_spinbox.setValue(env_vars.queueing)
+        self.ev11_spinbox.valueChanged.connect(lambda value: self.updateValue(env_vars, 'queueing', value))
+        self.ev11_spinbox.setFixedWidth(self.widget_width)
         ev11_label = QLabel("EV11: Queuing")
         ev11_label.setToolTip("Number of periods to do queuing for. Queuing delays repayments")
         ev11_hbox = QHBoxLayout()
         ev11_hbox.addWidget(ev11_label)
-        ev11_hbox.addWidget(self.ev11_combobox)
+        ev11_hbox.addWidget(self.ev11_spinbox)
         self.left_layout.addLayout(ev11_hbox)
+
 
         # EV12 
         self.ev12_textbox = QLineEdit("10")  # Initialize with 0 or any starting value
@@ -183,12 +182,12 @@ class SettingsDialog(QDialog):
         self.top_layout = QVBoxLayout()
 
         pv_info = [
-            ("PV1: Premium Increase Floor", "Premium Price Increase Floor"),
-            ("PV2: Premium Increase Ceiling", "Premium Price Increase Ceiling"),
-            ("PV3: Premium Increase Cumulative", "Premium Price Increase Cumulative"),
-            ("PV4: Policyholders Leave Floor", "Policyholders Leave Floor"),
-            ("PV5: Policyholders Leave Ceiling", "Policyholders Leave Ceiling"),
-            ("PV6: Policyholders Leave Cumulative", "Policyholders Leave Cumulative")
+            ("PV1: Premium Increase Floor", "Premium Price Increase Floor", 'prem_inc_floor'),
+            ("PV2: Premium Increase Ceiling", "Premium Price Increase Ceiling", 'prem_inc_ceiling'),
+            ("PV3: Premium Increase Cumulative", "Premium Price Increase Cumulative", 'prem_inc_cum'),
+            ("PV4: Policyholders Leave Floor", "Policyholders Leave Floor", 'ph_leave_floor'),
+            ("PV5: Policyholders Leave Ceiling", "Policyholders Leave Ceiling", 'ph_leave_ceiling'),
+            ("PV6: Policyholders Leave Cumulative", "Policyholders Leave Cumulative", 'ph_leave_cum')
         ]
 
         # PV1 - PV6
@@ -196,6 +195,10 @@ class SettingsDialog(QDialog):
             self.pv_spinbox = QSpinBox()
             self.pv_spinbox.setMinimum(0)
             self.pv_spinbox.setMaximum(100)
+            self.pv_spinbox.setValue(getattr(pricing_vars, pv_info[i][2]) * 100)
+            self.pv_spinbox.valueChanged.connect(
+                lambda value, var_name=pv_info[i][2]: self.updateValue(pricing_vars, var_name, value / 100)
+            )
             self.pv_spinbox.setFixedWidth(self.widget_width)
             pv_label = QLabel(pv_info[i][0])
             pv_label.setToolTip(pv_info[i][1])
@@ -239,9 +242,9 @@ class SettingsDialog(QDialog):
         self.main_layout.addLayout(self.two_column_layout)
 
         # OK and Cancel buttons
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok)
         self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
+#        self.button_box.rejected.connect(self.reject)
         self.main_layout.addWidget(self.button_box)
 
     def updateValue(self, obj, attribute_name, value):

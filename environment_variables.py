@@ -10,8 +10,8 @@ class Environment_Variables:
         self._dependent_thres = 2              # EV7: What is the member threshold needed for dependent members to defect? (allowed values: 2, 3)
         self._low_morale_quit_prob = 1/3       # EV9: Probability a low-morale member will quit if forced to reorg (Must be 1/3)
         
-    ### All member variables past this point must be calculated from the others:
-        self._cov_req = 0                     # EV10: Coverage Requirement. (must be total_member_cnt * monthly_premium)
+    # EV10: Coverage Requirement. (must be total_member_cnt * monthly_premium)
+        self._cov_req = self._total_member_cnt * self._monthly_premium 
 
     # NOTE: this was retroactively added later on
         self._queueing = 3                    # EV11: Queueing.
