@@ -184,10 +184,10 @@ class SettingsDialog(QDialog):
 
         pv_info = [
             ("PV1: Premium Increase Floor", "Premium Price Increase Floor", 'prem_inc_floor'),
-            ("PV2: Premium Increase Ceiling", "Premium Price Increase Ceiling", 'prem_inc_ceiling'),
-            ("PV3: Premium Increase Cumulative", "Premium Price Increase Cumulative", 'prem_inc_cum'),
-            ("PV4: Policyholders Leave Floor", "Policyholders Leave Floor", 'ph_leave_floor'),
-            ("PV5: Policyholders Leave Ceiling", "Policyholders Leave Ceiling", 'ph_leave_ceiling'),
+            ("PV2: Policyholders Leave Floor", "Policyholders Leave Floor", 'ph_leave_floor'),
+            ("PV3: Premium Increase Ceiling", "Premium Price Increase Ceiling", 'prem_inc_ceiling'),
+            ("PV4: Policyholders Leave Ceiling", "Policyholders Leave Ceiling", 'ph_leave_ceiling'),
+            ("PV5: Premium Increase Cumulative", "Premium Price Increase Cumulative", 'prem_inc_cum'),
             ("PV6: Policyholders Leave Cumulative", "Policyholders Leave Cumulative", 'ph_leave_cum')
         ]
 
