@@ -1,12 +1,12 @@
 
 class Environment_Variables:
     def __init__(self):
-        self._total_member_cnt = 0             # EV1: How many members are in the group?
+        self._total_member_cnt = 100             # EV1: How many members are in the group?
         self._monthly_premium = 100            # EV2: Monthly premium
-        self._chance_of_claim = .25            # EV3: What is the chance of a claim each month? (allowed values: 25 - 75)
-        self._perc_honest_defectors = .30      # EV4: What is the percentage of honest defectors? (allowed values: 10 - 45)
-        self._perc_low_morale = .10            # EV5: What is the percentage of low-morale members? (allowed values: 10 - 30)
-        self._perc_independent = .20           # EV6: What is the percentage of members who are unwilling to act alone? (allowed values: 20 - 80)
+        self._chance_of_claim = .25            # EV3: What is the chance of a claim each month? (allowed values: .25 - .75)
+        self._perc_honest_defectors = .20      # EV4: What is the percentage of honest defectors? (allowed values: .10 - .45)
+        self._perc_low_morale = .10            # EV5: What is the percentage of low-morale members? (allowed values: .10 - .30)
+        self._perc_independent = .20           # EV6: What is the percentage of members who are unwilling to act alone? (allowed values: .20 - .80)
         self._dependent_thres = 2              # EV7: What is the member threshold needed for dependent members to defect? (allowed values: 2, 3)
         self._low_morale_quit_prob = 1/3       # EV9: Probability a low-morale member will quit if forced to reorg (Must be 1/3)
         

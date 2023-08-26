@@ -2,11 +2,14 @@ import sys
 from PySide2.QtWidgets import *
 from PySide2.QtCore import Qt, QSize
 
-
-import sys
 from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QLabel, QWidget, QDialog, QTextEdit
 from PySide2.QtGui import QFont
 from PySide2.QtCore import Qt, QSize
+
+from environment_variables import *
+from pricing_variables import *
+
+from settings_menu import *
 
 class MainMenu(QMainWindow):
     def __init__(self):
@@ -26,14 +29,18 @@ class MainMenu(QMainWindow):
         layout.addWidget(title)
         layout.addStretch(1)
 
-        self.single_run_btn = QPushButton("Single Run")
-        self.single_run_btn.clicked.connect(self.single_run)
-        layout.addWidget(self.single_run_btn)
+        self.run_simulation_btn = QPushButton("Run Simulation")
+        self.run_simulation_btn.clicked.connect(self.run_simulation)
+        layout.addWidget(self.run_simulation_btn)
 
-        self.matrix_run_btn = QPushButton("Matrix Run")
-        self.matrix_run_btn.clicked.connect(self.matrix_run)
-        layout.addWidget(self.matrix_run_btn)
+        self.history_btn = QPushButton("History")
+        self.history_btn.clicked.connect(self.history)
+        layout.addWidget(self.history_btn)
 
+        # create variables that could be changed in settings
+        self.env_vars = Environment_Variables()
+        self.pricing_vars = Pricing_Variables() 
+        
         self.settings_btn = QPushButton("Settings")
         self.settings_btn.clicked.connect(self.open_settings)
         layout.addWidget(self.settings_btn)
@@ -50,16 +57,17 @@ class MainMenu(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-    def single_run(self):
-        self.window = PlaceholderWindow("Single Run")
+
+    def run_simulation(self):
+        self.window = PlaceholderWindow("Run Simulation")
         self.window.show()
 
-    def matrix_run(self):
-        self.window = PlaceholderWindow("Matrix Run")
+    def history(self):
+        self.window = PlaceholderWindow("History")
         self.window.show()
 
     def open_settings(self):
-        self.settings_dialog = SettingsDialog(self)
+        self.settings_dialog = SettingsDialog(self.env_vars, self.pricing_vars, self)
         self.settings_dialog.show()
 
     def open_about(self):
@@ -104,48 +112,6 @@ class PlaceholderWindow(QMainWindow):
         label = QLabel("Results will be shown here.")
         label.setAlignment(Qt.AlignCenter)
         self.setCentralWidget(label)
-
-class SettingsDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Settings")
-        self.setFixedSize(800, 600)  # Fixed size for the settings window
-
-        # Main layout for settings
-        self.main_layout = QVBoxLayout(self)
-
-        # Tabs for Single and Matrix run variables
-        self.tabs = QTabWidget()
-        self.single_run_tab = QWidget()
-        self.matrix_run_tab = QWidget()
-        about_dialog = QDialog(self)
-        about_dialog.setWindowTitle("About")
-        layout = QVBoxLayout()
-        text_edit = QTextEdit()
-        text_edit.setPlainText("About content here...\nLink to project...\nLicense info...")
-        layout.addWidget(text_edit)
-        about_dialog.setLayout(layout)
-        about_dialog.exec_()
-
-        # Single Run Tab
-        self.layout_single_run = QVBoxLayout(self.single_run_tab)
-        self.single_run_spinbox = QSpinBox()
-        self.layout_single_run.addWidget(self.single_run_spinbox)
-        self.tabs.addTab(self.single_run_tab, "Single Run Variables")
-
-        # Matrix Run Tab
-        self.layout_matrix_run = QVBoxLayout(self.matrix_run_tab)
-        self.matrix_run_spinbox = QSpinBox()
-        self.layout_matrix_run.addWidget(self.matrix_run_spinbox)
-        self.tabs.addTab(self.matrix_run_tab, "Matrix Run Variables")
-
-        self.main_layout.addWidget(self.tabs)
-
-        # OK and Cancel buttons
-        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
-        self.main_layout.addWidget(self.button_box)
 
 
 if __name__ == "__main__":
