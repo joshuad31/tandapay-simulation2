@@ -18,6 +18,8 @@ from system_record import System_Record
 from pricing_variables import Pricing_Variables
 from user_record import User_Record
 
+from diagnostics import *
+
 from collections import deque
 import pdb
 
@@ -26,40 +28,69 @@ class ResultsEnum(Enum):
     LOSS = 1
     DRAW = 2
 
+def print_user_info(user_list, index: int, label):
+    if index == -1:
+        return
+
+    print(f"----------[printing user info: {label}]----------")
+    print(f"sbg status = {user_list[index].sbg_status}")
+    print(f"invalid_refund = {user_list[index].invalid_refund}")
+    print(f"----------[printing user info: {label}]----------")
+
 def print_vars(env_vars, sys_rec, pricing_vars, user_list, label):
     print(f"----------[printing variables: {label}]----------")
-    print(f"number of defector/skipped/invalid: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}")
+    print(f"number of defector/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}")
     print(f"defector/skipped/invalid shortfall: {sys_rec.defection_shortfall}/{sys_rec.skip_shortfall}/{sys_rec.invalid_shortfall}")
     print(f"valid_remaining: {sys_rec.valid_remaining}")
-    print(f"user[0] balance: {user_list[0].premium_balance}")
+
+    sum_valid = 0
+    for user in user_list:
+        if user.sbg_status == ValidityEnum.VALID:
+            sum_valid += 1
+
+    print(f"number of users marked as valid: {sum_valid}")
+
     print(f"----------[finished printing:  {label}]----------\n")
 
-def run_simulation(env_vars, sys_rec, pricing_vars, user_list):
+def run_simulation(env_vars, sys_rec, pricing_vars, user_list, diagnostics_object = Diagnostics()):
     period = 0
     last_three_quit_cnt = deque()
     last_three_skipped_cnt = deque()
+    
+    tracking = -1
 
     while True:
 #        pdb.set_trace()
         rsa_calculate_premiums(env_vars, sys_rec, user_list, period) 
-        
+#        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSA")        
 
         if period == 0:
             uf1_determine_defectors(env_vars, sys_rec, user_list)
+#            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF1")
         else:
-            uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
+            uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period, diagnostics_object)
+            print_user_info(user_list, tracking, "after SF2")
+#            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF2")        
         
         rsb_payback_debt(env_vars, sys_rec, user_list, period)
+#        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSB")        
 
-        sf4_invalidate_subgroups(sys_rec, user_list)
-        
+        tracking = sf4_invalidate_subgroups(sys_rec, user_list)
+#        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF4")        
+        print_user_info(user_list, tracking, "after SF4")
+
         uf6_user_quit_function(env_vars, sys_rec, user_list)
+#        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF6")        
         
         rsc_calculate_shortfall(env_vars, sys_rec, user_list, period)
+#        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSC")        
 
         sf8_determine_claims(env_vars, user_list)
+#        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF8")        
 
-        sf7_reorganization_of_users(env_vars, sys_rec, user_list)
+        sf7_reorganization_of_users(env_vars, sys_rec, user_list, tracking)
+        print_user_info(user_list, tracking, "after SF7")
+#        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF7")        
 
         queueing_function(user_list)
 

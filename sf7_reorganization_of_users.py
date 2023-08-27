@@ -79,6 +79,11 @@ def combine_groups(group1, group2):
     new_size = group1.group_size + group2.group_size
     new_indices = group1.indices + group2.indices
 
+    if new_size > 7:
+        print(f"GROUP OF SIZE GREATER THAN 7 BEING CREATED:")
+        print(f"group1: {group1}\ngroup2: {group2}")
+        print(f"NEW SIZE: {new_size}")
+
     if group1.group_size == group2.group_size:
         new_num = random.choice([group1.group_num, group2.group_num])
     elif group1.group_size > group2.group_size:
@@ -106,12 +111,11 @@ def test_combine_size():
     for group in groups:
         print(f"Group {group.group_num} of size {group.group_size} with indices: {group.indices}")
 
-
-def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
+def sf7_reorganization_of_users(env_vars, sys_rec, user_list, tracking = -1):
     groups = [None] * len(user_list)
     for i, user in enumerate(user_list):
         # skip invalid user
-        if user.sbg_status != ValidityEnum.VALID:
+        if user.sbg_status == ValidityEnum.NR:
             continue
         
         # build the groups list 
@@ -129,9 +133,13 @@ def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
     groups = combine_size(groups, 1, [4, 5, 6])
     
     # extrapolate data from reorganized groups back into users
+
     for group in groups:
 #        print(f"group: {group}")
         for i in group.indices:
+            if tracking == i:
+                print(f"tracked user: group = {group}, members_cur_sbg = {user_list[i].members_cur_sbg}")
+
             # if this is true, that means they reorged. Perform
             # the following operations only for users who have reorged...
             if user_list[i].members_cur_sbg < 4:
@@ -149,10 +157,6 @@ def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
             user_list[i].members_cur_sbg = group.group_size
             user_list[i].sbg_status = ValidityEnum.VALID
             
-
-
-
-
 
 
 

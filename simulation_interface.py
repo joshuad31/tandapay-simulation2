@@ -15,6 +15,8 @@ from settings_menu import *
 
 from simulation import *
 
+from diagnostics import *
+
 class MainMenu(QMainWindow):
     def __init__(self):
         super().__init__()

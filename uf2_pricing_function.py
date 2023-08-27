@@ -3,9 +3,11 @@ from pricing_variables import Pricing_Variables
 from system_record import System_Record
 from user_record import *
 from utility import remove_user
+from diagnostics import *
 import random
 
-def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_period):
+
+def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_period, diagnostics_object = None):
     # Calculate the pricing slope:
     ph_leave_delta = pricing_vars.ph_leave_ceiling - pricing_vars.ph_leave_floor
     prem_inc_delta = pricing_vars.prem_inc_ceiling - pricing_vars.prem_inc_floor
@@ -16,8 +18,12 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
     # iterate through all of the active users
     for user_index in range(len(user_list)):
         user = user_list[user_index]
+#        if user.total_value_refund_list[current_period] != 0:
+#            print(f"{user_index}: total_value_refund: {user.total_value_refund_list[current_period]}")
+
         # if this user is not an active user (e.g. sbg status != VALID), skip them
         if user.sbg_status != ValidityEnum.VALID:
+#            print(f"{user_index}: skipped")
             continue
         
         # Determine if this user is a qualifying user or if they should be skipped
@@ -25,10 +31,12 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
         threshold = pricing_vars.prem_inc_floor * (env_vars.cov_req / env_vars.total_member_cnt)
         # skip this user because they are not qualifying
         if cm_sec_calc < threshold:
+#            print(f"cm_sec_calc = {cm_sec_calc}, threshold = {threshold}")
             continue
         
         # 1. IF total_value_refund_periodx (current period) is equal to zero
         if user.total_value_refund_list[current_period] == 0:
+#            print("total_value_refund == 0")
             # 1a. iterate through the previous periods in order of Most Recent -> Least Recent
             matching = -1
             for i in range(current_period - 1, -1, -1):
@@ -44,7 +52,7 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
             pm_sec_calc = user.second_premium_calc_list[matching]
             one_month_increase_percentage = (cm_sec_calc / pm_sec_calc) - 1
             
-            #print(f"one month increase percentage (with -1): f{one_month_increase_percentage}")
+#            print(f"one month increase percentage (with -1): {one_month_increase_percentage}")
 
             # 1c. one_month_increase_percentage should not exceed prem_inc_ceiling
             one_month_increase_percentage = min(one_month_increase_percentage, pricing_vars.prem_inc_ceiling)
@@ -69,17 +77,22 @@ def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_per
                 leave_list.append(user_index)
         # 2. ELSE IF total_value_refund (current period) is NOT equal to 0
         elif user.total_value_refund_list[current_period] != 0:
+            print("total_value_refund != 0")
+
             # 2a. if current_month_sec_calc is less than or equal to 0, continue to next user
             if user.second_premium_calc_list[current_period] <= 0:
                 continue
             
             # evaluate user for cumulative_increase_percentage
+            print(f"period {current_period}: second_prem_calc = {user.second_premium_calc_list[current_period]}, threshold = {threshold}")
             if user.second_premium_calc_list[current_period] >= threshold:
+                print("if statement executed")
                 if cumulative_increase_percentage(env_vars, pricing_vars, user, current_period):
                     leave_list.append(user_index)
 
         
             # 2b. else, continue to the next user (no code needed).
+
 
     # 3. Evaluate leave list
     for i in leave_list:
@@ -96,19 +109,16 @@ def cumulative_increase_percentage(env_vars, pricing_vars, user, current_period,
         return False
     
     # 1. calculate average for current_month_sec_calc for last 3 periods
-    debug_total_iterations = 0
     average = 0
     for i in range(current_period, current_period - NUM_MONTHS_TO_AVG, -1):
         average += user.second_premium_calc_list[i]
-        debug_total_iterations += 1
 
-    assert debug_total_iterations == NUM_MONTHS_TO_AVG, f"loop iterated more than {NUM_MONTHS_TO_AVG} times!"
     average /= NUM_MONTHS_TO_AVG
 
-    # 2. cumulative_increase_percentage = (average / (cov_req / total_member_cnt)) - 1
-    cumulative_increase_percentage = (average / (env_vars.cov_req / env_vars.total_member_cnt)) - 1
-    
-    if cumulative_increase_percentage > pricing_vars.prem_inc_cum:
+    # 2. cum_increase_percentage = (average / (cov_req / total_member_cnt)) - 1
+    cum_increase_percentage = (average / (env_vars.cov_req / env_vars.total_member_cnt)) - 1
+
+    if cum_increase_percentage > pricing_vars.prem_inc_cum:
         random_number = random.uniform(0, 1)
         if random_number < pricing_vars.ph_leave_cum:
             return True
