@@ -1,10 +1,13 @@
 .idea/
 venv/
+myenv/
 __pycache__
 local_settings.py
 note.txt
 result/
 input.txt
 output.txt
+simulation_interface.spec
 process_notion.py
-
+build/
+dist/

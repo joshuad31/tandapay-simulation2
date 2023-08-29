@@ -64,20 +64,39 @@ def combine_size(group_list, group_size, potential_sizes, reorged = None):
 
 #    print(f"group_list: {group_list}")
 #    print(f"to_combine: {to_combine}")
+    to_remove = []
+    to_append = []
     for groups in to_combine:
         group1 = groups[0]
         group2 = groups[1]
         new_group = combine_groups(group_list[group1], group_list[group2])
-        del group_list[group1]
-        del group_list[group2]
-        group_list.append(new_group)
+        
+#        to_remove.append(group1)
+#        to_remove.append(group2)
+        group_list[group1] = None
+        group_list[group2] = None
+        to_append.append(new_group)
+        #del group_list[group1]
+        #del group_list[group2]
+        #group_list.append(new_group)
 
+    for g in to_append:
+        group_list.append(g)
+
+    group_list = [elem for elem in group_list if elem is not None]
+
+#    print(f"group_list at end: {group_list}")
     return group_list
 
 def combine_groups(group1, group2):
     new_num = 0
     new_size = group1.group_size + group2.group_size
     new_indices = group1.indices + group2.indices
+
+    if new_size > 7:
+        print(f"GROUP OF SIZE GREATER THAN 7 BEING CREATED:")
+        print(f"group1: {group1}\ngroup2: {group2}")
+        print(f"NEW SIZE: {new_size}")
 
     if group1.group_size == group2.group_size:
         new_num = random.choice([group1.group_num, group2.group_num])
@@ -106,12 +125,11 @@ def test_combine_size():
     for group in groups:
         print(f"Group {group.group_num} of size {group.group_size} with indices: {group.indices}")
 
-
-def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
+def sf7_reorganization_of_users(env_vars, sys_rec, user_list, tracking = -1):
     groups = [None] * len(user_list)
     for i, user in enumerate(user_list):
         # skip invalid user
-        if user.sbg_status != ValidityEnum.VALID:
+        if user.sbg_status == ValidityEnum.NR:
             continue
         
         # build the groups list 
@@ -123,15 +141,21 @@ def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
     # filter the list to only have valid groups, no "none" elements
     groups = [x for x in groups if x is not None]
 
+#    breakpoint()
+
     # perform the reorganization operation
     groups = combine_size(groups, 3, [2, 3, 4])
     groups = combine_size(groups, 2, [3, 4, 5])
     groups = combine_size(groups, 1, [4, 5, 6])
     
     # extrapolate data from reorganized groups back into users
+
     for group in groups:
 #        print(f"group: {group}")
         for i in group.indices:
+            if tracking == i:
+                print(f"tracked user: group = {group}, members_cur_sbg = {user_list[i].members_cur_sbg}")
+
             # if this is true, that means they reorged. Perform
             # the following operations only for users who have reorged...
             if user_list[i].members_cur_sbg < 4:
@@ -149,10 +173,6 @@ def sf7_reorganization_of_users(env_vars, sys_rec, user_list):
             user_list[i].members_cur_sbg = group.group_size
             user_list[i].sbg_status = ValidityEnum.VALID
             
-
-
-
-
 
 
 
