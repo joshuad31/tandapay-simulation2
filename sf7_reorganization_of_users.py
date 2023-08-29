@@ -71,18 +71,19 @@ def combine_size(group_list, group_size, potential_sizes, reorged = None):
         group2 = groups[1]
         new_group = combine_groups(group_list[group1], group_list[group2])
         
-        to_remove.append(group1)
-        to_remove.append(group2)
+#        to_remove.append(group1)
+#        to_remove.append(group2)
+        group_list[group1] = None
+        group_list[group2] = None
         to_append.append(new_group)
         #del group_list[group1]
         #del group_list[group2]
         #group_list.append(new_group)
 
-    for i in to_remove:
-        del group_list[i]
-
     for g in to_append:
         group_list.append(g)
+
+    group_list = [elem for elem in group_list if elem is not None]
 
 #    print(f"group_list at end: {group_list}")
     return group_list

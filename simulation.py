@@ -56,8 +56,6 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list, diagnostics_objec
     period = 0
     last_three_quit_cnt = deque()
     last_three_skipped_cnt = deque()
-    
-    tracking = -1
 
     while True:
 #        pdb.set_trace()
@@ -69,15 +67,15 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list, diagnostics_objec
 #            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF1")
         else:
             uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period, diagnostics_object)
-            print_user_info(user_list, tracking, "after SF2")
+#            print_user_info(user_list, tracking, "after SF2")
 #            print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF2")        
         
         rsb_payback_debt(env_vars, sys_rec, user_list, period)
 #        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after RSB")        
 
-        tracking = sf4_invalidate_subgroups(sys_rec, user_list)
+        sf4_invalidate_subgroups(sys_rec, user_list)
 #        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF4")        
-        print_user_info(user_list, tracking, "after SF4")
+#        print_user_info(user_list, tracking, "after SF4")
 
         uf6_user_quit_function(env_vars, sys_rec, user_list)
 #        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after UF6")        
@@ -88,8 +86,8 @@ def run_simulation(env_vars, sys_rec, pricing_vars, user_list, diagnostics_objec
         sf8_determine_claims(env_vars, user_list)
 #        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF8")        
 
-        sf7_reorganization_of_users(env_vars, sys_rec, user_list, tracking)
-        print_user_info(user_list, tracking, "after SF7")
+        sf7_reorganization_of_users(env_vars, sys_rec, user_list)
+#        print_user_info(user_list, tracking, "after SF7")
 #        print_vars(env_vars, sys_rec, pricing_vars, user_list, "after SF7")        
 
         queueing_function(user_list)

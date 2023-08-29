@@ -1,6 +1,8 @@
 from utility import is_approx_equal
 from user_record import *
 
+import sys
+
 def rsa_calculate_premiums(env_vars, sys_rec, user_list, period):
     if period == 0:
         for user in user_list:
@@ -87,6 +89,8 @@ def rsc_calculate_shortfall(env_vars, sys_rec, user_list, period):
 
         # add to the sum
         premium_balance_sum += user.premium_balance
+#        print(f"{user.premium_balance}", end=" + ")
+        sys.stdout.flush()
 
     # finally, make sure the sum of current month balances is equal to cov_req. If not, there is an error
     # NOTE: Due to the arithmetic being performed, sometimes there is a floating point error here. Hence approx equal function
