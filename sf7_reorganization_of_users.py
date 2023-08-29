@@ -64,14 +64,27 @@ def combine_size(group_list, group_size, potential_sizes, reorged = None):
 
 #    print(f"group_list: {group_list}")
 #    print(f"to_combine: {to_combine}")
+    to_remove = []
+    to_append = []
     for groups in to_combine:
         group1 = groups[0]
         group2 = groups[1]
         new_group = combine_groups(group_list[group1], group_list[group2])
-        del group_list[group1]
-        del group_list[group2]
-        group_list.append(new_group)
+        
+        to_remove.append(group1)
+        to_remove.append(group2)
+        to_append.append(new_group)
+        #del group_list[group1]
+        #del group_list[group2]
+        #group_list.append(new_group)
 
+    for i in to_remove:
+        del group_list[i]
+
+    for g in to_append:
+        group_list.append(g)
+
+#    print(f"group_list at end: {group_list}")
     return group_list
 
 def combine_groups(group1, group2):
@@ -126,6 +139,8 @@ def sf7_reorganization_of_users(env_vars, sys_rec, user_list, tracking = -1):
     
     # filter the list to only have valid groups, no "none" elements
     groups = [x for x in groups if x is not None]
+
+#    breakpoint()
 
     # perform the reorganization operation
     groups = combine_size(groups, 3, [2, 3, 4])
