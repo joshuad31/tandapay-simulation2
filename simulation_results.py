@@ -29,4 +29,6 @@ class Simulation_Results:
     def __init__(self):
         self.result = None
         self.defectors = None
-
+        self.skipped = None
+        self.invalid = None
+        self.quit = None
