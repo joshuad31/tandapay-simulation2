@@ -1,6 +1,6 @@
 from simulation_results import *
 
-class Result_Aggregator:
+class Results_Aggregator:
     def __init__(self, sample_size, store_results = False):
         # will store results here if store_results = True
         self.results = []
@@ -22,8 +22,8 @@ class Result_Aggregator:
         self.avg_defectors = 0
         self.min_defectors = 1e99
         self.max_defectors = 0
-        self.result_on_min_defector = None
-        self.result_on_max_defector = None
+        self.result_on_min_defectors = None
+        self.result_on_max_defectors = None
 
         # tracking skipped
         self.avg_skipped = 0
@@ -75,39 +75,39 @@ class Result_Aggregator:
 
     def get_string(self) -> str:
         if self.results_added != self.sample_size:
-            return "ERROR: number of results does not match sample size. If you see this error, contact the dev."
+            return "ERROR: number of results {self.results_added} does not match sample size {self.sample_size}. If you see this error, contact the dev."
         
         self.calculate_secondaries()
 
         results_str = f"""
         Summary:
-        \twins   = {self.num_wins}    | {self.percent_wins}%
-        \tdraws  = {self.num_draws}   | {self.percent_draws}%
-        \tlosses = {self.num_losses}  | {self.percent_losses}%
+        \twins   = {self.num_wins}, {self.percent_wins:.4f}%
+        \tdraws  = {self.num_draws}, {self.percent_draws:.4f}%
+        \tlosses = {self.num_losses}, {self.percent_losses:.4f}%
        
         Wins Breakdown:
-        \tCase A: {num_wins_case_a}
+        \tCase A: {self.num_wins_case_a}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_A)}
-        \tCase B: {num_wins_case_b}
+        \tCase B: {self.num_wins_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_B)}
 
         Draws Breakdown:
-        \tCase A: {num_draws_case_a}
+        \tCase A: {self.num_draws_case_a}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.DRAW_A)}
-        \tCase B: {num_draws_case_b}
+        \tCase B: {self.num_draws_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.DRAW_B)}
         
         Losses Breakdown:
-        \tCase A: {num_losses_case_a}
+        \tCase A: {self.num_losses_case_a}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_A)}
-        \tCase B: {num_losses_case_b}
+        \tCase B: {self.num_losses_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_B)}
 
         Averages:
-        \tAvg Defectors = {self.avg_defectors}
-        \tAvg Skipped   = {self.avg_skipped}
-        \tAvg Invalid   = {self.avg_invalid}
-        \tAvg Quit      = {self.avg_quit}
+        \tAvg Defectors = {self.avg_defectors:.4f}
+        \tAvg Skipped   = {self.avg_skipped:.4f}
+        \tAvg Invalid   = {self.avg_invalid:.4f}
+        \tAvg Quit      = {self.avg_quit:.4f}
         
         Minimums:
         \tMin Defectors = {self.min_defectors}
@@ -135,6 +135,8 @@ class Result_Aggregator:
         \tMax Quit      = {self.max_quit}
         \tInfo: {ResultsEnum.get_result_str(self.result_on_max_quit)}
         """
+        
+        return results_str
 
     # recalculate averages
     def calculate_averages(self, simulation_results):
@@ -144,13 +146,13 @@ class Result_Aggregator:
         self.avg_quit += (simulation_results.quit / self.sample_size)
         
     def calculate_minimums(self, simulation_results):
-        self.min_defectors = min(simulation_results.defectors, min_defectors)
-        self.min_skipped = min(simulation_results.skipped, min_skipped)
-        self.min_invalid = min(simulation_results.invalid, min_invalid)
-        self.min_quit = min(simulation_results.quit, min_quit)
+        self.min_defectors = min(simulation_results.defectors, self.min_defectors)
+        self.min_skipped = min(simulation_results.skipped, self.min_skipped)
+        self.min_invalid = min(simulation_results.invalid, self.min_invalid)
+        self.min_quit = min(simulation_results.quit, self.min_quit)
 
         if self.min_defectors == simulation_results.defectors:
-            self.result_on_min_defector = simulation_results.result
+            self.result_on_min_defectors = simulation_results.result
         if self.min_skipped == simulation_results.skipped:
             self.result_on_min_skipped = simulation_results.result
         if self.min_invalid == simulation_results.invalid:
@@ -160,13 +162,13 @@ class Result_Aggregator:
 
 
     def calculate_maximums(self, simulation_results):
-        self.max_defectors = max(simulation_results.defectors, max_defectors)
-        self.max_skipped = max(simulation_results.skipped, max_skipped)
-        self.max_invalid = max(simulation_results.invalid, max_invalid)
-        self.max_quit = max(simulation_results.quit, max_quit)
+        self.max_defectors = max(simulation_results.defectors, self.max_defectors)
+        self.max_skipped = max(simulation_results.skipped, self.max_skipped)
+        self.max_invalid = max(simulation_results.invalid, self.max_invalid)
+        self.max_quit = max(simulation_results.quit, self.max_quit)
 
         if self.max_defectors == simulation_results.defectors:
-            self.result_on_max_defector = simulation_results.result
+            self.result_on_max_defectors = simulation_results.result
         if self.max_skipped == simulation_results.skipped:
             self.result_on_max_skipped = simulation_results.result
         if self.max_invalid == simulation_results.invalid:

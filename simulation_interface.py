@@ -14,8 +14,8 @@ from user_record import *
 from settings_menu import *
 
 from simulation import *
-
 from simulation_results import *
+from results_aggregator import Results_Aggregator
 
 class MainMenu(QMainWindow):
     def __init__(self):
@@ -66,74 +66,14 @@ class MainMenu(QMainWindow):
 
 
     def run_simulation(self):
-        # keep track of the number of wins/losses/draws
-        num_wins_case_a = 0
-        num_wins_case_b = 0
-        num_draws_case_a = 0
-        num_draws_case_b = 0
-        num_losses_case_a = 0
-        num_losses_case_b = 0
-        
-        min_defectors = 1e99
-        max_defectors = 0 
-        avg_defectors = 0
+        results_aggregator = Results_Aggregator(self.simulation_info.sample_size, False)
 
-        # run it n times
         for i in range(self.simulation_info.sample_size):
             simulation_results = exec_simulation(self.env_vars, self.pricing_vars)
-            
-            if simulation_results.result == ResultsEnum.WIN_A:
-                num_wins_case_a += 1
-            elif simulation_results.result == ResultsEnum.WIN_B:
-                num_wins_case_b += 1
-            elif simulation_results.result == ResultsEnum.DRAW_A:
-                num_draws_case_a += 1
-            elif simulation_results.result == ResultsEnum.DRAW_B:
-                num_draws_case_b += 1
-            elif simulation_results.result == ResultsEnum.LOSS_A:
-                num_losses_case_a += 1
-            elif simulation_results.result == ResultsEnum.LOSS_B:
-                num_losses_case_b += 1
+            results_aggregator.add_result(simulation_results)    
 
-            min_defectors = min(simulation_results.defectors, min_defectors)
-            max_defectors = max(simulation_results.defectors, max_defectors)
-            avg_defectors += simulation_results.defectors
-        
-        avg_defectors /= self.simulation_info.sample_size
-
-        # display the results
-        results_str = f"""
-        Summary: 
-        \tnum_wins = {num_wins_case_a + num_wins_case_b}
-        \tnum_draws = {num_draws_case_a + num_draws_case_b}
-        \tnum_losses = {num_losses_case_a + num_losses_case_b}
-        \ttotal (sample size): {self.simulation_info.sample_size}
-
-        \tAvg Defectors = {avg_defectors}
-        \tMin Defectors = {min_defectors}
-        \tMax Defectors = {max_defectors}
-
-        Wins Breakdown:
-        \tCase A: {num_wins_case_a}
-        \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_A)}
-        \tCase B: {num_wins_case_b}
-        \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_B)}
-
-        Draws Breakdown:
-        \tCase A: {num_draws_case_a}
-        \tDescription: {ResultsEnum.get_result_str(ResultsEnum.DRAW_A)}
-        \tCase B: {num_draws_case_b}
-        \tDescription: {ResultsEnum.get_result_str(ResultsEnum.DRAW_B)}
-        
-        Losses Breakdown:
-        \tCase A: {num_losses_case_a}
-        \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_A)}
-        \tCase B: {num_losses_case_b}
-        \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_B)}
-        """
-
-        self.window = ResultsWindow("Simulation Results")
-        self.window.set_results_text(results_str)
+        self.window = ResultsWindow("Results")
+        self.window.set_results_text(results_aggregator.get_string())
         self.window.show()
 
     def history(self):
