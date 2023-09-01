@@ -76,6 +76,10 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
 
         take_snapshot(simulation_results, sys_rec, not (period == 1))
 
+        # this is unusual, but it's meant to be a way to get greater insight into how the simulation works
+        # from period to period, by running the simulation directly from the terminal. This use case is separate
+        # from the intended use case of the simulation as a whole, and is primarily so that the spec can be
+        # analyzed and altered by the author.
         if __name__ == "__main__":
             logger_obj.log(f"period {period} defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}\n")
 
