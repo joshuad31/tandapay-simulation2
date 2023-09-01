@@ -32,3 +32,4 @@ class Simulation_Results:
         self.skipped = None
         self.invalid = None
         self.quit = None
+        self.total_member_count = -1

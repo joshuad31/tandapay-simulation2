@@ -24,6 +24,9 @@ class Results_Aggregator:
         self.max_defectors = 0
         self.result_on_min_defectors = None
         self.result_on_max_defectors = None
+        self.total_defectors_on_win = 0
+        self.total_defectors_on_draw = 0
+        self.total_defectors_on_loss = 0
 
         # tracking skipped
         self.avg_skipped = 0
@@ -31,6 +34,9 @@ class Results_Aggregator:
         self.max_skipped = 0
         self.result_on_min_skipped = None
         self.result_on_max_skipped = None
+        self.total_skipped_on_win = 0
+        self.total_skipped_on_draw = 0
+        self.total_skipped_on_loss = 0
         
         # tracking invalid
         self.avg_invalid = 0
@@ -38,6 +44,9 @@ class Results_Aggregator:
         self.max_invalid = 0
         self.result_on_min_invalid = None
         self.result_on_max_invalid = None
+        self.total_invalid_on_win = 0
+        self.total_invalid_on_draw = 0
+        self.total_invalid_on_loss = 0
         
         # tracking quit
         self.avg_quit = 0
@@ -45,28 +54,65 @@ class Results_Aggregator:
         self.max_quit = 0
         self.result_on_min_quit = None
         self.result_on_max_quit = None
+        self.total_quit_on_win = 0
+        self.total_quit_on_draw = 0
+        self.total_quit_on_loss = 0
+
+        # number of members being used in each simulation run
+        self.total_member_count = -1
+
+        # additional stats to be calculated:
+        self.win_defector_stat = 0
+        self.win_skipped_stat = 0
+        self.win_invalid_stat = 0
+        self.win_quit_stat = 0 
+        
+        self.draw_defector_stat = 0
+        self.draw_skipped_stat = 0
+        self.draw_invalid_stat = 0
+        self.draw_quit_stat = 0 
+        
+        self.loss_defector_stat = 0
+        self.loss_skipped_stat = 0
+        self.loss_invalid_stat = 0
+        self.loss_quit_stat = 0 
 
     def add_result(self, simulation_results):
         # if we're storing results, store it
         if self.store_results:
             self.results.append(simulation_results)
         
+        # store the total number of members to be used in calculations
+        if self.total_member_count == -1:
+            self.total_member_count = simulation_results.total_member_count
+
         # count the number of results we have added
         self.results_added += 1
 
         # increment the appropriate case
         if simulation_results.result == ResultsEnum.WIN_A:
             self.num_wins_case_a += 1
+            self.add_to_win_totals(simulation_results)
+        
         elif simulation_results.result == ResultsEnum.WIN_B:
             self.num_wins_case_b += 1
+            self.add_to_win_totals(simulation_results)
+        
         elif simulation_results.result == ResultsEnum.DRAW_A:
             self.num_draws_case_a += 1
+            self.add_to_draw_totals(simulation_results)
+        
         elif simulation_results.result == ResultsEnum.DRAW_B:
             self.num_draws_case_b += 1
+            self.add_to_draw_totals(simulation_results)
+        
         elif simulation_results.result == ResultsEnum.LOSS_A:
             self.num_losses_case_a += 1
+            self.add_to_loss_totals(simulation_results)
+        
         elif simulation_results.result == ResultsEnum.LOSS_B:
             self.num_losses_case_b += 1
+            self.add_to_loss_totals(simulation_results)
       
         # calculate averages, minimums, and maximums
         self.calculate_averages(simulation_results)
@@ -90,6 +136,11 @@ class Results_Aggregator:
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_A)}
         \tCase B: {self.num_wins_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_B)}
+        
+        \tWin defector stat: {self.win_defector_stat:.4f}
+        \tWin skipped stat: {self.win_skipped_stat:.4f}
+        \tWin invalid stat: {self.win_invalid_stat:.4f}
+        \tWin quit stat: {self.win_quit_stat:.4f}
 
         Draws Breakdown:
         \tCase A: {self.num_draws_case_a}
@@ -97,11 +148,21 @@ class Results_Aggregator:
         \tCase B: {self.num_draws_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.DRAW_B)}
         
+        \tDraw defector stat: {self.draw_defector_stat:.4f}
+        \tDraw skipped stat: {self.draw_skipped_stat:.4f}
+        \tDraw invalid stat: {self.draw_invalid_stat:.4f}
+        \tDraw quit stat: {self.draw_quit_stat:.4f}
+        
         Losses Breakdown:
         \tCase A: {self.num_losses_case_a}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_A)}
         \tCase B: {self.num_losses_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_B)}
+
+        \tLoss defector stat: {self.loss_defector_stat:.4f}
+        \tLoss skipped stat: {self.loss_skipped_stat:.4f}
+        \tLoss invalid stat: {self.loss_invalid_stat:.4f}
+        \tLoss quit stat: {self.loss_quit_stat:.4f}
 
         Averages:
         \tAvg Defectors = {self.avg_defectors:.4f}
@@ -160,7 +221,6 @@ class Results_Aggregator:
         if self.min_quit == simulation_results.quit:
             self.result_on_min_quit = simulation_results.result
 
-
     def calculate_maximums(self, simulation_results):
         self.max_defectors = max(simulation_results.defectors, self.max_defectors)
         self.max_skipped = max(simulation_results.skipped, self.max_skipped)
@@ -176,7 +236,6 @@ class Results_Aggregator:
         if self.max_quit == simulation_results.quit:
             self.result_on_max_quit = simulation_results.result
 
-
     def calculate_secondaries(self):
         self.num_wins = self.num_wins_case_a + self.num_wins_case_b
         self.num_draws = self.num_draws_case_a + self.num_draws_case_b
@@ -185,3 +244,42 @@ class Results_Aggregator:
         self.percent_wins = (self.num_wins / self.sample_size) * 100
         self.percent_draws = (self.num_draws / self.sample_size) * 100
         self.percent_losses = (self.num_losses / self.sample_size) * 100
+
+        if self.num_wins != 0:
+            self.win_defector_stat = self.total_defectors_on_win / self.num_wins / self.total_member_count
+            self.win_skipped_stat = self.total_skipped_on_win / self.num_wins / self.total_member_count
+            self.win_invalid_stat = self.total_invalid_on_win / self.num_wins / self.total_member_count
+            self.win_quit_stat = self.total_quit_on_win / self.num_wins / self.total_member_count
+
+        if self.num_draws != 0:
+            self.draw_defector_stat = self.total_defectors_on_draw / self.num_draws / self.total_member_count
+            self.draw_skipped_stat = self.total_skipped_on_draw / self.num_draws / self.total_member_count
+            self.draw_invalid_stat = self.total_invalid_on_draw / self.num_draws / self.total_member_count
+            self.draw_quit_stat = self.total_quit_on_draw / self.num_draws / self.total_member_count
+        
+        if self.num_losses != 0:
+            self.loss_defector_stat = self.total_defectors_on_loss / self.num_losses / self.total_member_count
+            self.loss_skipped_stat = self.total_skipped_on_loss / self.num_losses / self.total_member_count
+            self.loss_invalid_stat = self.total_invalid_on_loss / self.num_losses / self.total_member_count
+            self.loss_quit_stat = self.total_quit_on_loss / self.num_losses / self.total_member_count
+
+    def add_to_win_totals(self, simulation_results):
+        self.total_defectors_on_win += simulation_results.defectors
+        self.total_skipped_on_win += simulation_results.skipped
+        self.total_invalid_on_win += simulation_results.invalid
+        self.total_quit_on_win += simulation_results.quit
+    
+    def add_to_draw_totals(self, simulation_results):
+        self.total_defectors_on_draw += simulation_results.defectors
+        self.total_skipped_on_draw += simulation_results.skipped
+        self.total_invalid_on_draw += simulation_results.invalid
+        self.total_quit_on_draw += simulation_results.quit
+    
+    def add_to_loss_totals(self, simulation_results):
+        self.total_defectors_on_loss += simulation_results.defectors
+        self.total_skipped_on_loss += simulation_results.skipped
+        self.total_invalid_on_loss += simulation_results.invalid
+        self.total_quit_on_loss += simulation_results.quit
+
+
+

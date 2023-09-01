@@ -46,6 +46,7 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
     last_three_skipped_cnt = deque()
 
     simulation_results = Simulation_Results()
+    simulation_results.total_member_count = env_vars.total_member_cnt
 
     while True:
         rsa_calculate_premiums(env_vars, sys_rec, user_list, period) 
@@ -71,6 +72,8 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
         sf7_reorganization_of_users(env_vars, sys_rec, user_list)
 
         queueing_function(user_list)
+
+        print("defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit}")
 
         # keep track of last 3 skipped/quit cnt so that we can terminate 
         # the simulation if they are 0 for three periods in a row.
