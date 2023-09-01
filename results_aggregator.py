@@ -246,22 +246,22 @@ class Results_Aggregator:
         self.percent_losses = (self.num_losses / self.sample_size) * 100
 
         if self.num_wins != 0:
-            self.win_defector_stat = self.total_defectors_on_win / self.num_wins / self.total_member_count
-            self.win_skipped_stat = self.total_skipped_on_win / self.num_wins / self.total_member_count
-            self.win_invalid_stat = self.total_invalid_on_win / self.num_wins / self.total_member_count
-            self.win_quit_stat = self.total_quit_on_win / self.num_wins / self.total_member_count
+            self.win_defector_stat = self.total_defectors_on_win / self.num_wins / self.total_member_count * 100
+            self.win_skipped_stat = self.total_skipped_on_win / self.num_wins / self.total_member_count * 100
+            self.win_invalid_stat = self.total_invalid_on_win / self.num_wins / self.total_member_count * 100
+            self.win_quit_stat = self.total_quit_on_win / self.num_wins / self.total_member_count * 100
 
         if self.num_draws != 0:
-            self.draw_defector_stat = self.total_defectors_on_draw / self.num_draws / self.total_member_count
-            self.draw_skipped_stat = self.total_skipped_on_draw / self.num_draws / self.total_member_count
-            self.draw_invalid_stat = self.total_invalid_on_draw / self.num_draws / self.total_member_count
-            self.draw_quit_stat = self.total_quit_on_draw / self.num_draws / self.total_member_count
+            self.draw_defector_stat = self.total_defectors_on_draw / self.num_draws / self.total_member_count * 100
+            self.draw_skipped_stat = self.total_skipped_on_draw / self.num_draws / self.total_member_count * 100
+            self.draw_invalid_stat = self.total_invalid_on_draw / self.num_draws / self.total_member_count * 100
+            self.draw_quit_stat = self.total_quit_on_draw / self.num_draws / self.total_member_count * 100
         
         if self.num_losses != 0:
-            self.loss_defector_stat = self.total_defectors_on_loss / self.num_losses / self.total_member_count
-            self.loss_skipped_stat = self.total_skipped_on_loss / self.num_losses / self.total_member_count
-            self.loss_invalid_stat = self.total_invalid_on_loss / self.num_losses / self.total_member_count
-            self.loss_quit_stat = self.total_quit_on_loss / self.num_losses / self.total_member_count
+            self.loss_defector_stat = self.total_defectors_on_loss / self.num_losses / self.total_member_count * 100
+            self.loss_skipped_stat = self.total_skipped_on_loss / self.num_losses / self.total_member_count * 100
+            self.loss_invalid_stat = self.total_invalid_on_loss / self.num_losses / self.total_member_count * 100
+            self.loss_quit_stat = self.total_quit_on_loss / self.num_losses / self.total_member_count * 100
 
     def add_to_win_totals(self, simulation_results):
         self.total_defectors_on_win += simulation_results.defectors

@@ -19,6 +19,8 @@ from pricing_variables import Pricing_Variables
 from user_record import User_Record
 from simulation_results import *
 
+from logger import Logger
+
 from collections import deque
 import pdb
 
@@ -47,7 +49,7 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
 
     simulation_results = Simulation_Results()
     simulation_results.total_member_count = env_vars.total_member_cnt
-
+    
     while True:
         rsa_calculate_premiums(env_vars, sys_rec, user_list, period) 
 
@@ -55,7 +57,6 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
             uf1_determine_defectors(env_vars, sys_rec, user_list)
             # set number of defectors in simulation_results. This value should not change as the simulation runs,
             # so it's straightforward to just store this in the simulation_results now
-            simulation_results.defectors = sys_rec.defected_cnt
         else:
             uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, period)
         
@@ -75,7 +76,10 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
 
         take_snapshot(simulation_results, sys_rec, not (period == 1))
 
-        #print(f"period {period}: defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}")
+        if __name__ == "__main__":
+            logger_obj.log(f"period {period} defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}\n")
+
+#        print(f"end of period {period}: defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}")
 
         # keep track of last 3 skipped/quit cnt so that we can terminate 
         # the simulation if they are 0 for three periods in a row.
@@ -151,3 +155,7 @@ def take_snapshot(simulation_results, sys_rec, add_skipped = True):
    
     simulation_results.invalid += sys_rec.invalid_cnt
     simulation_results.quit += sys_rec.quit_cnt
+
+if __name__ == "__main__":
+    result = exec_simulation(Environment_Variables(), Pricing_Variables(), Logger())
+    print(ResultsEnum.get_result_str(result.result))
