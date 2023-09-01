@@ -3,11 +3,10 @@ from pricing_variables import Pricing_Variables
 from system_record import System_Record
 from user_record import *
 from utility import remove_user
-from diagnostics import *
 import random
 
 
-def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_period, diagnostics_object = None):
+def uf2_pricing_function(env_vars, sys_rec, pricing_vars, user_list, current_period):
     # Calculate the pricing slope:
     ph_leave_delta = pricing_vars.ph_leave_ceiling - pricing_vars.ph_leave_floor
     prem_inc_delta = pricing_vars.prem_inc_ceiling - pricing_vars.prem_inc_floor
