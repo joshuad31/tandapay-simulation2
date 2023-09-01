@@ -73,7 +73,9 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
 
         queueing_function(user_list)
 
-        print("defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit}")
+        take_snapshot(simulation_results, sys_rec, not (period == 1))
+
+        #print(f"period {period}: defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}")
 
         # keep track of last 3 skipped/quit cnt so that we can terminate 
         # the simulation if they are 0 for three periods in a row.
@@ -87,7 +89,7 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
         # advance period logic to advance to the next period.
         if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.50:
             simulation_results.result = ResultsEnum.WIN_A
-            take_snapshot(simulation_results, sys_rec)
+            #take_snapshot(simulation_results, sys_rec)
             return simulation_results
 
         period += 1
@@ -104,12 +106,12 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
                     # valid_remaining is less than 60% of total_member_cnt
                     if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.60:
                         simulation_results.result = ResultsEnum.DRAW_A
-                        take_snapshot(simulation_results, sys_rec)
+                        #take_snapshot(simulation_results, sys_rec)
                         return simulation_results
                     # if it wasn't a draw, then it's a loss in this case.
                     else:
                         simulation_results.result = ResultsEnum.LOSS_A 
-                        take_snapshot(simulation_results, sys_rec)
+                        #take_snapshot(simulation_results, sys_rec)
                         return simulation_results
                     
                 last_three_quit_cnt.popleft()
@@ -119,20 +121,20 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
             # below 55 percent of total_member_cnt
             if (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.55:
                 simulation_results.result = ResultsEnum.WIN_B
-                take_snapshot(simulation_results, sys_rec)
+                #take_snapshot(simulation_results, sys_rec)
                 return simulation_results
 
             # draw condition: If we're in the final period and valid_remaining is
             # less than 65 percent, but not less than 55 percent of total_member_cnt
             elif (sys_rec.valid_remaining / env_vars.total_member_cnt) < 0.65:
                 simulation_results.result = ResultsEnum.DRAW_B
-                take_snapshot(simulation_results, sys_rec)
+                #take_snapshot(simulation_results, sys_rec)
                 return simulation_results
             
             # loss condition: Reached the final period with valid_remaining still above 65% of total_member_cnt
             else:
                 simulation_results.result = ResultsEnum.LOSS_B
-                take_snapshot(simulation_results, sys_rec)
+                #take_snapshot(simulation_results, sys_rec)
                 return simulation_results
             
             # always end the simulation in the final period.
@@ -141,8 +143,11 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
         sys_rec = System_Record(sys_rec.valid_remaining)  
 
 
-def take_snapshot(simulation_results, sys_rec):
-    simulation_results.defected = sys_rec.defected_cnt
-    simulation_results.skipped = sys_rec.skipped_cnt
-    simulation_results.invalid = sys_rec.invalid_cnt
-    simulation_results.quit = sys_rec.quit_cnt
+def take_snapshot(simulation_results, sys_rec, add_skipped = True):
+    simulation_results.defectors += sys_rec.defected_cnt
+
+    if add_skipped:
+        simulation_results.skipped += sys_rec.skipped_cnt
+   
+    simulation_results.invalid += sys_rec.invalid_cnt
+    simulation_results.quit += sys_rec.quit_cnt

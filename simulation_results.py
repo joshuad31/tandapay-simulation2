@@ -28,8 +28,8 @@ class ResultsEnum(Enum):
 class Simulation_Results:
     def __init__(self):
         self.result = None
-        self.defectors = None
-        self.skipped = None
-        self.invalid = None
-        self.quit = None
+        self.defectors = 0 
+        self.skipped = 0 
+        self.invalid = 0 
+        self.quit = 0 
         self.total_member_count = -1
