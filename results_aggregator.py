@@ -126,50 +126,53 @@ class Results_Aggregator:
         self.calculate_secondaries()
 
         results_str = f"""
-        Summary:
+        Results Summary:
         \twins   = {self.num_wins}, {self.percent_wins:.4f}%
         \tdraws  = {self.num_draws}, {self.percent_draws:.4f}%
         \tlosses = {self.num_losses}, {self.percent_losses:.4f}%
-       
+        
         Wins Breakdown:
         \tCase A: {self.num_wins_case_a}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_A)}
+        
         \tCase B: {self.num_wins_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.WIN_B)}
         
-        \tWin defector stat: {self.win_defector_stat:.4f}
-        \tWin skipped stat: {self.win_skipped_stat:.4f}
-        \tWin invalid stat: {self.win_invalid_stat:.4f}
-        \tWin quit stat: {self.win_quit_stat:.4f}
+        \tWin Defectors Avg = {self.win_defector_stat:.4f}
+        \tWin Skipped Avg   = {self.win_skipped_stat:.4f}
+        \tWin Invalid Avg   = {self.win_invalid_stat:.4f}
+        \tWin Quit Avg      = {self.win_quit_stat:.4f}
 
         Draws Breakdown:
         \tCase A: {self.num_draws_case_a}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.DRAW_A)}
+        
         \tCase B: {self.num_draws_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.DRAW_B)}
         
-        \tDraw defector stat: {self.draw_defector_stat:.4f}
-        \tDraw skipped stat: {self.draw_skipped_stat:.4f}
-        \tDraw invalid stat: {self.draw_invalid_stat:.4f}
-        \tDraw quit stat: {self.draw_quit_stat:.4f}
+        \tDraw Defectors Avg = {self.draw_defector_stat:.4f}
+        \tDraw Skipped Avg   = {self.draw_skipped_stat:.4f}
+        \tDraw Invalid Avg   = {self.draw_invalid_stat:.4f}
+        \tDraw Quit Avg      = {self.draw_quit_stat:.4f}
         
         Losses Breakdown:
         \tCase A: {self.num_losses_case_a}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_A)}
+        
         \tCase B: {self.num_losses_case_b}
         \tDescription: {ResultsEnum.get_result_str(ResultsEnum.LOSS_B)}
 
-        \tLoss defector stat: {self.loss_defector_stat:.4f}
-        \tLoss skipped stat: {self.loss_skipped_stat:.4f}
-        \tLoss invalid stat: {self.loss_invalid_stat:.4f}
-        \tLoss quit stat: {self.loss_quit_stat:.4f}
-
-        Averages:
+        \tLoss Defectors Avg = {self.loss_defector_stat:.4f}
+        \tLoss Skipped Avg   = {self.loss_skipped_stat:.4f}
+        \tLoss Invalid Avg   = {self.loss_invalid_stat:.4f}
+        \tLoss Quit Avg      = {self.loss_quit_stat:.4f}
+       
+        Overall Averages:
         \tAvg Defectors = {self.avg_defectors:.4f}
         \tAvg Skipped   = {self.avg_skipped:.4f}
         \tAvg Invalid   = {self.avg_invalid:.4f}
         \tAvg Quit      = {self.avg_quit:.4f}
-        
+
         Minimums:
         \tMin Defectors = {self.min_defectors}
         \tInfo: {ResultsEnum.get_result_str(self.result_on_min_defectors)}
