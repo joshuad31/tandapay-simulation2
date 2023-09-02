@@ -2,6 +2,7 @@
 venv/
 myenv/
 __pycache__
+*.csv
 local_settings.py
 note.txt
 result/

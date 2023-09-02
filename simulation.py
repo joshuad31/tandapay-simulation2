@@ -18,14 +18,13 @@ from system_record import System_Record
 from pricing_variables import Pricing_Variables
 from user_record import User_Record
 from simulation_results import *
-
-from logger import Logger
+from csv_builder import CSV_Builder
 
 from collections import deque
 import pdb
 
 
-def exec_simulation(env_vars, pricing_vars, logger_obj = None):
+def exec_simulation(env_vars, pricing_vars, func = None):
     # initialize user_list
     user_list = [User_Record(env_vars) for _ in range(env_vars.total_member_cnt)]
 
@@ -40,9 +39,9 @@ def exec_simulation(env_vars, pricing_vars, logger_obj = None):
     role_assignment(env_vars, user_list, num_four_member_groups * 4)
 
     # run the simulation, return the simulation_results
-    return base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj)
+    return base_simulation(env_vars, sys_rec, pricing_vars, user_list, func)
 
-def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = None):
+def base_simulation(env_vars, sys_rec, pricing_vars, user_list, func = None):
     period = 0
     last_three_quit_cnt = deque()
     last_three_skipped_cnt = deque()
@@ -74,21 +73,13 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
 
         queueing_function(user_list)
 
-        take_snapshot(simulation_results, sys_rec, not (period == 1))
-
-        # this is unusual, but it's meant to be a way to get greater insight into how the simulation works
-        # from period to period, by running the simulation directly from the terminal. This use case is separate
-        # from the intended use case of the simulation as a whole, and is primarily so that the spec can be
-        # analyzed and altered by the author.
-        if __name__ == "__main__":
-            logger_obj.log(f"period {period} defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}\n")
-
-#        print(f"end of period {period}: defected/skipped/invalid/quit: {sys_rec.defected_cnt}/{sys_rec.skipped_cnt}/{sys_rec.invalid_cnt}/{sys_rec.quit_cnt}")
-
         # keep track of last 3 skipped/quit cnt so that we can terminate 
         # the simulation if they are 0 for three periods in a row.
         last_three_quit_cnt.append(sys_rec.quit_cnt)
         last_three_skipped_cnt.append(sys_rec.skipped_cnt)
+       
+        if func is not None:
+            func(period, env_vars, sys_rec, pricing_vars, user_list)
 
         # advance period logic:
         
@@ -150,16 +141,6 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, logger_obj = Non
 
         sys_rec = System_Record(sys_rec.valid_remaining)  
 
-
-def take_snapshot(simulation_results, sys_rec, add_skipped = True):
-    simulation_results.defectors += sys_rec.defected_cnt
-
-    if add_skipped:
-        simulation_results.skipped += sys_rec.skipped_cnt
-   
-    simulation_results.invalid += sys_rec.invalid_cnt
-    simulation_results.quit += sys_rec.quit_cnt
-
 if __name__ == "__main__":
-    result = exec_simulation(Environment_Variables(), Pricing_Variables(), Logger())
-    print(ResultsEnum.get_result_str(result.result))
+    simulation_results = exec_simulation(Environment_Variables(), Pricing_Variables(), CSV_Builder().record)
+    print(f"{ResultsEnum.get_result_str(simulation_results.result)}")
