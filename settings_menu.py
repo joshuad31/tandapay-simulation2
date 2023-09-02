@@ -58,8 +58,8 @@ class SettingsDialog(QDialog):
 
         # EV3
         self.ev3_spinbox = QSpinBox()
-        self.ev3_spinbox.setMinimum(25)
-        self.ev3_spinbox.setMaximum(75)
+        self.ev3_spinbox.setMinimum(0) #25
+        self.ev3_spinbox.setMaximum(100) #75
         self.ev3_spinbox.setValue(env_vars.chance_of_claim * 100)
         self.ev3_spinbox.valueChanged.connect(lambda value: self.updateValue(env_vars, 'chance_of_claim', value / 100))
         self.ev3_spinbox.setFixedWidth(self.widget_width)
@@ -72,8 +72,8 @@ class SettingsDialog(QDialog):
 
         # EV4
         self.ev4_spinbox = QSpinBox()
-        self.ev4_spinbox.setMinimum(10)
-        self.ev4_spinbox.setMaximum(45)
+        self.ev4_spinbox.setMinimum(0) #10
+        self.ev4_spinbox.setMaximum(100) #45
         self.ev4_spinbox.setValue(env_vars.perc_honest_defectors * 100)
         self.ev4_spinbox.valueChanged.connect(lambda value: self.updateValue(env_vars, 'perc_honest_defectors', value / 100))
         self.ev4_spinbox.setFixedWidth(self.widget_width)
@@ -86,8 +86,8 @@ class SettingsDialog(QDialog):
 
         # EV5
         self.ev5_spinbox = QSpinBox()
-        self.ev5_spinbox.setMinimum(10)
-        self.ev5_spinbox.setMaximum(30)
+        self.ev5_spinbox.setMinimum(0) #10
+        self.ev5_spinbox.setMaximum(100) #30
         self.ev5_spinbox.setValue(env_vars.perc_low_morale * 100)
         self.ev5_spinbox.valueChanged.connect(lambda value: self.updateValue(env_vars, 'perc_low_morale', value / 100))
         self.ev5_spinbox.setFixedWidth(self.widget_width)
@@ -100,8 +100,8 @@ class SettingsDialog(QDialog):
 
         # EV6
         self.ev6_spinbox = QSpinBox()
-        self.ev6_spinbox.setMinimum(20)
-        self.ev6_spinbox.setMaximum(80)
+        self.ev6_spinbox.setMinimum(0) #20
+        self.ev6_spinbox.setMaximum(100) #80
         self.ev6_spinbox.setValue(env_vars.perc_independent * 100)
         self.ev6_spinbox.valueChanged.connect(lambda value: self.updateValue(env_vars, 'perc_independent', value / 100))
         self.ev6_spinbox.setFixedWidth(self.widget_width)

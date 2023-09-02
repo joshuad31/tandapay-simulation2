@@ -19,6 +19,29 @@ class System_Record:
         self._first_premium_calc = 0
         self._claimed = False
 
+    def __repr__(self):
+        repr_elements = [
+            f"System_Record(",
+            f"valid_remaining={self._valid_remaining}",
+            f", defected_cnt={self._defected_cnt}",
+            f", skipped_cnt={self._skipped_cnt}",
+            f", invalid_cnt={self._invalid_cnt}",
+            f", reorged_cnt={self._reorged_cnt}",
+            f", quit_cnt={self._quit_cnt}",
+            f", defection_shortfall={self._defection_shortfall}",
+            f", invalid_shortfall={self._invalid_shortfall}",
+            f", skip_shortfall={self._skip_shortfall}",
+            f", shortfall_debt_individual={self._shortfall_debt_individual}",
+            f", shortfall_debt_total={self._shortfall_debt_total}",
+            f", shortfall_credit_individual={self._shortfall_credit_individual}",
+            f", shortfall_credit_total={self._shortfall_credit_total}",
+            f", first_premium_calc={self._first_premium_calc}",
+            f", claimed={self._claimed}",
+            f")"
+        ]
+        
+        return "\n".join(repr_elements) 
+
     def calculate_vars(self):
         self._defection_shortfall = self._defected_cnt * self._first_premium_calc
         self._skip_shortfall = self._skipped_cnt * self._first_premium_calc

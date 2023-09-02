@@ -80,7 +80,8 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, func = None):
        
         if func is not None:
             func(period, env_vars, sys_rec, pricing_vars, user_list)
-
+        
+        take_snapshot(simulation_results, sys_rec, not (period == 1))
         # advance period logic:
         
         # win condition: valid_remaining below 50% of original total_member_cnt.
@@ -140,6 +141,15 @@ def base_simulation(env_vars, sys_rec, pricing_vars, user_list, func = None):
             break
 
         sys_rec = System_Record(sys_rec.valid_remaining)  
+
+def take_snapshot(simulation_results, sys_rec, add_skipped = True):
+    simulation_results.defectors += sys_rec.defected_cnt
+
+    if add_skipped:
+        simulation_results.skipped += sys_rec.skipped_cnt
+   
+    simulation_results.invalid += sys_rec.invalid_cnt
+    simulation_results.quit += sys_rec.quit_cnt
 
 if __name__ == "__main__":
     simulation_results = exec_simulation(Environment_Variables(), Pricing_Variables(), CSV_Builder().record)
