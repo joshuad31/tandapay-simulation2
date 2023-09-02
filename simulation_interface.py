@@ -14,8 +14,8 @@ from user_record import *
 from settings_menu import *
 
 from simulation import *
-
-from diagnostics import *
+from simulation_results import *
+from results_aggregator import Results_Aggregator
 
 class MainMenu(QMainWindow):
     def __init__(self):
@@ -66,50 +66,15 @@ class MainMenu(QMainWindow):
 
 
     def run_simulation(self):
-        # keep track of the number of wins/losses/draws
-        num_wins = 0
-        num_draws = 0
-        num_losses = 0
-        
-        # run it n times
+        results_aggregator = Results_Aggregator(self.simulation_info.sample_size, False)
+
         for i in range(self.simulation_info.sample_size):
-            result = self.run_simulation_once()
+            simulation_results = exec_simulation(self.env_vars, self.pricing_vars)
+            results_aggregator.add_result(simulation_results)    
 
-            if result == ResultsEnum.WIN:
-                num_wins += 1
-            elif result == ResultsEnum.DRAW:
-                num_draws += 1
-            else:
-                num_losses += 1
-
-        # display the results
-        results_str = f"""
-        num_wins = {num_wins}
-        num_draws = {num_draws}
-        num_losses = {num_losses}
-        total (sample size): {self.simulation_info.sample_size}
-        """
-
-        self.window = ResultsWindow("Simulation Results")
-        self.window.set_results_text(results_str)
+        self.window = ResultsWindow("Results")
+        self.window.set_results_text(results_aggregator.get_string())
         self.window.show()
-
-    def run_simulation_once(self):
-        # initialize user list
-        user_list = [User_Record(self.env_vars) for _ in range(self.env_vars.total_member_cnt)]
-        
-        # perform subgroup setup
-        data = subgroup_setup(len(user_list), user_list)
-        num_four_member_groups = data[0]
-        
-        # initialize system record:
-        sys_record = System_Record(self.env_vars.total_member_cnt)
-
-        # assign roles
-        role_assignment(self.env_vars, user_list, num_four_member_groups * 4)
-
-        # run the simulation and return the result
-        return run_simulation(self.env_vars, sys_record, self.pricing_vars, user_list)
 
     def history(self):
         self.window = PlaceholderWindow("History")
@@ -166,10 +131,18 @@ class ResultsWindow(QMainWindow):
     def __init__(self, title):
         super(ResultsWindow, self).__init__()
         self.setWindowTitle(title)
-        self.setFixedSize(800, 600)
+
+        # Initialize to 800x600 but make it resizable
+        self.resize(800, 600)
 
         # Create a QPlainTextEdit widget
         self.textbox = QPlainTextEdit()
+
+        # Disable line wrapping
+        self.textbox.setLineWrapMode(QPlainTextEdit.NoWrap)
+
+        # Enable horizontal scrollbar
+        self.textbox.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         # Set to read-only
         self.textbox.setReadOnly(True)
@@ -177,9 +150,6 @@ class ResultsWindow(QMainWindow):
         # Set monospace font
         font = QFont("Courier")
         self.textbox.setFont(font)
-
-        # Set white background color
-#        self.textbox.setStyleSheet("background-color: white;")
 
         # Create layout and add widgets
         layout = QVBoxLayout()
@@ -190,11 +160,9 @@ class ResultsWindow(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-        # Add a margin around the textbox
-#        layout.setContentsMargins(20, 20, 20, 20)
-
     def set_results_text(self, text):
-        self.textbox.setPlainText(text)    
+        self.textbox.setPlainText(text)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
