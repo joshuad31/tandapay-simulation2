@@ -19,10 +19,10 @@ from pricing_variables import Pricing_Variables
 from user_record import User_Record
 from simulation_results import *
 from csv_builder import CSV_Builder
+from config_helper import INI_Handler
 
 from collections import deque
 import pdb
-
 
 def exec_simulation(env_vars, pricing_vars, func = None):
     # initialize user_list
@@ -152,5 +152,13 @@ def take_snapshot(simulation_results, sys_rec, add_skipped = True):
     simulation_results.quit += sys_rec.quit_cnt
 
 if __name__ == "__main__":
-    simulation_results = exec_simulation(Environment_Variables(), Pricing_Variables(), CSV_Builder().record)
+    ini_handler = INI_Handler("config/settings_cli.ini")
+
+    env_vars = ini_handler.read_environment_variables()
+    pricing_vars = ini_handler.read_pricing_variables()
+
+    simulation_results = exec_simulation(env_vars, pricing_vars, CSV_Builder().record)
     print(f"{ResultsEnum.get_result_str(simulation_results.result)}")
+
+
+
