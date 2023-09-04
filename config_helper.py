@@ -42,13 +42,18 @@ class INI_Handler:
         self.config.read(self.path)
         pv = Pricing_Variables()
 
-        # Reading and setting Pricing_Variables
-        pv.prem_inc_cum = float(self.config.get('Pricing_Variables', 'prem_inc_cum')) / 100
-        pv.prem_inc_floor = float(self.config.get('Pricing_Variables', 'prem_inc_floor')) / 100
-        pv.prem_inc_ceiling = float(self.config.get('Pricing_Variables', 'prem_inc_ceiling')) / 100
-        pv.ph_leave_cum = float(self.config.get('Pricing_Variables', 'ph_leave_cum')) / 100
-        pv.ph_leave_floor = float(self.config.get('Pricing_Variables', 'ph_leave_floor')) / 100
-        pv.ph_leave_ceiling = float(self.config.get('Pricing_Variables', 'ph_leave_ceiling')) / 100
+        pv.noref_change_floor        = float(self.config.get('Pricing_Variables', 'noref_change_floor')       / 100
+        pv.noref_change_ceiling      = float(self.config.get('Pricing_Variables', 'noref_change_ceiling')     / 100
+        pv.noref_ph_leave_floor      = float(self.config.get('Pricing_Variables', 'noref_ph_leave_floor')     / 100
+        pv.noref_ph_leave_ceiling    = float(self.config.get('Pricing_Variables', 'noref_ph_leave_ceiling')   / 100
+        pv.refund_change_floor       = float(self.config.get('Pricing_Variables', 'refund_change_floor')      / 100
+        pv.refund_change_ceiling     = float(self.config.get('Pricing_Variables', 'refund_change_ceiling')    / 100
+        pv.refund_ph_leave_floor     = float(self.config.get('Pricing_Variables', 'refund_ph_leave_floor')    / 100
+        pv.refund_ph_leave_ceiling   = float(self.config.get('Pricing_Variables', 'refund_ph_leave_ceiling')  / 100
+        pv.avg_3mo_change_floor      = float(self.config.get('Pricing_Variables', 'avg_3mo_change_floor')     / 100
+        pv.avg_3mo_change_ceiling    = float(self.config.get('Pricing_Variables', 'avg_3mo_change_ceiling')   / 100
+        pv.avg_3mo_ph_leave_floor    = float(self.config.get('Pricing_Variables', 'avg_3mo_ph_leave_floor')   / 100
+        pv.avg_3mo_ph_leave_ceiling  = float(self.config.get('Pricing_Variables', 'avg_3mo_ph_leave_ceiling') / 100
 
         return pv
 
@@ -70,12 +75,18 @@ class INI_Handler:
 
     def write_pricing_variables(self, pv):
         self.config['Pricing_Variables'] = {
-            'prem_inc_cum': round(pv.prem_inc_cum * 100),
-            'prem_inc_floor': round(pv.prem_inc_floor * 100),
-            'prem_inc_ceiling': round(pv.prem_inc_ceiling * 100),
-            'ph_leave_cum': round(pv.ph_leave_cum * 100),
-            'ph_leave_floor': round(pv.ph_leave_floor * 100),
-            'ph_leave_ceiling': round(pv.ph_leave_ceiling * 100)
+            'noref_change_floor'       : round(pv.noref_change_floor       * 100)
+            'noref_change_ceiling'     : round(pv.noref_change_ceiling     * 100)
+            'noref_ph_leave_floor'     : round(pv.noref_ph_leave_floor     * 100)
+            'noref_ph_leave_ceiling'   : round(pv.noref_ph_leave_ceiling   * 100)
+            'refund_change_floor'      : round(pv.refund_change_floor      * 100)
+            'refund_change_ceiling'    : round(pv.refund_change_ceiling    * 100)
+            'refund_ph_leave_floor'    : round(pv.refund_ph_leave_floor    * 100)
+            'refund_ph_leave_ceiling'  : round(pv.refund_ph_leave_ceiling  * 100)
+            'avg_3mo_change_floor'     : round(pv.avg_3mo_change_floor     * 100)
+            'avg_3mo_change_ceiling'   : round(pv.avg_3mo_change_ceiling   * 100)
+            'avg_3mo_ph_leave_floor'   : round(pv.avg_3mo_ph_leave_floor   * 100)
+            'avg_3mo_ph_leave_ceiling' : round(pv.avg_3mo_ph_leave_ceiling * 100)
         }
         with open(self.path, 'w') as configfile:
             self.config.write(configfile)

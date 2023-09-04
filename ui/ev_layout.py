@@ -53,12 +53,13 @@ class EV_Layout:
     def get_env_vars(self):
         self.env_vars.total_member_cnt = self.uief.getValue(self.ev1_label)
         self.env_vars.monthly_premium = self.uief.getValue(self.ev2_label)
-        self.env_vars.chance_of_claim = self.uief.getValue(self.ev3_label)
-        self.env_vars.perc_honest_defectors = self.uief.getValue(self.ev4_label)
-        self.env_vars.perc_low_morale = self.uief.getValue(self.ev5_label)
-        self.env_vars.perc_independent = self.uief.getValue(self.ev6_label)
+        self.env_vars.chance_of_claim = self.uief.getValue(self.ev3_label) / 100
+        self.env_vars.perc_honest_defectors = self.uief.getValue(self.ev4_label) / 100
+        self.env_vars.perc_low_morale = self.uief.getValue(self.ev5_label) / 100
+        self.env_vars.perc_independent = self.uief.getValue(self.ev6_label) / 100
         self.env_vars.dependent_thres = int(self.uief.getValue(self.ev7_label))
         self.env_vars.queueing = self.uief.getValue(self.ev11_label)
+        return self.env_vars
 
     def get_ev_layout(self) -> QVBoxLayout:
         layout = QVBoxLayout()

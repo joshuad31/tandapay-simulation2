@@ -20,6 +20,7 @@ class OV_Layout:
     def get_other_vars(self):
         self.ov.sample_size = self.uief.getValue(self.ov1_label)
         self.ov.settings_path = self.uief.getValue(self.ov2_label)
+        return self.ov
 
     def get_ov_layout(self):
         layout = QVBoxLayout()
