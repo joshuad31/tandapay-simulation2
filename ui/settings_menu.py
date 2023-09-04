@@ -103,7 +103,7 @@ class SettingsDialog:
         self.ov = self.ovl.get_other_vars()
         self.pv = self.pvl.get_pricing_vars()
 
-        if self.ini_handler is not None
+        if self.ini_handler is not None:
             self.ini_handler.write_pricing_variables(self.pv)
             self.ini_handler.write_environment_variables(self.ev)
 
@@ -122,7 +122,11 @@ class SettingsDialog:
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    test_settings = SettingsDialog(Environment_Variables(), Pricing_Variables(), Other_Variables())
+    ini_handler = INI_Handler("testconfig/settings.ini")
+    ev = ini_handler.read_environment_variables()
+    pv = ini_handler.read_pricing_variables()
+
+    test_settings = SettingsDialog(ev, pv, Other_Variables(), ini_handler)
     
     dialog = test_settings.get_settings_dialog()
     dialog.finished.connect(app.quit)

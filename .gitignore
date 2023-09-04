@@ -2,6 +2,7 @@
 venv/
 myenv/
 __pycache__
+ui/testconfig/
 *.csv
 local_settings.py
 note.txt
