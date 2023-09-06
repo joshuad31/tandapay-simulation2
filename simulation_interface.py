@@ -8,14 +8,17 @@ from PySide2.QtCore import Qt, QSize
 
 from environment_variables import *
 from pricing_variables import *
+from other_variables import *
 from system_record import *
 from user_record import *
 
-from settings_menu import *
+from ui.settings_menu import SettingsDialog
 
 from simulation import *
 from simulation_results import *
 from results_aggregator import Results_Aggregator
+
+from config_helper import INI_Handler
 
 class MainMenu(QMainWindow):
     def __init__(self):
@@ -44,9 +47,10 @@ class MainMenu(QMainWindow):
         layout.addWidget(self.history_btn)
 
         # create variables that could be changed in settings
-        self.env_vars = Environment_Variables()
-        self.pricing_vars = Pricing_Variables() 
-        self.simulation_info = Simulation_Info()
+        self.ini_handler = INI_Handler("config/settings.ini")
+        self.env_vars = self.ini_handler.read_environment_variables()
+        self.pricing_vars = self.ini_handler.read_pricing_variables() 
+        self.other_vars = Other_Variables()
 
         self.settings_btn = QPushButton("Settings")
         self.settings_btn.clicked.connect(self.open_settings)
@@ -66,9 +70,9 @@ class MainMenu(QMainWindow):
 
 
     def run_simulation(self):
-        results_aggregator = Results_Aggregator(self.simulation_info.sample_size, False)
+        results_aggregator = Results_Aggregator(self.other_vars.sample_size, False)
 
-        for i in range(self.simulation_info.sample_size):
+        for i in range(self.other_vars.sample_size):
             simulation_results = exec_simulation(self.env_vars, self.pricing_vars)
             results_aggregator.add_result(simulation_results)    
 
@@ -81,8 +85,13 @@ class MainMenu(QMainWindow):
         self.window.show()
 
     def open_settings(self):
-        self.settings_dialog = SettingsDialog(self.env_vars, self.pricing_vars, self.simulation_info, self)
-        self.settings_dialog.show()
+        self.env_vars = self.ini_handler.read_environment_variables()
+        self.pricing_vars = self.ini_handler.read_pricing_variables() 
+        settings_menu = SettingsDialog(self.env_vars, self.pricing_vars, self.other_vars, self.ini_handler)
+        
+        self.settings_dialog = settings_menu.get_settings_dialog()
+        
+        self.settings_dialog.exec_()
 
     def open_about(self):
         self.about_window = AboutWindow()

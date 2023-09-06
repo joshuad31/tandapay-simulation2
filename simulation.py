@@ -152,7 +152,7 @@ def take_snapshot(simulation_results, sys_rec, add_skipped = True):
     simulation_results.quit += sys_rec.quit_cnt
 
 if __name__ == "__main__":
-    ini_handler = INI_Handler("config/settings_cli.ini")
+    ini_handler = INI_Handler("config/settings.ini")
 
     env_vars = ini_handler.read_environment_variables()
     pricing_vars = ini_handler.read_pricing_variables()

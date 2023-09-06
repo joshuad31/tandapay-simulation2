@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayou
 from PySide2.QtGui import QFont
 from PySide2.QtCore import Qt, QSize
 
-from ui_element_factory import UI_Element_Factory
+from ui.ui_element_factory import UI_Element_Factory
 
 class PV_Layout:
     def __init__(self, pricing_vars, widget_width=None):

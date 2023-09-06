@@ -1,5 +1,7 @@
 from user_record import *
 
+import random
+
 def remove_user(user_list, index, reason = "No reason provided."):
     if not isinstance(index, int):
         raise TypeError("Index must be an integer.")
@@ -24,3 +26,16 @@ def remove_user(user_list, index, reason = "No reason provided."):
 
 def is_approx_equal(a, b, epsilon):
     return abs(a - b) < epsilon
+
+def evaluate_probability(prob) -> bool:
+    #if not (0 <= prob <= 1):
+    #    raise ValueError(f"attempting to run evaluate_probability on a probability outside of [0, 1]: prob={prob}")
+    
+    if prob <= 0:
+        return False
+    elif 1 <= prob:
+        return True
+
+    return random.uniform(0, 1) < prob
+        
+

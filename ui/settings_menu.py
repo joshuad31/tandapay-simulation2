@@ -11,11 +11,11 @@ from environment_variables import *
 from pricing_variables import *
 from other_variables import *
 
-from ev_layout import EV_Layout
-from pv_layout import PV_Layout
-from ov_layout import OV_Layout
+from ui.ev_layout import EV_Layout
+from ui.pv_layout import PV_Layout
+from ui.ov_layout import OV_Layout
 
-from ui_element_factory import UI_Element_Factory
+from ui.ui_element_factory import UI_Element_Factory
 from config_helper import INI_Handler
 
 class SettingsDialog:

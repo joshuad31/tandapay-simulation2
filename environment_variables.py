@@ -90,7 +90,7 @@ class Environment_Variables:
     @chance_of_claim.setter
     def chance_of_claim(self, chance):
         assert isinstance(chance, (int, float)), "attempting to set chance_of_claim EV to non-numeric value!"
-        if 0.25 <= chance <= 0.75:
+        if 0 <= chance <= 1:
             self._chance_of_claim = chance
             self.calculate_member_variables()
         else:

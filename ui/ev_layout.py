@@ -10,7 +10,7 @@ from PySide2.QtCore import Qt, QSize
 from PySide2.QtWidgets import QVBoxLayout, QSpinBox, QLabel, QHBoxLayout, QComboBox, QLineEdit
 from PySide2.QtCore import Qt
 
-from ui_element_factory import UI_Element_Factory
+from ui.ui_element_factory import UI_Element_Factory
 
 class EV_Layout:
     def __init__(self, env_vars, widget_width=None):
