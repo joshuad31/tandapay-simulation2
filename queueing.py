@@ -8,7 +8,6 @@ def queueing_function(user_list):
         if queuing_length == 1:
             if user.prior_month_premium_list[0] is not None:
                 user.claim_refund = user.prior_month_premium_list[0]
-#                print(f"set claim_refund = {user.claim_refund}")
 
             user.prior_month_premium_list[0] = user.cur_month_premium
 
@@ -16,7 +15,6 @@ def queueing_function(user_list):
         elif queuing_length == 2:
             if user.prior_month_premium_list[1] is not None:
                 user.claim_refund = user.prior_month_premium_list[1]
-#                print(f"set claim_refund = {user.claim_refund}")
             
             user.prior_month_premium_list[1] = user.prior_month_premium_list[0]
             user.prior_month_premium_list[0] = user.cur_month_premium
@@ -25,7 +23,6 @@ def queueing_function(user_list):
         elif queuing_length == 3:
             if user.prior_month_premium_list[2] is not None:
                 user.claim_refund = user.prior_month_premium_list[2]
-#                print(f"set claim_refund = {user.claim_refund}")
             
             user.prior_month_premium_list[2] = user.prior_month_premium_list[1]
             user.prior_month_premium_list[1] = user.prior_month_premium_list[0]
@@ -35,7 +32,6 @@ def queueing_function(user_list):
         elif queuing_length == 4:
             if user.prior_month_premium_list[3] is not None:
                 user.claim_refund = user.prior_month_premium_list[3]
-#                print(f"set claim_refund = {user.claim_refund}")
 
             user.prior_month_premium_list[3] = user.prior_month_premium_list[2]
             user.prior_month_premium_list[2] = user.prior_month_premium_list[1]
