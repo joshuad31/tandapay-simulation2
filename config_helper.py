@@ -3,6 +3,7 @@ import configparser
 
 from environment_variables import Environment_Variables
 from pricing_variables import Pricing_Variables
+from other_variables import Other_Variables
 
 # Define the class for handling .ini files
 class INI_Handler:
@@ -18,7 +19,8 @@ class INI_Handler:
             open(self.path, 'w').close()
             self.write_environment_variables(Environment_Variables())
             self.write_pricing_variables(Pricing_Variables())
-    
+            self.write_other_variables(Other_Variables())
+
     def read_environment_variables(self):
         self.config.read(self.path)
         ev = Environment_Variables()
@@ -57,6 +59,17 @@ class INI_Handler:
 
         return pv
 
+    def read_other_variables(self):
+        self.config.read(self.path)
+        ov = Other_Variables()
+
+        ov.sample_size              = int(self.config.get('Other_Variables', 'sample_size'))
+        ov.trial_sample_size        = int(self.config.get('Other_Variables', 'trial_sample_size'))
+        ov.trial_count              = int(self.config.get('Other_Variables', 'trial_count'))
+        ov.alpha                    = float(self.config.get('Other_Variables', 'alpha'))
+
+        return ov
+
     def write_environment_variables(self, ev):
         self.config['Environment_Variables'] = {
             'total_member_cnt': ev.total_member_cnt,
@@ -91,12 +104,22 @@ class INI_Handler:
         with open(self.path, 'w') as configfile:
             self.config.write(configfile)
 
+    def write_other_variables(self, ov):
+        self.config['Other_Variables'] = {
+            'sample_size'           : ov.sample_size,
+            'trial_sample_size'     : ov.trial_sample_size,
+            'trial_count'           : ov.trial_count,
+            'alpha'                 : ov.alpha,
+        }
+        with open(self.path, 'w') as configfile:
+            self.config.write(configfile)
 
 if __name__ == "__main__":
     ev = Environment_Variables()
     pv = Pricing_Variables()
+    ov = Other_Variables()
 
     ini_handler = INI_Handler("config/settings_test.ini")
     ini_handler.write_environment_variables(ev)
     ini_handler.write_pricing_variables(pv)
-    
+    ini_handler.write_other_variables(ov) 

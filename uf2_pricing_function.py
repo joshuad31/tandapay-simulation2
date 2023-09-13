@@ -26,6 +26,7 @@ def uf2_pricing_function(ev, sr, pv, user_list, cur_period):
             if evaluate_refund(ev, pv, user, cur_period):
                 leave_list.append(i)
     
+    print(f"sizeof leave list: {len(leave_list)}")
     for i in leave_list:
         sr.valid_remaining -= 1
         sr.skipped_cnt += 1
@@ -48,6 +49,7 @@ def evaluate_noref(ev, pv, user, cur_period) -> bool:
     if matching != -1:
         pmp = user.second_premium_calc_list[matching]
     else: 
+        print(f"matching not found")
         pmp = ev.monthly_premium
 
     # calculate noref_cmp_floor and ceiling:
@@ -105,20 +107,7 @@ def evaluate_refund(ev, pv, user, cur_period) -> bool:
         refund_ph_leave_percent -= (refund_pricing_slope * pv.refund_change_floor)
         refund_ph_leave_percent += pv.refund_ph_leave_floor
 
-        try:
-            return evaluate_probability(refund_ph_leave_percent)
-        except:
-            print(f"""
-                Caught ValueError in evaluate_probability in evaluate_refund.
-                cmp = {cmp}
-                refund_cmp_floor = {refund_cmp_floor}
-                refund_cmp_inc_percent = {refund_cmp_inc_percent} = (cmp / refund_cmp_floor) - 1
-                refund_pricing_slope = {refund_pricing_slope}
-                refund_change_floor = {pv.refund_change_floor}
-                refund_ph_leave_floor = {pv.refund_ph_leave_floor}
-                refund_ph_leave_percent = {refund_ph_leave_percent}
-                """)
-            sys.exit()
+        return evaluate_probability(refund_ph_leave_percent)
     else:
         return evaluate_cumulative(ev, pv, user, cur_period)
 

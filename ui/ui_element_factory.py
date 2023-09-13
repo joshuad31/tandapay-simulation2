@@ -26,6 +26,8 @@ class UI_Element_Factory:
             return widget.value()
         elif isinstance(widget, QComboBox):
             return widget.currentText()
+        elif isinstance(widget, QDoubleSpinBox):
+            return widget.value()
         else:
             return None  # Return None for unsupported widget types
     
@@ -73,6 +75,39 @@ class UI_Element_Factory:
         hbox = QHBoxLayout()
         hbox.addWidget(label_widget)
         hbox.addWidget(spinbox)
+        return hbox
+    
+    def make_float_entry_element(self, label, tooltip=None, initial_value=None, minimum=0.0, maximum=100.0, callback=None):
+        # Create a QDoubleSpinBox widget
+        double_spin_box = QDoubleSpinBox()
+        double_spin_box.setMinimum(minimum)
+        double_spin_box.setMaximum(maximum)
+        
+        # Set its properties
+        if tooltip:
+            double_spin_box.setToolTip(tooltip)
+    
+        if initial_value:
+            double_spin_box.setValue(initial_value)
+        
+        if self.widget_width is not None:
+            double_spin_box.setFixedWidth(self.widget_width)
+        
+        # Connect the callback if provided
+        if callback:
+            double_spin_box.valueChanged.connect(callback)
+        
+        # Add the widget to the dictionary
+        self.widget_values[label] = double_spin_box
+        
+        # Create a label for the widget
+        lbl = QLabel(label)
+        
+        # Create a horizontal layout and add the label and widget to it
+        hbox = QHBoxLayout()
+        hbox.addWidget(lbl)
+        hbox.addWidget(double_spin_box)
+        
         return hbox
 
     def make_dropdown_entry_element(self, label, options, tooltip=None, initial_value=None, callback=None) -> QHBoxLayout:

@@ -24,7 +24,7 @@ class MainMenu(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Main Menu")
-        self.setFixedSize(300, 300)
+        self.setFixedSize(300, 360)
 
         layout = QVBoxLayout()
 
@@ -41,6 +41,14 @@ class MainMenu(QMainWindow):
         self.run_simulation_btn = QPushButton("Run Simulation")
         self.run_simulation_btn.clicked.connect(self.run_simulation)
         layout.addWidget(self.run_simulation_btn)
+
+        self.statistical_analysis_btn = QPushButton("Statistical Analysis")
+        self.statistical_analysis_btn.clicked.connect(self.run_statistics)
+        layout.addWidget(self.statistical_analysis_btn)
+
+        self.searching_btn = QPushButton("Searching")
+        self.searching_btn.clicked.connect(self.run_searching)
+        layout.addWidget(self.searching_btn)
 
         self.history_btn = QPushButton("History")
         self.history_btn.clicked.connect(self.history)
@@ -69,15 +77,25 @@ class MainMenu(QMainWindow):
         self.setCentralWidget(central_widget)
 
 
+    def run_base(self, n, ev, pv):
+        results_aggregator = Results_Aggregator(n, False)
+        for i in range(n):
+            simulation_results = exec_simulation(ev, pv)
+            results_aggregator.add_result(simulation_results)
+
+        return results_aggregator
+
     def run_simulation(self):
-        results_aggregator = Results_Aggregator(self.other_vars.sample_size, False)
-
-        for i in range(self.other_vars.sample_size):
-            simulation_results = exec_simulation(self.env_vars, self.pricing_vars)
-            results_aggregator.add_result(simulation_results)    
-
+        results_aggregator = run_base(self.other_vars.sample_size, self.env_vars, self.pricing_vars)
         self.window = ResultsWindow("Results")
         self.window.set_results_text(results_aggregator.get_string())
+        self.window.show()
+
+    def run_statistics(self):
+                 
+
+    def run_searching(self):
+        self.window = PlaceholderWindow("Searching")
         self.window.show()
 
     def history(self):
