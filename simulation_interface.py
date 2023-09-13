@@ -12,7 +12,8 @@ from other_variables import *
 from system_record import *
 from user_record import *
 
-from ui.settings_menu import SettingsDialog
+from settings_menu import SettingsDialog
+from statistics_settings_menu import StatisticsSettings
 
 from simulation import *
 from simulation_results import *
@@ -92,7 +93,12 @@ class MainMenu(QMainWindow):
         self.window.show()
 
     def run_statistics(self):
-                 
+        self.other_vars = self.ini_handler.read_other_variables()
+        stats = StatisticsSettings(self.other_vars, self.ini_handler)
+        
+        self.stats_dialog = stats.get_statistics_dialog()
+
+        self.stats_dialog.exec_()
 
     def run_searching(self):
         self.window = PlaceholderWindow("Searching")

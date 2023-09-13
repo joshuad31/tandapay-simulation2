@@ -2,11 +2,10 @@ import sys
 from PySide2.QtWidgets import *
 from PySide2.QtCore import Qt, QSize
 
-from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QLabel, QWidget, QDialog, QTextEdit
+from PySide2.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QLabel, QWidget, QDialog, QTextEdit, QFrame
 from PySide2.QtGui import QFont
 from PySide2.QtCore import Qt, QSize
 
-sys.path.append('../')
 from environment_variables import *
 from pricing_variables import *
 from other_variables import *
@@ -31,11 +30,39 @@ class StatisticsSettings:
 
         self.uief = UI_Element_Factory(self.widget_width)
 
+        self.run_btn_callback = None
+
+    def get_two_column_layout(self) -> QHBoxLayout:
+        self.two_column_layout = QHBoxLayout()
+        
+        # the left side will have the statistics settings and a "Run" button
+        left_layout = QVBoxLayout()
+        
+        stats_layout = self.sl.get_stats_layout()
+        left_layout.addLayout(stats_layout)
+        
+        # line separator
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        left_layout.addWidget(line)
+        
+        # run statistics button
+        self.run_statistics_btn = QPushButton("Run Statistics")
+
+        if self.run_btn_callback:
+            self.run_statistics_btn.clicked.connect(self.run_statistics)
+   
+        left_layout.addWidget(self.run_statistics_btn)
+        
+        self.two_column_layout.addLayout(left_layout)
+        return self.two_column_layout
+
     def get_statistics_dialog(self) -> QDialog:
         self.dialog = QDialog()
         self.dialog.setWindowTitle("Statistics")
-
-        layout = self.sl.get_stats_layout()
+        
+        layout = self.get_two_column_layout()
 
         self.dialog.setLayout(layout)
         return self.dialog
