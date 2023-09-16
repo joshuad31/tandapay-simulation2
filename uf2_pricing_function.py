@@ -26,7 +26,7 @@ def uf2_pricing_function(ev, sr, pv, user_list, cur_period):
             if evaluate_refund(ev, pv, user, cur_period):
                 leave_list.append(i)
     
-    print(f"sizeof leave list: {len(leave_list)}")
+#    print(f"sizeof leave list: {len(leave_list)}")
     for i in leave_list:
         sr.valid_remaining -= 1
         sr.skipped_cnt += 1

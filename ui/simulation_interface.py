@@ -77,7 +77,6 @@ class MainMenu(QMainWindow):
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
 
-
     def run_base(self, n, ev, pv):
         results_aggregator = Results_Aggregator(n, False)
         for i in range(n):
@@ -91,6 +90,14 @@ class MainMenu(QMainWindow):
         self.window = ResultsWindow("Results")
         self.window.set_results_text(results_aggregator.get_string())
         self.window.show()
+
+    def stats_callback(self, n):
+        results_aggregator = Results_Aggregator(n, False)
+        for i in range(n):
+            simulation_results = exec_simulation(self.env_vars, self.pricing_vars)
+            results_aggregator.add_result(simulation_results)
+
+        return results_aggregator
 
     def run_statistics(self):
         self.other_vars = self.ini_handler.read_other_variables()
