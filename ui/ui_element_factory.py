@@ -74,7 +74,7 @@ class UI_Element_Factory:
 
         hbox = QHBoxLayout()
         hbox.addWidget(label_widget)
-        hbox.addWidget(spinbox)
+        hbox.addWidget(spinbox, 0.5)
         return hbox
     
     def make_float_entry_element(self, label, tooltip=None, initial_value=None, minimum=0.0, maximum=100.0, callback=None):
