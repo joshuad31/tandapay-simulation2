@@ -16,7 +16,9 @@ class EV_Layout:
     def __init__(self, env_vars, widget_width=None):
         self.env_vars = env_vars
         self.uief = UI_Element_Factory(widget_width) 
-        
+
+        self.ev_label = "Environment Variables"
+
         self.ev1_label = "EV1: Total Member Count"
         self.ev1_tooltip = "How many members are initially in the simulation?"
         
@@ -63,6 +65,14 @@ class EV_Layout:
 
     def get_ev_layout(self) -> QVBoxLayout:
         layout = QVBoxLayout()
+
+        header = QLabel("Environment Variables")
+        header_font = QFont()
+        header_font.setBold(True)
+        header_font.setPointSize(14)
+        header.setFont(header_font)
+        header.setAlignment(Qt.AlignCenter)
+        layout.addWidget(header)
 
         # ev1
         ev1_hbox = self.uief.make_numeric_entry_element(self.ev1_label, self.ev1_tooltip, self.env_vars.total_member_cnt, 0, 1e9)

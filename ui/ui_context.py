@@ -11,6 +11,3 @@ class UI_Context:
         self.ev_obj = None
         self.pv_obj = None
         self.ov_obj = None
-
-        self.test_type_options = None
-        self.outcome_options = None

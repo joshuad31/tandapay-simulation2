@@ -45,6 +45,14 @@ class PV_Layout:
     def get_pv_layout(self) -> QVBoxLayout:
         layout = QVBoxLayout()
         
+        header = QLabel("Pricing Variables")
+        header_font = QFont()
+        header_font.setBold(True)
+        header_font.setPointSize(14)
+        header.setFont(header_font)
+        header.setAlignment(Qt.AlignCenter)
+        layout.addWidget(header)
+        
         pv1_hbox  = self.uief.make_numeric_entry_element(self.pv1_label,  self.pv1_label,  self.pv.noref_change_floor       * 100, 0, 100)
         pv2_hbox  = self.uief.make_numeric_entry_element(self.pv2_label,  self.pv2_label,  self.pv.noref_change_ceiling     * 100, 0, 100)
         pv3_hbox  = self.uief.make_numeric_entry_element(self.pv3_label,  self.pv3_label,  self.pv.noref_ph_leave_floor     * 100, 0, 100)

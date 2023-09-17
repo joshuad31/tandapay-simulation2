@@ -14,11 +14,11 @@ from .ui_element_factory import UI_Element_Factory
 from .ui_context import UI_Context
 
 class IV_Layout:
-    def __init__(self, ui_context):
+    def __init__(self, ui_context, widget_width=None):
         self.uic = ui_context
-        self.evl = EV_Layout(self.uic.ev_obj)
-        self.pvl = PV_Layout(self.uic.pv_obj)
-        self.ovl = OV_Layout(self.uic.ov_obj)
+        self.evl = EV_Layout(self.uic.ev_obj, widget_width)
+        self.pvl = PV_Layout(self.uic.pv_obj, widget_width)
+        self.ovl = OV_Layout(self.uic.ov_obj, widget_width)
 
     def get_iv_layout(self) -> QHBoxLayout:
         # add them all to the settings menu layout
@@ -28,6 +28,7 @@ class IV_Layout:
         left_top_layout = self.evl.get_ev_layout()
         left_bottom_layout = self.ovl.get_ov_layout()
         left_combined_layout = QVBoxLayout()
+        left_combined_layout.setAlignment(Qt.AlignTop)
         left_combined_layout.addLayout(left_top_layout)
         left_combined_layout.addLayout(left_bottom_layout)
         
@@ -37,7 +38,7 @@ class IV_Layout:
         # finalize layout
         two_column_layout.addLayout(left_combined_layout)
         two_column_layout.addLayout(right_layout)
-        
+
         return two_column_layout
 
     def save(self):

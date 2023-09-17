@@ -22,6 +22,14 @@ class OV_Layout:
 
     def get_ov_layout(self, settings_import_callback=None):
         layout = QVBoxLayout()
+        
+        header = QLabel("Other Variables")
+        header_font = QFont()
+        header_font.setBold(True)
+        header_font.setPointSize(14)
+        header.setFont(header_font)
+        header.setAlignment(Qt.AlignCenter)
+        layout.addWidget(header)
 
         ov1_hbox = self.uief.make_numeric_entry_element(self.ov1_label, self.ov1_label, 1, 0, 1e9)
         layout.addLayout(ov1_hbox)

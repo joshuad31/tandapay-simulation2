@@ -8,6 +8,8 @@ from PySide2.QtGui import QFont
 from PySide2.QtCore import Qt, QSize
 
 from .ui_element_factory import UI_Element_Factory
+from statistics.hypothesis_test import TestTypeEnum
+from simulation.other_variables import OutcomeEnum
 
 class Stats_Layout:
     def __init__(self, ui_context, widget_width=None):
@@ -36,14 +38,23 @@ class Stats_Layout:
         self.uic.ov_obj.trial_sample_size   = self.uief.getValue(self.ov1_label)
         self.uic.ov_obj.trial_count         = self.uief.getValue(self.ov2_label)
         self.uic.ov_obj.alpha               = self.uief.getValue(self.ov3_label)
-        self.uic.ov_obj.test_type      = TestTypeEnum(self.uief.getValue(self.ov4_label))
-        self.uic.ov_obj.test_outcome        = OutcomeEnum(self.uief.getValue(self.ov5_label))
+        self.uic.ov_obj.test_type           = TestTypeEnum[self.uief.getValue(self.ov4_label)]
+        self.uic.ov_obj.test_outcome        = OutcomeEnum[self.uief.getValue(self.ov5_label)]
         self.uic.ov_obj.value_to_test       = self.uief.getValue(self.ov6_label)
         return self.uic
 
     def get_stats_layout(self) -> QVBoxLayout:
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
 
+        header = QLabel("Statistics Variables")
+        header_font = QFont()
+        header_font.setBold(True)
+        header_font.setPointSize(14)
+        header.setFont(header_font)
+        header.setAlignment(Qt.AlignCenter)
+        layout.addWidget(header)
+        
         self.ov1_hbox = self.uief.make_numeric_entry_element(self.ov1_label, self.ov1_tooltip, self.uic.ov_obj.trial_sample_size)
         layout.addLayout(self.ov1_hbox)
 
@@ -53,10 +64,12 @@ class Stats_Layout:
         self.ov3_hbox = self.uief.make_float_entry_element(self.ov3_label, self.ov3_tooltip, self.uic.ov_obj.alpha, 0.0, 1.0)
         layout.addLayout(self.ov3_hbox)
 
-        self.ov4_hbox = self.uief.make_dropdown_entry_element(self.ov4_label, self.uic.test_type_options, self.ov4_tooltip, self.uic.ov_obj.test_type.name)
+        options = [option.name for option in TestTypeEnum]
+        self.ov4_hbox = self.uief.make_dropdown_entry_element(self.ov4_label, options, self.ov4_tooltip, self.uic.ov_obj.test_type.name)
         layout.addLayout(self.ov4_hbox)
         
-        self.ov5_hbox = self.uief.make_dropdown_entry_element(self.ov5_label, self.uic.outcome_options, self.ov5_tooltip, self.uic.ov_obj.test_outcome.name)
+        options = [option.name for option in OutcomeEnum]
+        self.ov5_hbox = self.uief.make_dropdown_entry_element(self.ov5_label, options, self.ov5_tooltip, self.uic.ov_obj.test_outcome.name)
         layout.addLayout(self.ov5_hbox)
 
         self.ov6_hbox = self.uief.make_float_entry_element(self.ov6_label, self.ov6_tooltip, self.uic.ov_obj.value_to_test, 0.0, 1.0)

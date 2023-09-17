@@ -57,7 +57,7 @@ class Main_Menu(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def settings(self):
-        self.settings_menu = Settings_Menu(self.uic)
+        self.settings_menu = Settings_Menu(self.uic, 150)
         self.settings_menu.open_settings_menu()
 
     def get_title_widget(self) -> QLabel:
