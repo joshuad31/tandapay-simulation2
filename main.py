@@ -3,6 +3,7 @@ from simulation.environment_variables import Environment_Variables
 from simulation.pricing_variables import Pricing_Variables
 from simulation.other_variables import *
 
+
 def initialize_ui():
     uic = ui.UI_Context()
     uic.ev_obj = Environment_Variables()
