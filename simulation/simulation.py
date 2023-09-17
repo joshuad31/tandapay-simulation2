@@ -19,10 +19,12 @@ from pricing_variables import Pricing_Variables
 from user_record import User_Record
 from simulation_results import *
 from csv_builder import CSV_Builder
-from config_helper import INI_Handler
+
+from util.ini_handler import INI_Handler
 
 from collections import deque
 import pdb
+
 
 def exec_simulation(env_vars, pricing_vars, func = None):
     # initialize user_list
