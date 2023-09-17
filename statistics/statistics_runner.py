@@ -9,8 +9,6 @@ from pricing_variables import *
 from simulation import exec_simulation
 from simulation_results import *
 
-import statistics
-
 class Statistics_Runner:
 
     def __init__(self, ev, pv, ov):
