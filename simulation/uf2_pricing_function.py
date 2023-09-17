@@ -4,8 +4,8 @@ from environment_variables import Environment_Variables
 from pricing_variables import Pricing_Variables
 from system_record import System_Record
 from user_record import *
-from utility import remove_user
-from utility import evaluate_probability
+from remove_user import remove_user
+from remove_user import evaluate_probability
 import random
 
 def uf2_pricing_function(ev, sr, pv, user_list, cur_period):

@@ -1,4 +1,4 @@
-from utility import is_approx_equal
+from remove_user import is_approx_equal
 from user_record import *
 
 import sys

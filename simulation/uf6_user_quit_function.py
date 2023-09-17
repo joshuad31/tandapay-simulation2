@@ -1,6 +1,6 @@
 import random
 
-from utility import remove_user
+from remove_user import remove_user
 from user_record import *
 
 def uf6_user_quit_function(env_vars, sys_rec, user_list):
