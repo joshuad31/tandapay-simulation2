@@ -1,7 +1,7 @@
 import math
 
 from enum import Enum
-from user_record import User_Record
+from .user_record import User_Record
 
 # subgroup_setup method. Documentation can be found at: https://www.notion.so/Subgroup-Setup-7e7852c10715423699fc522ca9e6536a
 def subgroup_setup(total_member_cnt, user_list):

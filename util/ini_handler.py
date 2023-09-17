@@ -1,9 +1,9 @@
 import os
 import configparser
 
-from environment_variables import Environment_Variables
-from pricing_variables import Pricing_Variables
-from other_variables import Other_Variables
+from simulation.environment_variables import Environment_Variables
+from simulation.pricing_variables import Pricing_Variables
+from simulation.other_variables import Other_Variables
 
 # Define the class for handling .ini files
 class INI_Handler:

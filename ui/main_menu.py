@@ -9,6 +9,7 @@ from PySide2.QtCore import Qt, QSize
 from .ui_element_factory import UI_Element_Factory
 from .ui_context import UI_Context
 from .settings_menu import Settings_Menu
+from .results_menu import Results_Window
 
 class Main_Menu(QMainWindow):
     def __init__(self, ui_context: UI_Context):
@@ -32,10 +33,10 @@ class Main_Menu(QMainWindow):
         self.layout.addStretch(1)
         
         # make buttons for main menu
-        self.run_simulation_btn = self.uief.make_push_button_element("Run Simulation", None, self.uic.run_simulation)
+        self.run_simulation_btn = self.uief.make_push_button_element("Run Simulation", None, self.run_simulation)
         self.layout.addWidget(self.run_simulation_btn)
 
-        self.run_statistics_btn = self.uief.make_push_button_element("Run Statistics", None, self.uic.run_statistics)
+        self.run_statistics_btn = self.uief.make_push_button_element("Run Statistics", None, self.run_statistics)
         self.layout.addWidget(self.run_statistics_btn)
 
         self.settings_btn = self.uief.make_push_button_element("Settings", None, self.settings)
@@ -55,6 +56,18 @@ class Main_Menu(QMainWindow):
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
+
+    def run_simulation(self):
+        result_str = self.uic.run_simulation()
+        self.results_window = Results_Window("results")
+        self.results_window.set_results_text(result_str)
+        self.results_window.show()
+
+    def run_statistics(self):
+        result_str = self.uic.run_statistics()
+        self.results_window = Results_Window("results")
+        self.results_window.set_results_text(result_str)
+        self.results_window.show()
 
     def settings(self):
         self.settings_menu = Settings_Menu(self.uic, 150)

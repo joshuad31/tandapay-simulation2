@@ -1,24 +1,25 @@
 # import all primary functions
-from uf1_determine_defectors import uf1_determine_defectors
-from uf2_pricing_function import uf2_pricing_function
-from sf4_invalidate_subgroups import sf4_invalidate_subgroups
-from uf6_user_quit_function import uf6_user_quit_function
-from sf7_reorganization_of_users import sf7_reorganization_of_users
-from sf8_determine_claims import sf8_determine_claims
+from .uf1_determine_defectors import uf1_determine_defectors
+from .uf2_pricing_function import uf2_pricing_function
+from .sf4_invalidate_subgroups import sf4_invalidate_subgroups
+from .uf6_user_quit_function import uf6_user_quit_function
+from .sf7_reorganization_of_users import sf7_reorganization_of_users
+from .sf8_determine_claims import sf8_determine_claims
 
 # import secondary functions
-from role_assignment import role_assignment
-from subgroup_setup import subgroup_setup
-from period_functions import *
-from queueing import *
+from .role_assignment import role_assignment
+from .subgroup_setup import subgroup_setup
+from .period_functions import *
+from .queueing import *
 
 # import necessary data structures
-from environment_variables import Environment_Variables
-from system_record import System_Record
-from pricing_variables import Pricing_Variables
-from user_record import User_Record
-from simulation_results import *
-from csv_builder import CSV_Builder
+from .environment_variables import Environment_Variables
+from .system_record import System_Record
+from .pricing_variables import Pricing_Variables
+from .user_record import User_Record
+from .simulation_results import *
+from .results_aggregator import *
+from .csv_builder import CSV_Builder
 
 from util.ini_handler import INI_Handler
 
@@ -26,7 +27,15 @@ from collections import deque
 import pdb
 
 
-def exec_simulation(env_vars, pricing_vars, func = None):
+def exec_simulation_multiple(env_vars, pricing_vars, n) -> Results_Aggregator:
+    results_aggregator = Results_Aggregator(n, False)
+    for i in range(n):
+        simulation_results = exec_simulation(env_vars, pricing_vars)
+        results_aggregator.add_result(simulation_results)
+
+    return results_aggregator
+
+def exec_simulation(env_vars, pricing_vars, func = None) -> Simulation_Results:
     # initialize user_list
     user_list = [User_Record(env_vars) for _ in range(env_vars.total_member_cnt)]
 

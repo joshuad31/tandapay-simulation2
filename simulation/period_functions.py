@@ -1,5 +1,5 @@
-from remove_user import is_approx_equal
-from user_record import *
+from .remove_user import is_approx_equal
+from .user_record import *
 
 import sys
 

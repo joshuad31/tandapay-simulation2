@@ -2,12 +2,14 @@ import numpy as np
 from scipy.stats import norm
 from enum import Enum
 
-from other_variables import OutcomeEnum
-from other_variables import Other_Variables
-from environment_variables import *
-from pricing_variables import *
-from simulation import exec_simulation
-from simulation_results import *
+from simulation.other_variables import OutcomeEnum
+from simulation.other_variables import Other_Variables
+from simulation.environment_variables import *
+from simulation.pricing_variables import *
+from simulation.simulation import exec_simulation
+from simulation.simulation_results import *
+from .confidence_interval import calculate_confidence_interval
+from .hypothesis_test import perform_hypothesis_test
 
 class Statistics_Runner:
 
@@ -88,7 +90,7 @@ class Statistics_Runner:
         for outcome in [OutcomeEnum.WIN, OutcomeEnum.LOSS, OutcomeEnum.DRAW]:
             mean = mean_probabilities[outcome]
             stddev = std_probabilities[outcome]
-            lower, upper = statistics.calculate_confidence_interval(mean, stddev, self.ov.trial_count, self.ov.alpha)
+            lower, upper = calculate_confidence_interval(mean, stddev, self.ov.trial_count, self.ov.alpha)
 
             ci_lower_dict[outcome] = lower
             ci_upper_dict[outcome] = upper
@@ -105,12 +107,43 @@ class Statistics_Runner:
         mean = mean_probabilities[self.ov.test_outcome]
         std = std_probabilities[self.ov.test_outcome]
 
-        p_value = statistics.perform_hypothesis_test(mean, std, self.ov.trial_count, self.ov.value_to_test, self.ov.test_type)
+#        print(f"mean: {mean}, std: {std}, value to test: {self.ov.value_to_test}")
+        p_value = perform_hypothesis_test(mean, std, self.ov.trial_count, self.ov.value_to_test, self.ov.test_type)
+#        print(f"p-value: {p_value}")
 
         if p_value < self.ov.alpha:
-            return True
+            return (True, p_value)
 
-        return False
+
+        return (False, p_value)
+
+    def get_string(self):
+        mean_dict, std_dict = self.get_mean_std()
+        ci_lower_dict, ci_upper_dict = self.get_confidence_interval()
+        reject_null, p_value = self.get_hypothesis_test()
+
+        return f"""
+            Mean:
+            \twins:   {mean_dict[OutcomeEnum.WIN]:.4f}
+            \tdraws:  {mean_dict[OutcomeEnum.DRAW]:.4f}
+            \tlosses: {mean_dict[OutcomeEnum.LOSS]:.4f}
+
+            Standard Deviation:
+            \twins:   {std_dict[OutcomeEnum.WIN]:.4f}
+            \tdraws:  {std_dict[OutcomeEnum.DRAW]:.4f}
+            \tlosses: {std_dict[OutcomeEnum.LOSS]:.4f}
+
+            Confidence Intervals:
+            \twins:   ({ci_lower_dict[OutcomeEnum.WIN]:.4f}, {ci_upper_dict[OutcomeEnum.WIN]:.4f})
+            \tdraws:  ({ci_lower_dict[OutcomeEnum.DRAW]:.4f}, {ci_upper_dict[OutcomeEnum.DRAW]:.4f})
+            \tlosses: ({ci_lower_dict[OutcomeEnum.LOSS]:.4f}, {ci_upper_dict[OutcomeEnum.LOSS]:.4f})
+        
+            Hypothesis Test:
+            \treject null: {reject_null}
+            \tp-value: {p_value:.4f}
+
+            Note: This section is not complete. This is a test release.
+        """
 
 if __name__ == "__main__":
     statistics_runner = Statistics_Runner(Environment_Variables(), Pricing_Variables(), Other_Variables())

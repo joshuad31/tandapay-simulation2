@@ -1,7 +1,7 @@
 import random
 
-from remove_user import remove_user
-from user_record import *
+from .remove_user import remove_user
+from .user_record import *
 
 def uf6_user_quit_function(env_vars, sys_rec, user_list):
     paid_invalid_user_indices = []

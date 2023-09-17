@@ -1,5 +1,5 @@
-from system_record import System_Record
-from user_record import *
+from .system_record import System_Record
+from .user_record import *
 
 def sf4_invalidate_subgroups(sys_rec, user_list):
     test_user = -1

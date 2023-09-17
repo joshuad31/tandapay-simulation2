@@ -1,6 +1,6 @@
 import random
 
-from user_record import *
+from .user_record import *
 
 def sf8_determine_claims(env_vars, user_list):
     probability = random.uniform(0, 1)

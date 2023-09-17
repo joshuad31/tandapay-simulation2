@@ -1,4 +1,4 @@
-from simulation_results import *
+from .simulation_results import *
 
 class Results_Aggregator:
     def __init__(self, sample_size, store_results = False):

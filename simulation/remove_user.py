@@ -1,4 +1,4 @@
-from user_record import *
+from .user_record import *
 
 import random
 

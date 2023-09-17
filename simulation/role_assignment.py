@@ -1,11 +1,11 @@
 import random
 
-from subgroup_setup import subgroup_setup
-from environment_variables import Environment_Variables
+from .subgroup_setup import subgroup_setup
+from .environment_variables import Environment_Variables
 
-from user_record import User_Record
-from user_record import PrimaryRoleEnum
-from user_record import SecondaryRoleEnum
+from .user_record import User_Record
+from .user_record import PrimaryRoleEnum
+from .user_record import SecondaryRoleEnum
 
 def role_assignment(env_vars, user_list, num_members_in_four_member_group):
 # Check validity of parameters passed to the function

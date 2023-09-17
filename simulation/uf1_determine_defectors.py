@@ -1,10 +1,10 @@
-from role_assignment import *
-from subgroup_setup import *
+from .role_assignment import *
+from .subgroup_setup import *
 
-from environment_variables import Environment_Variables
-from system_record import System_Record
-from user_record import *
-from remove_user import remove_user
+from .environment_variables import Environment_Variables
+from .system_record import System_Record
+from .user_record import *
+from .remove_user import remove_user
 
 def uf1_determine_defectors(env_vars, sys_record, user_list):
     if not isinstance(env_vars, Environment_Variables):
