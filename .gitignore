@@ -13,3 +13,4 @@ simulation_interface.spec
 process_notion.py
 build/
 dist/
+config/
