@@ -10,7 +10,7 @@ from util.results_db import Results_DB
 class Main:
     def __init__(self):
         self.uic = ui.UI_Context()
-        self.version = "v3.2.1"
+        self.version = "v3.2.2"
         self.ini_handler = INI_Handler("config/settings.ini")
         
         # read config file
