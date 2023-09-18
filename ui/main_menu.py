@@ -39,6 +39,9 @@ class Main_Menu(QMainWindow):
         self.run_statistics_btn = self.uief.make_push_button_element("Run Statistics", None, self.run_statistics)
         self.layout.addWidget(self.run_statistics_btn)
 
+        self.run_debug_btn = self.uief.make_push_button_element("Run Debug", None, self.run_debug)
+        self.layout.addWidget(self.run_debug_btn)
+
         self.settings_btn = self.uief.make_push_button_element("Settings", None, self.settings)
         self.layout.addWidget(self.settings_btn)
 
@@ -59,13 +62,19 @@ class Main_Menu(QMainWindow):
 
     def run_simulation(self):
         result_str = self.uic.run_simulation()
-        self.results_window = Results_Window("results")
+        self.results_window = Results_Window("Simulation Results")
         self.results_window.set_results_text(result_str)
         self.results_window.show()
 
     def run_statistics(self):
         result_str = self.uic.run_statistics()
-        self.results_window = Results_Window("results")
+        self.results_window = Results_Window("Statistics Results")
+        self.results_window.set_results_text(result_str)
+        self.results_window.show()
+
+    def run_debug(self):
+        result_str = self.uic.run_debug()
+        self.results_window = Results_Window("Debug Results")
         self.results_window.set_results_text(result_str)
         self.results_window.show()
 

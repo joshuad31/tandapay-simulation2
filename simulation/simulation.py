@@ -52,6 +52,23 @@ def exec_simulation(env_vars, pricing_vars, func = None) -> Simulation_Results:
     # run the simulation, return the simulation_results
     return base_simulation(env_vars, sys_rec, pricing_vars, user_list, func)
 
+def exec_simulation_debug(env_vars, pricing_vars):
+    ini_handler = INI_Handler("config/settings.ini")
+
+    env_vars = ini_handler.read_environment_variables()
+    pricing_vars = ini_handler.read_pricing_variables()
+    
+    csv_builder = CSV_Builder()
+    simulation_results = exec_simulation(env_vars, pricing_vars, csv_builder.record)
+    sys_path, user_path = csv_builder.get_absolute_paths()
+#    print(f"{ResultsEnum.get_result_str(simulation_results.result)}")
+    return {
+        'result': ResultsEnum.get_result_str(simulation_results.result),
+        'sys_csv_path': sys_path,
+        'user_csv_path': user_path,
+    }
+
+
 def base_simulation(env_vars, sys_rec, pricing_vars, user_list, func = None):
     period = 0
     last_three_quit_cnt = deque()

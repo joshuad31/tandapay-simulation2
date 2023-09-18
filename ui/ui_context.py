@@ -5,6 +5,7 @@ class UI_Context:
         self.run_simulation = None
         self.run_statistics = None
 #        self.settings = None
+        self.run_debug = None
         self.history = None
         self.about = None
 

@@ -18,7 +18,9 @@ class Main:
         
         # set callbacks
         self.uic.run_simulation = self.run_simulation_callback
-        self.uic.run_statistics = self.run_statistics
+        self.uic.run_statistics = self.run_statistics_callback
+        self.uic.run_debug = self.run_debug_callback
+        
         self.uic.history = self.run_history
         self.uic.about = self.run_about
 
@@ -28,9 +30,17 @@ class Main:
         results_aggregator = exec_simulation_multiple(self.uic.ev_obj, self.uic.pv_obj, self.uic.ov_obj.sample_size)
         return results_aggregator.get_string()
 
-    def run_statistics(self):
+    def run_statistics_callback(self):
         statistics_runner = Statistics_Runner(self.uic.ev_obj, self.uic.pv_obj, self.uic.ov_obj)
         return statistics_runner.get_string()
+
+    def run_debug_callback(self):
+        result_dict = exec_simulation_debug(self.uic.ev_obj, self.uic.pv_obj)
+        return f"""
+        Result: {result_dict['result']}
+        Wrote user record to CSV: {result_dict['user_csv_path']}
+        Wrote system record to CSV: {result_dict['sys_csv_path']}
+        """
 
     def run_history(self):
         return "temporarily unavailable"
