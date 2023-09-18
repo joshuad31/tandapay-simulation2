@@ -10,6 +10,7 @@ from util.results_db import Results_DB
 class Main:
     def __init__(self):
         self.uic = ui.UI_Context()
+        self.version = "v3.2.1"
         self.ini_handler = INI_Handler("config/settings.ini")
         
         # read config file
@@ -31,10 +32,14 @@ class Main:
 
     def run_simulation_callback(self) -> str:
         results_aggregator = exec_simulation_multiple(self.uic.ev_obj, self.uic.pv_obj, self.uic.ov_obj.sample_size)
-        return results_aggregator.get_string()
+        result_str = results_aggregator.get_string()
+        self.uic.history_db_obj.add_result("Simulation Run", self.version, result_str)
+        return result_str
 
     def run_statistics_callback(self):
         statistics_runner = Statistics_Runner(self.uic.ev_obj, self.uic.pv_obj, self.uic.ov_obj)
+        result_str = statistics_runner.get_string()
+        self.uic.history_db_obj.add_result("Statistics Run", self.version, result_str)
         return statistics_runner.get_string()
 
     def run_debug_callback(self):
