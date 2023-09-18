@@ -51,7 +51,7 @@ class Main_Menu(QMainWindow):
         self.about_btn = self.uief.make_push_button_element("About", None, self.uic.about)
         self.layout.addWidget(self.about_btn)
     
-        self.quit_btn = self.uief.make_push_button_element("Quit", None, sys.exit)
+        self.quit_btn = self.uief.make_push_button_element("Quit", None, self.quit)
         self.layout.addWidget(self.quit_btn)
 
         # finally, set this as the central widget. The central widget
@@ -81,6 +81,10 @@ class Main_Menu(QMainWindow):
     def settings(self):
         self.settings_menu = Settings_Menu(self.uic, 150)
         self.settings_menu.open_settings_menu()
+
+    def quit(self):
+        self.uic.save_settings()
+        sys.exit()
 
     def get_title_widget(self) -> QLabel:
         title = QLabel("Tandapay")

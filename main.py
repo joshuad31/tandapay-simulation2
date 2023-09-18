@@ -19,10 +19,10 @@ class Main:
         # set callbacks
         self.uic.run_simulation = self.run_simulation_callback
         self.uic.run_statistics = self.run_statistics_callback
+        self.uic.save_settings = self.save_settings_callback
         self.uic.run_debug = self.run_debug_callback
-        
-        self.uic.history = self.run_history
-        self.uic.about = self.run_about
+        self.uic.history = self.run_history_callback
+        self.uic.about = self.run_about_callback
 
         ui.initialize(self.uic)
 
@@ -41,12 +41,17 @@ class Main:
         Wrote user record to CSV: {result_dict['user_csv_path']}
         Wrote system record to CSV: {result_dict['sys_csv_path']}
         """
+    def save_settings_callback(self):
+        self.ini_handler.write_environment_variables(self.uic.ev_obj)
+        self.ini_handler.write_pricing_variables(self.uic.pv_obj)
+        self.ini_handler.write_other_variables(self.uic.ov_obj)
 
-    def run_history(self):
+    def run_history_callback(self):
         return "temporarily unavailable"
 
-    def run_about(self):
+    def run_about_callback(self):
         return "temporarily unavailable"
+
 
 if __name__ == "__main__":
     app = Main()
