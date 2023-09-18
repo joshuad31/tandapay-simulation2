@@ -5,6 +5,7 @@ from simulation.pricing_variables import Pricing_Variables
 from simulation.other_variables import *
 from statistics.statistics_runner import Statistics_Runner
 from util.ini_handler import INI_Handler
+from util.results_db import Results_DB
 
 class Main:
     def __init__(self):
@@ -23,6 +24,8 @@ class Main:
         self.uic.run_debug = self.run_debug_callback
         self.uic.history = self.run_history_callback
         self.uic.about = self.run_about_callback
+
+        self.uic.history_db_obj = Results_DB()
 
         ui.initialize(self.uic)
 

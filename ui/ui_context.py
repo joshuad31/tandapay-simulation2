@@ -6,8 +6,10 @@ class UI_Context:
         self.run_statistics = None
         self.save_settings = None
         self.run_debug = None
-        self.history = None
+#        self.history = None
         self.about = None
+
+        self.history_db_obj = None
 
         self.ev_obj = None
         self.pv_obj = None

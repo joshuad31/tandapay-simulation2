@@ -10,6 +10,7 @@ from .ui_element_factory import UI_Element_Factory
 from .ui_context import UI_Context
 from .settings_menu import Settings_Menu
 from .results_menu import Results_Window
+from .history_menu import History_Menu
 
 class Main_Menu(QMainWindow):
     def __init__(self, ui_context: UI_Context):
@@ -45,7 +46,7 @@ class Main_Menu(QMainWindow):
         self.settings_btn = self.uief.make_push_button_element("Settings", None, self.settings)
         self.layout.addWidget(self.settings_btn)
 
-        self.history_btn = self.uief.make_push_button_element("History", None, self.uic.history)
+        self.history_btn = self.uief.make_push_button_element("History", None, self.history)
         self.layout.addWidget(self.history_btn)
 
         self.about_btn = self.uief.make_push_button_element("About", None, self.uic.about)
@@ -81,6 +82,10 @@ class Main_Menu(QMainWindow):
     def settings(self):
         self.settings_menu = Settings_Menu(self.uic, 150)
         self.settings_menu.open_settings_menu()
+
+    def history(self):
+        self.history_menu = History_Menu(self.uic, self)
+        self.history_menu.show()
 
     def quit(self):
         self.uic.save_settings()
