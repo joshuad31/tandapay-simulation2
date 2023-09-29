@@ -119,11 +119,14 @@ class Results_Aggregator:
         self.calculate_minimums(simulation_results)
         self.calculate_maximums(simulation_results)
 
+        if self.results_added == self.sample_size:
+            self.calculate_secondaries()
+
     def get_string(self) -> str:
         if self.results_added != self.sample_size:
             return "ERROR: number of results {self.results_added} does not match sample size {self.sample_size}. If you see this error, contact the dev."
         
-        self.calculate_secondaries()
+        #self.calculate_secondaries()
 
         results_str = f"""
         Results Summary:
