@@ -12,6 +12,7 @@ from simulation.simulation_results import *
 from simulation.results_aggregator import *
 from .confidence_interval import calculate_confidence_interval
 from .hypothesis_test import perform_hypothesis_test
+from .hypothesis_test import TestTypeEnum 
 
 class Statistics_Aggregator:
     def __init__(self, ov):
@@ -71,11 +72,11 @@ class Statistics_Aggregator:
             std_value = math.sqrt(sum([(getattr(result, attribute) - mean_value) ** 2 for result in self.results]) / (self.ov.trial_count - 1))
             self.std_dict[attribute] = std_value
 
-    def calculate_confidence_intervals(self, alpha=0.05):
+    def calculate_confidence_intervals(self):
         self.ci_dict = {}
 
         # Z-value for the confidence level
-        z_value = norm.ppf(1 - alpha / 2)
+        z_value = norm.ppf(1 - self.ov.alpha / 2)
 
         for attribute in self._attributes:
             mean_value = self.mean_dict[attribute]
@@ -89,6 +90,28 @@ class Statistics_Aggregator:
             upper_bound = mean_value + margin_of_error
 
             self.ci_dict[attribute] = (lower_bound, upper_bound)
+
+    def calculate_hypothesis_test(self, attribute: str, null_value: float, test_type: TestTypeEnum):
+        if attribute not in self._attributes:
+            raise ValueError("Attempting to perform hypothesis test on an attribute that isn't in the statistics model.")
+
+        p_value = perform_hypothesis_test(self.mean_dict[attribute], self.std_dict[attribute], self.ov.trial_count, null_value, test_type)
+
+        operator_str = ""
+        if test_type == TestTypeEnum.GREATER:
+            operator_str = ">"
+        elif test_type == TestTypeEnum.LESS:
+            operator_str = "<"
+        else:
+            operator_str = "≠"
+       
+        math_str = f"with {(1 - self.ov.alpha)*100}% confidence that {attribute} {operator_str} {null_value}"
+        
+        if p_value < self.ov.alpha:
+            return (p_value, f"We can say {math_str}")
+        else:
+            return (p_value, f"We can not say {math_str}")
+
 
     # this function is mainly for debugging
     def print_dicts(self):

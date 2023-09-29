@@ -11,6 +11,7 @@ from simulation.simulation import exec_simulation_multiple
 from simulation.simulation_results import *
 from .confidence_interval import calculate_confidence_interval
 from .hypothesis_test import perform_hypothesis_test
+from .hypothesis_test import TestTypeEnum
 from .statistics_aggregator import Statistics_Aggregator
 
 class Statistics_Runner:
@@ -31,3 +32,6 @@ class Statistics_Runner:
             self.statistics_aggregator.add_result(exec_simulation_multiple(self.ev, self.pv, self.ov.trial_sample_size))
         
         self.statistics_aggregator.print_dicts()
+        
+        p_value, string = self.statistics_aggregator.calculate_hypothesis_test("num_wins", 30.0, TestTypeEnum.TWOTAILED)
+        print(f"p_value = {p_value}, result = {string}")
