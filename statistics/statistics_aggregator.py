@@ -10,9 +10,11 @@ from simulation.pricing_variables import *
 from simulation.simulation import exec_simulation
 from simulation.simulation_results import *
 from simulation.results_aggregator import *
+from .statistics_attributes import statistics_attributes
 from .confidence_interval import calculate_confidence_interval
 from .hypothesis_test import perform_hypothesis_test
 from .hypothesis_test import TestTypeEnum 
+
 
 class Statistics_Aggregator:
     def __init__(self, ov):
@@ -25,27 +27,7 @@ class Statistics_Aggregator:
         self.std_dict = {}
         self.ci_dict = {}
 
-        self._attributes = [
-            "num_wins",
-            "num_draws",
-            "num_losses",
-            "win_defector_stat",
-            "win_skipped_stat",
-            "win_invalid_stat",
-            "win_quit_stat",
-            "draw_defector_stat",
-            "draw_skipped_stat",
-            "draw_invalid_stat",
-            "draw_quit_stat",
-            "loss_defector_stat",
-            "loss_skipped_stat",
-            "loss_invalid_stat",
-            "loss_quit_stat",
-            "avg_defectors",
-            "avg_skipped",
-            "avg_invalid",
-            "avg_quit",
-        ]
+        self._attributes = statistics_attributes
 
     def add_result(self, result: Results_Aggregator):
         # if we try to pass it additional results after the
@@ -59,18 +41,23 @@ class Statistics_Aggregator:
         # if we have filled the results array, calculate the
         # statistics on all of the results
         if self.results_added == len(self.results):
-            self.calculate_stats(self._attributes)
+            self.calculate_stats()
 
-    def calculate_stats(self, attributes: list[str]):
+    def calculate_stats(self):
         self.mean_dict = {}
         self.std_dict = {}
 
-        for attribute in attributes:
+        if self.results_added != len(self.results):
+            raise ValueError("Error: attempting to perform calculations in statistics aggregator before results have been added")
+
+        for attribute in self._attributes:
             mean_value = sum([getattr(result, attribute) for result in self.results]) / self.ov.trial_count
             self.mean_dict[attribute] = mean_value
             
             std_value = math.sqrt(sum([(getattr(result, attribute) - mean_value) ** 2 for result in self.results]) / (self.ov.trial_count - 1))
             self.std_dict[attribute] = std_value
+
+        self.calculate_confidence_intervals()
 
     def calculate_confidence_intervals(self):
         self.ci_dict = {}
@@ -131,3 +118,18 @@ class Statistics_Aggregator:
 
         for key, value in self.ci_dict.items():
             print(f"{key}: {value}")
+
+    def get_string(self):
+        if len(self.ci_dict) == 0 or len(self.std_dict) == 0 or len(self.mean_dict) == 0:
+            self.calculate_stats()
+
+        string = ""
+        for attribute in self._attributes:
+            string += f"""
+            {attribute}:
+            \tmean:                   {self.mean_dict[attribute]}
+            \tstd. dev:               {self.std_dict[attribute]}
+            \tconfidence interval:    {self.ci_dict[attribute]}
+            """
+
+        return string.replace("_", " ")

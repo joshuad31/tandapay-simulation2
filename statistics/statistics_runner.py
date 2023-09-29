@@ -24,14 +24,28 @@ class Statistics_Runner:
         # will store all the results
         self.statistics_aggregator = Statistics_Aggregator(self.ov) 
     
-    def run(self):
+    def run(self, hypothesis_tests=None):
         self.statistics_aggregator = Statistics_Aggregator(self.ov) 
 
         # Running trials
         for trial in range(self.ov.trial_count):
             self.statistics_aggregator.add_result(exec_simulation_multiple(self.ev, self.pv, self.ov.trial_sample_size))
         
-        self.statistics_aggregator.print_dicts()
+        #self.statistics_aggregator.print_dicts()
         
-        p_value, string = self.statistics_aggregator.calculate_hypothesis_test("num_wins", 30.0, TestTypeEnum.TWOTAILED)
-        print(f"p_value = {p_value}, result = {string}")
+        #p_value, string = self.statistics_aggregator.calculate_hypothesis_test("num_wins", 30.0, TestTypeEnum.TWOTAILED)
+        #print(f"p_value = {p_value}, result = {string}")
+
+    def get_string(self):
+        self.run()
+        base_str = self.statistics_aggregator.get_string()
+        
+        p_value, legible_str = self.statistics_aggregator.calculate_hypothesis_test(self.ov.test_outcome, self.ov.value_to_test, self.ov.test_type)
+        full_string = f"""{base_str}
+
+            Hypothesis Test:
+            \tp-value: {p_value}
+            \tResult: {legible_str}
+            """
+
+        return full_string
