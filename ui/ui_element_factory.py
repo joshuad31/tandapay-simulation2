@@ -77,11 +77,13 @@ class UI_Element_Factory:
         hbox.addWidget(spinbox, 0.5)
         return hbox
     
-    def make_float_entry_element(self, label, tooltip=None, initial_value=None, minimum=0.0, maximum=100.0, callback=None):
+    def make_float_entry_element(self, label, tooltip=None, initial_value=None, minimum=0.0, maximum=1.0, callback=None):
         # Create a QDoubleSpinBox widget
         double_spin_box = QDoubleSpinBox()
         double_spin_box.setMinimum(minimum)
         double_spin_box.setMaximum(maximum)
+        double_spin_box.setDecimals(12)
+        double_spin_box.setSingleStep(0.01)
         
         # Set its properties
         if tooltip:

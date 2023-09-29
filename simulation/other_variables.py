@@ -1,5 +1,6 @@
 from enum import Enum
 from statistics.hypothesis_test import TestTypeEnum
+from statistics.statistics_attributes import statistics_attributes
 
 class OutcomeEnum(Enum):
     WIN = 0
@@ -18,7 +19,7 @@ class Other_Variables:
         self.alpha = 0.05               # alpha value to be used for confidence intervals & hypothesis testing
         
         self._test_type = TestTypeEnum.TWOTAILED
-        self._test_outcome = OutcomeEnum.WIN
+        self._test_outcome = "num_wins" 
         self.value_to_test = 0.500
 
         # other
@@ -41,8 +42,9 @@ class Other_Variables:
 
     @test_outcome.setter
     def test_outcome(self, value):
-        if isinstance(value, OutcomeEnum):
-            self._test_outcome = value
-        else:
-            self._test_outcome = OutcomeEnum[value]
+        if not isinstance(value, str):
+            raise TypeError("Attempting to pass non-string value to test_outcome. (attributes must be strings)")
+        if value not in statistics_attributes:
+            raise ValueError("Attempting to pass invalid attribute string to test_outcome.")
 
+        self._test_outcome = value

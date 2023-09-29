@@ -4,6 +4,7 @@ import configparser
 from simulation.environment_variables import Environment_Variables
 from simulation.pricing_variables import Pricing_Variables
 from simulation.other_variables import Other_Variables
+from statistics.hypothesis_test import TestTypeEnum
 
 # Define the class for handling .ini files
 class INI_Handler:
@@ -67,6 +68,9 @@ class INI_Handler:
         ov.trial_sample_size        = int(self.config.get('Other_Variables', 'trial_sample_size'))
         ov.trial_count              = int(self.config.get('Other_Variables', 'trial_count'))
         ov.alpha                    = float(self.config.get('Other_Variables', 'alpha'))
+        ov.test_type                = TestTypeEnum[self.config.get('Other_Variables', 'test_type')]
+        ov.test_outcome             = str(self.config.get('Other_Variables', 'test_outcome'))
+        ov.value_to_test            = float(self.config.get('Other_Variables', 'value_to_test'))
 
         return ov
 
@@ -110,6 +114,9 @@ class INI_Handler:
             'trial_sample_size'     : ov.trial_sample_size,
             'trial_count'           : ov.trial_count,
             'alpha'                 : ov.alpha,
+            'test_type'             : ov.test_type.name,
+            'test_outcome'          : ov.test_outcome,
+            'value_to_test'         : ov.value_to_test,
         }
         with open(self.path, 'w') as configfile:
             self.config.write(configfile)

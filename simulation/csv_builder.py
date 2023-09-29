@@ -1,5 +1,6 @@
 import copy
 import csv
+import os
 
 class CSV_Builder:
     def __init__(self, sys_csv_file='system_record.csv', user_csv_file='user_record.csv'):
@@ -42,5 +43,9 @@ class CSV_Builder:
                                  user.claim_refund, user.invalid_refund, user.premium_balance, user.cur_month_premium, 
                                  user._credit_to_savings_account, user.sbg_reorg_cnt, user.second_premium_calc_list[period], 
                                  user.total_value_refund_list[period], user.debt_to_savings_account_list[period]])
- 
-
+    
+    # returns a tuple containing the absolute path of sys_csv and user_csv
+    def get_absolute_paths(self):
+        sys_csv_absolute_path = os.path.abspath(self.sys_csv_file)
+        user_csv_absolute_path = os.path.abspath(self.user_csv_file)
+        return (sys_csv_absolute_path, user_csv_absolute_path)

@@ -9,7 +9,7 @@ from PySide2.QtCore import Qt, QSize
 
 from .ui_element_factory import UI_Element_Factory
 from statistics.hypothesis_test import TestTypeEnum
-from simulation.other_variables import OutcomeEnum
+from statistics.statistics_attributes import statistics_attributes
 
 class Stats_Layout:
     def __init__(self, ui_context, widget_width=None):
@@ -39,7 +39,7 @@ class Stats_Layout:
         self.uic.ov_obj.trial_count         = self.uief.getValue(self.ov2_label)
         self.uic.ov_obj.alpha               = self.uief.getValue(self.ov3_label)
         self.uic.ov_obj.test_type           = TestTypeEnum[self.uief.getValue(self.ov4_label)]
-        self.uic.ov_obj.test_outcome        = OutcomeEnum[self.uief.getValue(self.ov5_label)]
+        self.uic.ov_obj.test_outcome        = self.uief.getValue(self.ov5_label)
         self.uic.ov_obj.value_to_test       = self.uief.getValue(self.ov6_label)
         return self.uic
 
@@ -68,11 +68,11 @@ class Stats_Layout:
         self.ov4_hbox = self.uief.make_dropdown_entry_element(self.ov4_label, options, self.ov4_tooltip, self.uic.ov_obj.test_type.name)
         layout.addLayout(self.ov4_hbox)
         
-        options = [option.name for option in OutcomeEnum]
-        self.ov5_hbox = self.uief.make_dropdown_entry_element(self.ov5_label, options, self.ov5_tooltip, self.uic.ov_obj.test_outcome.name)
+        options = statistics_attributes
+        self.ov5_hbox = self.uief.make_dropdown_entry_element(self.ov5_label, options, self.ov5_tooltip, self.uic.ov_obj.test_outcome)
         layout.addLayout(self.ov5_hbox)
 
-        self.ov6_hbox = self.uief.make_float_entry_element(self.ov6_label, self.ov6_tooltip, self.uic.ov_obj.value_to_test, 0.0, 1.0)
+        self.ov6_hbox = self.uief.make_float_entry_element(self.ov6_label, self.ov6_tooltip, self.uic.ov_obj.value_to_test, 0.0, 100000.0)
         layout.addLayout(self.ov6_hbox)
 
         return layout
