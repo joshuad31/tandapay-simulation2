@@ -17,3 +17,6 @@ class Pricing_Variables:
         self.avg_3mo_change_ceiling     = .80
         self.avg_3mo_ph_leave_floor     = .02
         self.avg_3mo_ph_leave_ceiling   = .04
+    
+    def get_limits(self, attribute: str):
+        return (0, 1)

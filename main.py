@@ -4,13 +4,14 @@ from simulation.environment_variables import Environment_Variables
 from simulation.pricing_variables import Pricing_Variables
 from simulation.other_variables import *
 from statistics.statistics_runner import Statistics_Runner
+from statistics.searching import Searching
 from util.ini_handler import INI_Handler
 from util.results_db import Results_DB
 
 class Main:
     def __init__(self):
         self.uic = ui.UI_Context()
-        self.version = "v3.2.3"
+        self.version = "v3.3.0"
         self.ini_handler = INI_Handler("config/settings.ini")
         
         # read config file
@@ -21,6 +22,7 @@ class Main:
         # set callbacks
         self.uic.run_simulation = self.run_simulation_callback
         self.uic.run_statistics = self.run_statistics_callback
+        self.uic.run_searching = self.run_searching_callback
         self.uic.save_settings = self.save_settings_callback
         self.uic.run_debug = self.run_debug_callback
         self.uic.history = self.run_history_callback
@@ -42,6 +44,12 @@ class Main:
         self.uic.history_db_obj.add_result("Statistics Run", self.version, result_str)
         return statistics_runner.get_string()
 
+    def run_searching_callback(self, attribute, target_percent, outcome, min_value, max_value, steps, order):
+        searching = Searching(self.uic.ev_obj, self.uic.pv_obj, self.uic.ov_obj)
+        result_str = searching.perform_full_search(attribute, target_percent, outcome, min_value, max_value, steps, order)
+        self.uic.history_db_obj.add_result("Searching Run", self.version, result_str)
+        return result_str 
+    
     def run_debug_callback(self):
         result_dict = exec_simulation_debug(self.uic.ev_obj, self.uic.pv_obj)
         return f"""
