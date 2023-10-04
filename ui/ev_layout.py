@@ -83,19 +83,19 @@ class EV_Layout:
         layout.addLayout(ev2_hbox)
 
         # ev3
-        ev3_hbox = self.uief.make_numeric_entry_element(self.ev3_label, self.ev3_tooltip, 100 * self.env_vars.chance_of_claim, 0, 100)
+        ev3_hbox = self.uief.make_float_entry_element(self.ev3_label, self.ev3_tooltip, 100 * self.env_vars.chance_of_claim, 0, 100)
         layout.addLayout(ev3_hbox)
 
         # ev4
-        ev4_hbox = self.uief.make_numeric_entry_element(self.ev4_label, self.ev4_tooltip, 100 * self.env_vars.perc_honest_defectors, 0, 100)
+        ev4_hbox = self.uief.make_float_entry_element(self.ev4_label, self.ev4_tooltip, 100 * self.env_vars.perc_honest_defectors, 0, 100)
         layout.addLayout(ev4_hbox)
        
         # ev5
-        ev5_hbox = self.uief.make_numeric_entry_element(self.ev5_label, self.ev5_tooltip, 100 * self.env_vars.perc_low_morale, 0, 100)
+        ev5_hbox = self.uief.make_float_entry_element(self.ev5_label, self.ev5_tooltip, 100 * self.env_vars.perc_low_morale, 0, 100)
         layout.addLayout(ev5_hbox)
 
         # ev6
-        ev6_hbox = self.uief.make_numeric_entry_element(self.ev6_label, self.ev6_tooltip, 100 * self.env_vars.perc_independent, 0, 100)
+        ev6_hbox = self.uief.make_float_entry_element(self.ev6_label, self.ev6_tooltip, 100 * self.env_vars.perc_independent, 0, 100)
         layout.addLayout(ev6_hbox)
 
         # ev7

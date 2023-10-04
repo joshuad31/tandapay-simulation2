@@ -22,9 +22,10 @@ def uf2_pricing_function(ev, sr, pv, user_list, cur_period):
         if user.total_value_refund_list[cur_period] == 0:
             if evaluate_noref(ev, pv, user, cur_period):
                 leave_list.append(i)
-        else:
-            if evaluate_refund(ev, pv, user, cur_period):
-                leave_list.append(i)
+#NOTE: Temporarily disabled this section
+#        else:
+#            if evaluate_refund(ev, pv, user, cur_period):
+#                leave_list.append(i)
     
 #    print(f"sizeof leave list: {len(leave_list)}")
     for i in leave_list:
