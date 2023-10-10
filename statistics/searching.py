@@ -23,6 +23,9 @@ class Result:
         self.value = value
 
 class Searching:
+    """
+    implements the siulation search functionality
+    """
 
     def __init__(self, ev, pv, ov):
         self.ev = ev
@@ -108,6 +111,19 @@ class Searching:
         return linreg_models, raw_results
     
     def perform_full_search(self, attribute, target_percent, outcome, min_value, max_value, steps, order):
+        """
+        Performs a search.
+
+        :param attribute: attribute to search
+        :param target_percent: percent of <outcome> you want to target
+        :param outcome: outcome you're studying (win, loss, or tie?) should be an OutcomeEnum object.
+        :param min_value: minimum value to search (searches in [min_value, max_value])
+        :param max_value: maximum value to search (searches in [min_value, max_value])
+        :param steps: number of steps to search over and make a regression model from
+        :param order: what order regression model to use? (e.g. order=2 will use L(x) = ax^2 + bx + c)
+
+        :return: a formatted string detailing the results in a displayable manner
+        """
         linreg_models, raw_results = self.get_linreg(attribute, min_value, max_value, steps, order) 
 
         coeffs = []
