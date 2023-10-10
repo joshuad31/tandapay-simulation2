@@ -1,6 +1,11 @@
 
 
 def queueing_function(user_list):
+    """
+    Queueing delays the refunds that are given to the users.
+
+    :param user_list: takes in the list of users for this simulation run
+    """
     for user in user_list:
         queueing_length = len(user.prior_month_premium_list)
 

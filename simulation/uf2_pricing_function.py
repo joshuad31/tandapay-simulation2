@@ -9,7 +9,16 @@ from .remove_user import evaluate_probability
 import random
 
 def uf2_pricing_function(ev, sr, pv, user_list, cur_period):
-   
+    """
+    user function 2; pricing function
+
+    :param ev: takes in simulation environment variables
+    :param sr: takes in simulation system record
+    :param pv: takes in simulation pricing variables
+    :param user_list: takes in user list for this simulation instance
+    :param cur_period: current period the simulation is on
+    """
+
     # 1. Get a list of all active users
     list_of_active = []
     for i, user in enumerate(user_list):
@@ -34,12 +43,33 @@ def uf2_pricing_function(ev, sr, pv, user_list, cur_period):
         remove_user(user_list, i, "user was in leave list in uf2")
 
 def evaluate_qualifying(ev, user, floor, cur_period):
+    """
+    evaluates if member is qualifying to be evaluated for uf2
+
+    :param ev: environment variables for this simulation run
+    :param user: user to evaluate
+    :param floor: floor to calculate threshold from
+    :param cur_period: current period simulation is on
+
+    :return: threshold < second premium calc
+    """
     threshold = floor * ev.monthly_premium    
     return threshold < user.second_premium_calc_list[cur_period]
 
 # a, b, c, d correspond to steps in the spec. x is a step I changed to improve the code.
 # evaluates a user who got no refund. Returns true if they are to be added to the leave list
 def evaluate_noref(ev, pv, user, cur_period) -> bool:
+    """
+    evaluates member who did not get a refund
+
+    :param ev: environment variables for this simulation run
+    :param user: user to evaluate
+    :param floor: floor to calculate threshold from
+    :param cur_period: current period simulation is on
+    
+    :return: true if they defect
+    """
+
     # test if they qualify
 #    if not evaluate_qualifying(ev, user, pv.noref_change_floor, cur_period):
 #        return False
@@ -80,6 +110,9 @@ def evaluate_noref(ev, pv, user, cur_period) -> bool:
         return evaluate_cumulative(ev, pv, user, cur_period)
 
 def evaluate_refund(ev, pv, user, cur_period) -> bool:
+    """
+    Unused function. disabled per Josh's recommendation to improve simulation results
+    """
     # test if they qualify
 #    if not evaluate_qualifying(ev, user, pv.refund_change_floor, cur_period):
 #        return False
@@ -113,6 +146,16 @@ def evaluate_refund(ev, pv, user, cur_period) -> bool:
         return evaluate_cumulative(ev, pv, user, cur_period)
 
 def evaluate_cumulative(ev, pv, user, cur_period) -> bool:
+    """
+    evaluates cumulative increase to determine if user defects
+
+    :param ev: environment variables for this simulation run
+    :param user: user to evaluate
+    :param floor: floor to calculate threshold from
+    :param cur_period: current period simulation is on
+
+    :return: true if they defect
+    """
     # constants for average calculation
     MIN_PERIOD = 4
     MAX_PERIOD = 9

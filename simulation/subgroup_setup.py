@@ -5,6 +5,14 @@ from .user_record import User_Record
 
 # subgroup_setup method. Documentation can be found at: https://www.notion.so/Subgroup-Setup-7e7852c10715423699fc522ca9e6536a
 def subgroup_setup(total_member_cnt, user_list):
+    """
+    Assigns the users to their subgroups
+
+    :param total_member_cnt: total number of members we have in this simulation instance
+    :param user_list: user list  for this simulation instance
+
+    :return: tuple containing (num_four_member_groups, num_five_member_groups, num_six_member_groups, num_seven_member_groups)
+    """
     assert isinstance(total_member_cnt, int), "total_member_cnt must be an integer!"
     assert isinstance(user_list, list), "user_list must be a list!"
 

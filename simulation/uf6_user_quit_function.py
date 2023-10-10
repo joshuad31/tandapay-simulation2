@@ -4,6 +4,13 @@ from .remove_user import remove_user
 from .user_record import *
 
 def uf6_user_quit_function(env_vars, sys_rec, user_list):
+    """
+    Determines users that quit
+
+    :param env_vars: environment variables for this simulation run
+    :param sys_rec: system record for this simulation instance
+    :param user_list: list of users for this simulation instance
+    """
     paid_invalid_user_indices = []
     will_reorg = [] 
 

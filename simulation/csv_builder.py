@@ -3,7 +3,17 @@ import csv
 import os
 
 class CSV_Builder:
+    """
+    This class contains operations for generating .csv files for the simulation's debug run functionality
+    """
+
     def __init__(self, sys_csv_file='system_record.csv', user_csv_file='user_record.csv'):
+        """
+        Initializes csv files for system record and user record
+
+        :param sys_csv_file: path to csv where you will store system record
+        :param user_csv_file: path to csv where you will store user records
+        """
         self.sys_csv_file = sys_csv_file
         self.user_csv_file = user_csv_file
         # Initialize System Record CSV
@@ -24,6 +34,17 @@ class CSV_Builder:
                              'Second_Premium_Calc', 'Total_Value_Refund', 'Debt_To_Savings_Account'])
 
     def record(self, period, env_vars, sys_rec, pricing_vars, user_list):
+        """
+        passed as a function pointer to simulation so that we can record
+        between periods. saves data to the CSVs
+
+        :param period: current period the simulation is on
+        :param env_vars: environment variables we are running the simulation with
+        :param sys_rec: system record we are initializing the simulation with
+        :param pricing_vars: pricing variables we are running the simulation with
+        :param user_list: list of user_record objects which represents the users
+        """
+
         # Record System_Record
         with open(self.sys_csv_file, 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -46,6 +67,12 @@ class CSV_Builder:
     
     # returns a tuple containing the absolute path of sys_csv and user_csv
     def get_absolute_paths(self):
+        """
+        gets absolute paths of system and user record
+
+        :return: Tuple containing (sys_csv_path, user_csv_path)
+        """
+
         sys_csv_absolute_path = os.path.abspath(self.sys_csv_file)
         user_csv_absolute_path = os.path.abspath(self.user_csv_file)
         return (sys_csv_absolute_path, user_csv_absolute_path)

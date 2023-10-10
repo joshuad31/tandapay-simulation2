@@ -4,6 +4,14 @@ from .user_record import *
 import sys
 
 def rsa_calculate_premiums(env_vars, sys_rec, user_list, period):
+    """
+    This function, RSA, calculates users' premiums
+
+    :param env_vars: Takes in simulation environment variables
+    :param sys_rec: Takes in simulation system record for this period
+    :param user_list: Takes in the list of users in this simulation run
+    :param period: Takes in the current period the simulation is on
+    """
     if period == 0:
         for user in user_list:
             # the first premium calculation will be equal to the total coverage requirement
@@ -44,10 +52,28 @@ def rsa_calculate_premiums(env_vars, sys_rec, user_list, period):
             user.invalid_refund = 0
 
 def rsb_payback_debt(env_vars, sys_rec, user_list, period):
+    """
+    This function, RSB, pays back their debts
+    
+    :param env_vars: Takes in simulation environment variables
+    :param sys_rec: Takes in simulation system record for this period
+    :param user_list: Takes in the list of users in this simulation run
+    :param period: Takes in the current period the simulation is on
+    """
     for user in user_list:
         user.premium_balance = sys_rec.shortfall_credit_individual + sys_rec.first_premium_calc
 
 def rsc_calculate_shortfall(env_vars, sys_rec, user_list, period):
+    """
+    This function, RSC, calculates shortfalls
+
+
+    :param env_vars: Takes in simulation environment variables
+    :param sys_rec: Takes in simulation system record for this period
+    :param user_list: Takes in the list of users in this simulation run
+    :param period: Takes in the current period the simulation is on
+    """
+
     # calculate shortfall_debt_total
     sys_rec.shortfall_debt_total = sys_rec.defection_shortfall
     sys_rec.shortfall_debt_total += sys_rec.skip_shortfall

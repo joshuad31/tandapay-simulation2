@@ -8,6 +8,14 @@ from .user_record import PrimaryRoleEnum
 from .user_record import SecondaryRoleEnum
 
 def role_assignment(env_vars, user_list, num_members_in_four_member_group):
+    """
+    Assigns users to appropriate roles based on environment variable parameters
+
+    :param env_vars: environment variables for this simulation run
+    :param user_list: list of users for this simulation run
+    :param num_members_in_four_member_groups: number of users who were assigned into four member groups
+    """
+
 # Check validity of parameters passed to the function
     assert isinstance(env_vars, Environment_Variables), "env_vars must be of type EnvironmentVariables!"
     assert isinstance(user_list, list), "user_list must be a list!"

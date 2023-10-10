@@ -2,6 +2,9 @@
 
 
 class Pricing_Variables:
+    """
+    Encapsulates the pricing variables we are running the simulation with
+    """
     def __init__(self):
         self.noref_change_floor         = .10
         self.noref_change_ceiling       = .90

@@ -28,6 +28,16 @@ import pdb
 
 
 def exec_simulation_multiple(env_vars, pricing_vars, n) -> Results_Aggregator:
+    """
+    Executes the simulation multiple times and returns a Results_Aggregator object
+    that details the results of these simulation runs.
+
+    :param env_vars: takes in simulation environment variables
+    :param pricing_vars: takes in simulation pricing variables
+    :param n: takes in number of trials to run the simulation for
+
+    :return: results_aggregator detailing results of `n` simulation runs
+    """
     results_aggregator = Results_Aggregator(n, False)
     for i in range(n):
         simulation_results = exec_simulation(env_vars, pricing_vars)
@@ -36,6 +46,17 @@ def exec_simulation_multiple(env_vars, pricing_vars, n) -> Results_Aggregator:
     return results_aggregator
 
 def exec_simulation(env_vars, pricing_vars, func = None) -> Simulation_Results:
+    """
+    Executes the simulation once, returns a Simulation_Results object that
+    details the results of this individual run
+
+    :param env_vars: Environment variables to run the simulation with
+    :param pricing_vars: Pricing variables to run the simulation with
+    :param func: Optional callback function to record simulation variables between periods
+
+    :return: simulation_results, which details the results of this individual run
+    """
+
     # initialize user_list
     user_list = [User_Record(env_vars) for _ in range(env_vars.total_member_cnt)]
 
@@ -53,6 +74,19 @@ def exec_simulation(env_vars, pricing_vars, func = None) -> Simulation_Results:
     return base_simulation(env_vars, sys_rec, pricing_vars, user_list, func)
 
 def exec_simulation_debug(env_vars, pricing_vars):
+    """
+    executes a debug run of the simulation. results in two CSVs being
+    generated which contain information about the system record and
+    user record between each period of a single simulation run.
+
+    :param env_vars: takes in the environment variables for this simulation run
+    :param pricing_vars: takes in the pricing variables for this simulation run
+
+    :return: dict containing 'result', a string detailing the results of this
+            individual simulation run. 'sys_csv_path', absolute path where the csv file
+            detailing the system record is stored. 'user_csv_path' absolute path where
+            the csv file detailing the user record per period is stored.
+    """
     ini_handler = INI_Handler("config/settings.ini")
 
     env_vars = ini_handler.read_environment_variables()
@@ -70,6 +104,18 @@ def exec_simulation_debug(env_vars, pricing_vars):
 
 
 def base_simulation(env_vars, sys_rec, pricing_vars, user_list, func = None):
+    """
+    internal function for running the base simulation.
+    
+    :param env_vars: environment variables to run the simulation with
+    :param sys_rec: system record to initialize the simulation with
+    :param pricing_vars: pricing variables to run the simulation with
+    :param user_list: list of users to run the simulation with
+    :param func: optional callback function to take snapshots of the simulation between periods
+    
+    :return: simulation_results object detailing the results of the simulation run
+    """
+
     period = 0
     last_three_quit_cnt = deque()
     last_three_skipped_cnt = deque()

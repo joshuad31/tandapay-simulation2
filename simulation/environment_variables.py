@@ -1,5 +1,17 @@
 
 class Environment_Variables:
+    """
+    This class encapsulates all of the environment variables.
+
+    domain limited variables:
+    - chance of claim: [25, 75]
+    - percent honest defectors: [10, 45]
+    - percent low morale: [10, 30]
+    - percent independent: [20, 80]
+    - dependent threshold: [2, 3]
+    - queueing: [0, 3]
+    """
+
     def __init__(self):
         self._total_member_cnt = 100             # EV1: How many members are in the group?
         self._monthly_premium = 100            # EV2: Monthly premium

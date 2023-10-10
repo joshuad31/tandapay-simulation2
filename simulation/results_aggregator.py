@@ -1,7 +1,18 @@
 from .simulation_results import *
 
 class Results_Aggregator:
+    """
+    aggregates results over the course of many simulation runs. performs
+    various calculations automatically to streamline the process of displaying
+    this information.
+    """
     def __init__(self, sample_size, store_results = False):
+        """
+        initializes the results aggregator
+
+        :param sample_size: number of simulation runs you are going to use for this results aggregator instance
+        :param store_results: unused, causes all results to be stored in an array. (Optional)
+        """
         # will store results here if store_results = True
         self.results = []
         self.results_added = 0
@@ -78,6 +89,12 @@ class Results_Aggregator:
         self.loss_quit_avg = 0 
 
     def add_result(self, simulation_results):
+        """
+        adds a result to the results aggregator
+
+        :param simulation_results: takes in a simulation results object from a single simulation run
+        """
+
         # if we're storing results, store it
         if self.store_results:
             self.results.append(simulation_results)
@@ -123,6 +140,11 @@ class Results_Aggregator:
             self.calculate_secondaries()
 
     def get_string(self) -> str:
+        """
+        Returns a string for displaying the results to the user
+
+        :return: string in displayable format
+        """
         if self.results_added != self.sample_size:
             return "ERROR: number of results {self.results_added} does not match sample size {self.sample_size}. If you see this error, contact the dev."
         
@@ -207,12 +229,25 @@ class Results_Aggregator:
 
     # recalculate averages
     def calculate_averages(self, simulation_results):
+        """
+        keeps a running calculation of the average number of defectors,
+        skipped, invalid, and quit.
+
+        :param simulation_results: results from a single simulation run
+        """
         self.avg_defectors += (simulation_results.defectors / self.sample_size)
         self.avg_skipped += (simulation_results.skipped / self.sample_size)
         self.avg_invalid += (simulation_results.invalid / self.sample_size)
         self.avg_quit += (simulation_results.quit / self.sample_size)
         
     def calculate_minimums(self, simulation_results):
+        """
+        keeps a running calculation of the minimum number of defectors,
+        skipped, invalid, and quit.
+
+        :param simulation_results: results from a single simulation run
+        """
+        
         self.min_defectors = min(simulation_results.defectors, self.min_defectors)
         self.min_skipped = min(simulation_results.skipped, self.min_skipped)
         self.min_invalid = min(simulation_results.invalid, self.min_invalid)
@@ -228,6 +263,12 @@ class Results_Aggregator:
             self.result_on_min_quit = simulation_results.result
 
     def calculate_maximums(self, simulation_results):
+        """
+        keeps a running calculation of the maximum number of defectors,
+        skipped, invalid, and quit.
+
+        :param simulation_results: results from a single simulation run
+        """
         self.max_defectors = max(simulation_results.defectors, self.max_defectors)
         self.max_skipped = max(simulation_results.skipped, self.max_skipped)
         self.max_invalid = max(simulation_results.invalid, self.max_invalid)
@@ -243,6 +284,9 @@ class Results_Aggregator:
             self.result_on_max_quit = simulation_results.result
 
     def calculate_secondaries(self):
+        """
+        calculates internal member variables
+        """
         self.num_wins = self.num_wins_case_a + self.num_wins_case_b
         self.num_draws = self.num_draws_case_a + self.num_draws_case_b
         self.num_losses = self.num_losses_case_a + self.num_losses_case_b

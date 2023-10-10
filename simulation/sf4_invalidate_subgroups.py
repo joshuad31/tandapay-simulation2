@@ -2,6 +2,13 @@ from .system_record import System_Record
 from .user_record import *
 
 def sf4_invalidate_subgroups(sys_rec, user_list):
+    """
+    Invalidates subgroups that are an invalid size. Alters
+    appropriate variables in user records and system record.
+
+    :param sys_rec: simulation system record
+    :param user_list: simulation user list
+    """
     test_user = -1
     for i in range(len(user_list)):
         user = user_list[i]

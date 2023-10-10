@@ -5,6 +5,9 @@ import heapq
 import pdb
 
 class group_data:
+    """
+    encapsulates a group object. used for sf7 combining algorithm
+    """
     def __init__(self, group_num, group_size, indices = []):
         self.group_num = group_num
         self.group_size = group_size
@@ -18,6 +21,18 @@ class group_data:
         return f"({self.group_num}, {self.group_size}, {self.indices})"
 
 def combine_size(group_list, group_size, potential_sizes, reorged = None):
+    """
+    helper function for sf7 combining algorithm. Combines members in a group of
+    size group_size with groups in potential sizes, prioritizing groups of size
+    potential_sizes[i] over potential_sizes[i+1].
+
+    :param group_list: list of all the groups
+    :param group_size: size to combine
+    :param potential_sizes: list of sizes to combine with, ordered from greatest to least priority
+    :param reorged: Do not use this parameter. Used for the array that stores reorged users
+
+    :return: altered group list
+    """
     # store all of the members who were reorged into larger groups
     if reorged is None:
         reorged = []
@@ -126,6 +141,14 @@ def test_combine_size():
         print(f"Group {group.group_num} of size {group.group_size} with indices: {group.indices}")
 
 def sf7_reorganization_of_users(env_vars, sys_rec, user_list, tracking = -1):
+    """
+    system function 7 implementation. reorganizes users who are in an invalid group size.
+
+    :param env_vars: takes in the simulation environment variables
+    :param sys_rec: takes in simulation's system record
+    :param user_list: takes in simulation's user list
+    :param tracking: unused optional parameter, leave this field blank
+    """
     groups = [None] * len(user_list)
     for i, user in enumerate(user_list):
         # skip invalid user
