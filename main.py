@@ -3,8 +3,8 @@ from simulation.simulation import *
 from simulation.environment_variables import Environment_Variables
 from simulation.pricing_variables import Pricing_Variables
 from simulation.other_variables import *
-from statistics.statistics_runner import Statistics_Runner
-from statistics.searching import Searching
+from stats.statistics_runner import Statistics_Runner
+from stats.searching import Searching
 from util.ini_handler import INI_Handler
 from util.results_db import Results_DB
 

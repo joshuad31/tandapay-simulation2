@@ -1,6 +1,6 @@
 from enum import Enum
-from statistics.hypothesis_test import TestTypeEnum
-from statistics.statistics_attributes import statistics_attributes
+from stats.hypothesis_test import TestTypeEnum
+from stats.statistics_attributes import statistics_attributes
 
 class OutcomeEnum(Enum):
     """

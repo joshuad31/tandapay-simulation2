@@ -10,7 +10,7 @@ from .ui_element_factory import UI_Element_Factory
 from .results_menu import Results_Window
 from .ui_context import UI_Context
 
-from statistics.searching_attributes import searching_attributes
+from stats.searching_attributes import searching_attributes
 from simulation.other_variables import OutcomeEnum
 
 class Searching_Menu:
