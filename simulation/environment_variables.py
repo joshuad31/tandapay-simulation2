@@ -1,5 +1,17 @@
 
 class Environment_Variables:
+    """
+    This class encapsulates all of the environment variables.
+
+    domain limited variables:
+    - chance of claim: [25, 75]
+    - percent honest defectors: [10, 45]
+    - percent low morale: [10, 30]
+    - percent independent: [20, 80]
+    - dependent threshold: [2, 3]
+    - queueing: [0, 3]
+    """
+
     def __init__(self):
         self._total_member_cnt = 100             # EV1: How many members are in the group?
         self._monthly_premium = 100            # EV2: Monthly premium
@@ -29,7 +41,34 @@ class Environment_Variables:
         self._member_cnt_dependent = 0        # Number of members with the secondary role "Dependent"
 
         self.calculate_member_variables()
+        
+        self._attribute_limits = {
+            "total_member_cnt":         (0, 1e10),
+            "monthly_premium":          (0, 1e10),
+            "chance_of_claim":          (.25, .75),
+            "perc_honest_defectors":    (.10, .45),
+            "perc_low_morale":          (.10, .30),
+            "perc_independent":         (.20, .80),
+            "dependent_thres":          (2, 3),
+            "low_morale_quit_prob":     (1/3, 1/3),
+            "queueing":                 (0, 3),
+            "max_period":               (10, 10),
+        }
 
+        temp_dict = {} 
+
+        for key, value in self._attribute_limits.items():
+            temp_key = f"_{key}"
+            temp_dict[temp_key] = value
+
+        self._attribute_limits.update(temp_dict)
+
+    def get_limits(self, attribute: str):
+        if attribute in self._attribute_limits:
+            return self._attribute_limits[attribute]
+        else:
+            return (0, 1)
+    
     def calculate_member_variables(self):
         # calculate number of members in each primary role
         self._member_cnt_defectors = int(self._total_member_cnt * self._perc_honest_defectors)

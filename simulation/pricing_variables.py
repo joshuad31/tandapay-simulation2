@@ -2,6 +2,9 @@
 
 
 class Pricing_Variables:
+    """
+    Encapsulates the pricing variables we are running the simulation with
+    """
     def __init__(self):
         self.noref_change_floor         = .10
         self.noref_change_ceiling       = .90
@@ -17,3 +20,6 @@ class Pricing_Variables:
         self.avg_3mo_change_ceiling     = .80
         self.avg_3mo_ph_leave_floor     = .02
         self.avg_3mo_ph_leave_ceiling   = .04
+    
+    def get_limits(self, attribute: str):
+        return (0, 1)

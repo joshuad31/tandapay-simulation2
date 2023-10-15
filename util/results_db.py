@@ -3,6 +3,9 @@ import sqlite3
 from datetime import datetime
 
 class Results_DB:
+    """
+    Helper class for storing results in a database
+    """
     def __init__(self, db_path='data/history.db'):
         db_dir = os.path.dirname(db_path)
         if not os.path.exists(db_dir):

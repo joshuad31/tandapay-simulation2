@@ -20,3 +20,4 @@ statistics_attributes = [
     "avg_invalid",
     "avg_quit",
 ]
+

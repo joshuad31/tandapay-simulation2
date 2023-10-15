@@ -1,13 +1,21 @@
 from enum import Enum
-from statistics.hypothesis_test import TestTypeEnum
-from statistics.statistics_attributes import statistics_attributes
+from stats.hypothesis_test import TestTypeEnum
+from stats.statistics_attributes import statistics_attributes
 
 class OutcomeEnum(Enum):
+    """
+    Can be a win, loss, or draw
+    """
     WIN = 0
     LOSS = 1
     DRAW = 2
 
 class Other_Variables:
+    """
+    Stores a collection of other variables that are used for simulation runs,
+    but not in the actual simulation itself. Includes things like sample size,
+    trial sample size, trial count, ...
+    """
     def __init__(self):
         # simulation runs
         self.sample_size = 1            # number of times to run the simulation

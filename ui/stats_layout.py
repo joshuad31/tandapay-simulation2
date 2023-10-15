@@ -8,8 +8,8 @@ from PySide2.QtGui import QFont
 from PySide2.QtCore import Qt, QSize
 
 from .ui_element_factory import UI_Element_Factory
-from statistics.hypothesis_test import TestTypeEnum
-from statistics.statistics_attributes import statistics_attributes
+from stats.hypothesis_test import TestTypeEnum
+from stats.statistics_attributes import statistics_attributes
 
 class Stats_Layout:
     def __init__(self, ui_context, widget_width=None):

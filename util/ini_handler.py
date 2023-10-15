@@ -4,10 +4,14 @@ import configparser
 from simulation.environment_variables import Environment_Variables
 from simulation.pricing_variables import Pricing_Variables
 from simulation.other_variables import Other_Variables
-from statistics.hypothesis_test import TestTypeEnum
+from stats.hypothesis_test import TestTypeEnum
 
 # Define the class for handling .ini files
 class INI_Handler:
+    """
+    Helper class for writing to INI config files
+    """
+
     def __init__(self, path):
         self.path = path
         self.config = configparser.ConfigParser()

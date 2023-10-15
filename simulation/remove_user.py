@@ -3,6 +3,14 @@ from .user_record import *
 import random
 
 def remove_user(user_list, index, reason = "No reason provided."):
+    """
+    removes a user from the user list. This involves altering the subgroup information
+    of other users who are effected.
+
+    :param user_list: takes in the list of users in this simulation run
+    :param index: at what index user should be removed
+    :param reason: reason user was removed (optional)
+    """
     if not isinstance(index, int):
         raise TypeError("Index must be an integer.")
     if not isinstance(user_list, list):
@@ -25,9 +33,24 @@ def remove_user(user_list, index, reason = "No reason provided."):
     #print(reason)
 
 def is_approx_equal(a, b, epsilon):
+    """
+    Tests for equality with a margin of error
+
+    :param a: floating point number 1
+    :param b: floating point number 2
+    :param epsilon: margin of error allowed
+    :return: |a - b| < epsilon
+    """
     return abs(a - b) < epsilon
 
 def evaluate_probability(prob) -> bool:
+    """
+    evaluates a probability between 0 and 1. For example, if 0.5 is passed, it will
+    return true 50% of the time and false 50% of the time.
+
+    :param prob: probability to evaluate
+    """
+
     #if not (0 <= prob <= 1):
     #    raise ValueError(f"attempting to run evaluate_probability on a probability outside of [0, 1]: prob={prob}")
     

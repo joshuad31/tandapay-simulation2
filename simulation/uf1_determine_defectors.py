@@ -7,6 +7,14 @@ from .user_record import *
 from .remove_user import remove_user
 
 def uf1_determine_defectors(env_vars, sys_record, user_list):
+    """
+    user function 1; determines the defectors for this simulation run
+
+    :param env_vars: environment variables for this simulation run
+    :param sys_record: system record for this simulation run
+    :param user_list: list of users for this simulation run
+    """
+
     if not isinstance(env_vars, Environment_Variables):
         raise TypeError("in UF1, env_vars is not of type Environemnt_Variables!")
     if not isinstance(sys_record, System_Record):

@@ -15,8 +15,18 @@ from .hypothesis_test import TestTypeEnum
 from .statistics_aggregator import Statistics_Aggregator
 
 class Statistics_Runner:
+    """
+    Contains functionality for simulation statistics runs
+    """
 
     def __init__(self, ev, pv, ov):
+        """
+        Initializes the runner
+
+        :param ev: environment variables to use
+        :param pv: pricing variables to use
+        :param ov: other variables to use
+        """
         self.ev = ev
         self.pv = pv
         self.ov = ov
@@ -25,6 +35,10 @@ class Statistics_Runner:
         self.statistics_aggregator = Statistics_Aggregator(self.ov) 
     
     def run(self, hypothesis_tests=None):
+        """
+        Runs statistics on the simulation.
+        """
+    
         self.statistics_aggregator = Statistics_Aggregator(self.ov) 
 
         # Running trials
@@ -37,6 +51,10 @@ class Statistics_Runner:
         #print(f"p_value = {p_value}, result = {string}")
 
     def get_string(self):
+        """
+        returns the statistics results as a formatted string
+        """
+
         self.run()
         base_str = self.statistics_aggregator.get_string()
         

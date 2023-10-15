@@ -17,6 +17,9 @@ from .hypothesis_test import TestTypeEnum
 
 
 class Statistics_Aggregator:
+    """
+    Aggregates data for a simulation statistics run
+    """
     def __init__(self, ov):
         self.ov = ov
         
